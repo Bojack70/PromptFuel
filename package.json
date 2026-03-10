@@ -1,0 +1,17 @@
+{
+  "name": "promptfuel",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Real-time token estimation, cost forecasting, and prompt optimization for AI tools",
+  "scripts": {
+    "build": "pnpm -r build",
+    "dev": "pnpm -r --parallel dev",
+    "test": "pnpm -r test",
+    "lint": "pnpm -r lint",
+    "clean": "pnpm -r exec rm -rf dist"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "packageManager": "pnpm@9.15.4"
+}

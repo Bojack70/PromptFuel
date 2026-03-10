@@ -1,0 +1,44 @@
+{
+  "name": "@promptfuel/sdk",
+  "version": "1.0.0",
+  "description": "Token estimation, cost forecasting, and prompt optimization SDK for AI API developers",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./middleware": {
+      "types": "./dist/middleware.d.ts",
+      "import": "./dist/middleware.js"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@promptfuel/core": "workspace:*"
+  },
+  "devDependencies": {
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  },
+  "keywords": ["ai", "tokens", "cost", "prompt", "optimization", "openai", "claude", "anthropic"],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/promptfuel/promptfuel.git",
+    "directory": "packages/sdk"
+  },
+  "homepage": "https://github.com/promptfuel/promptfuel#readme",
+  "bugs": {
+    "url": "https://github.com/promptfuel/promptfuel/issues"
+  }
+}

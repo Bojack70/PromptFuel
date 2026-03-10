@@ -1,0 +1,26 @@
+{
+  "name": "@promptfuel/extension",
+  "version": "1.0.0",
+  "description": "PromptFuel Chrome Extension - real-time token estimation, cost forecasting & prompt optimization",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "vite build && cp src/manifest.json dist/manifest.json",
+    "dev": "vite",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@promptfuel/core": "workspace:*",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@crxjs/vite-plugin": "^2.0.0-beta.28",
+    "@types/chrome": "^0.0.287",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.0"
+  }
+}

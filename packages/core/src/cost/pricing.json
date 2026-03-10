@@ -1,0 +1,17 @@
+{
+  "_lastUpdated": "2026-02-26",
+  "gpt-4o": { "input": 2.50, "output": 10.00, "context": 128000 },
+  "gpt-4o-mini": { "input": 0.15, "output": 0.60, "context": 128000 },
+  "gpt-4-turbo": { "input": 10.00, "output": 30.00, "context": 128000 },
+  "gpt-3.5-turbo": { "input": 0.50, "output": 1.50, "context": 16385 },
+  "o1": { "input": 15.00, "output": 60.00, "context": 200000 },
+  "o1-mini": { "input": 3.00, "output": 12.00, "context": 128000 },
+  "o3": { "input": 10.00, "output": 40.00, "context": 200000 },
+  "o3-mini": { "input": 1.10, "output": 4.40, "context": 200000 },
+  "claude-opus-4-6": { "input": 15.00, "output": 75.00, "context": 200000 },
+  "claude-sonnet-4-6": { "input": 3.00, "output": 15.00, "context": 200000 },
+  "claude-haiku-4-5": { "input": 0.80, "output": 4.00, "context": 200000 },
+  "claude-3.5-sonnet": { "input": 3.00, "output": 15.00, "context": 200000 },
+  "claude-3-opus": { "input": 15.00, "output": 75.00, "context": 200000 },
+  "claude-3-haiku": { "input": 0.25, "output": 1.25, "context": 200000 }
+}

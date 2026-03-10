@@ -1,0 +1,43 @@
+{
+  "name": "@promptfuel/cli",
+  "version": "1.0.0",
+  "description": "Interactive CLI and TUI for token counting, cost estimation, and prompt optimization",
+  "type": "module",
+  "bin": {
+    "promptfuel": "./dist/index.js"
+  },
+  "main": "./dist/index.js",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@promptfuel/core": "workspace:*",
+    "@promptfuel/web": "workspace:*",
+    "clipboardy": "^4.0.0",
+    "ink": "^5.1.0",
+    "ink-text-input": "^6.0.0",
+    "meow": "^13.2.0",
+    "react": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.1",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  },
+  "keywords": ["ai", "tokens", "cost", "prompt", "optimization", "openai", "claude", "cli", "tui"],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/promptfuel/promptfuel.git",
+    "directory": "packages/cli"
+  },
+  "homepage": "https://github.com/promptfuel/promptfuel#readme",
+  "bugs": {
+    "url": "https://github.com/promptfuel/promptfuel/issues"
+  }
+}

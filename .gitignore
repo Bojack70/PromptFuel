@@ -1,0 +1,24 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+*.tsbuildinfo
+
+# Environment & secrets
+.env
+.env.*
+!.env.example
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/settings.json
+
+# Claude internal
+.claude/
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
