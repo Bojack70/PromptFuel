@@ -33,7 +33,7 @@ const VERBOSE_MAP: Array<[RegExp, string]> = [
   [/with reference to/gi, 'about'],
   [/in the absence of/gi, 'without'],
   [/in the amount of/gi, 'for'],
-  [/in the process of/gi, 'while'],
+  [/\bin the process of/gi, 'while'],
   [/as a matter of fact/gi, 'in fact'],
   [/with respect to/gi, 'about'],
   [/with regard to/gi, 'about'],
@@ -55,6 +55,10 @@ const VERBOSE_MAP: Array<[RegExp, string]> = [
   [/prior to/gi, 'before'],
   [/the fact that/gi, 'that'],
   [/whether or not/gi, 'whether'],
+
+  // --- Unnecessary "the" before abstract/uncountable nouns in "how X works" patterns ---
+  // Safe: only removes "the" when the noun is used generically, not referencing a specific thing
+  [/\bhow (does |do |did )?the (gravity|electricity|photosynthesis|evolution|relativity|quantum mechanics|magnetism|friction|momentum|entropy|radiation|thermodynamics|nuclear fission|osmosis|diffusion|combustion|oxidation|metabolism|respiration|digestion|circulation|inflation|democracy|capitalism|socialism|machine learning|deep learning|artificial intelligence|blockchain|encryption|compression|recursion|polymorphism|inheritance|abstraction|concurrency|parallelism)\b/gi, 'how $1$2'],
 
   // --- Wordy verbs ---
   [/conduct an investigation (?:into|of|on)/gi, 'investigate'],
