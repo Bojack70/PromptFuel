@@ -116,52 +116,23 @@ export async function runOptimize(
     ? `  Budget : ${budget.toLocaleString('en-US')} tokens${result.budget ? ` | met: ${result.budget.met ? 'yes' : 'no'} | gap: ${result.budget.remainingGap}` : ''}`
     : null;
 
+  const changeLines = result.suggestions.map((s) => {
+    const saved = s.tokensSaved > 0 ? ` (-${s.tokensSaved}t)` : '';
+    return `  ✂ ${s.description}${saved}`;
+  });
+
   const lines: string[] = [
     '',
-    separator('\u2550', 60),
-    '  PromptFuel \u2014 Prompt Optimizer',
-    separator('\u2550', 60),
+    `  PromptFuel  ${model}  ·  ${intentLabel}${budgetLine ? `  ·  budget ${budget}t` : ''}`,
     '',
-    `  Model  : ${model}`,
-    `  Intent : ${intentLabel}`,
-    ...(budgetLine ? [budgetLine] : []),
+    `  BEFORE  "${truncate(promptText, 100)}"`,
+    `  AFTER   "${truncate(result.optimizedPrompt, 100)}"`,
     '',
-    separator('─', 60),
-    '  ORIGINAL',
-    separator('─', 60),
-    `  "${truncate(promptText, 120)}"`,
+    ...(changeLines.length > 0 ? changeLines : ['  ✓ Prompt looks clean, no changes needed']),
     '',
-    separator('─', 60),
-    '  OPTIMIZED',
-    separator('─', 60),
-    `  "${truncate(result.optimizedPrompt, 120)}"`,
+    `  Saved ${result.tokenReduction} tokens (${result.reductionPercent}%)  ·  ${result.originalTokens} → ${result.optimizedTokens} tokens  ·  ${formatCost(costSavings)} saved`,
     '',
   ];
-
-  if (result.suggestions.length > 0) {
-    lines.push(separator('─', 60));
-    lines.push(`  WHAT CHANGED (${result.suggestions.length} optimizations)`);
-    lines.push(separator('─', 60));
-    for (let i = 0; i < result.suggestions.length; i++) {
-      const rendered = renderSuggestion(result.suggestions[i], i);
-      lines.push(...rendered);
-      lines.push('');
-    }
-  } else {
-    lines.push('  No changes — prompt looks clean!');
-    lines.push('');
-  }
-
-  lines.push(separator('─', 60));
-  lines.push('  SAVINGS SUMMARY');
-  lines.push(separator('─', 60));
-  lines.push(`  Token reduction  : ${result.tokenReduction.toLocaleString('en-US')} tokens (${result.reductionPercent}%)`);
-  lines.push(`  Cost savings     : ${formatCost(costSavings)}`);
-  lines.push(`  Before : ${result.originalTokens.toLocaleString('en-US')} tokens  →  After : ${result.optimizedTokens.toLocaleString('en-US')} tokens`);
-  lines.push(`  Cost   : ${formatCost(originalCost.totalCost)}  →  ${formatCost(optimizedCost.totalCost)}`);
-  lines.push('');
-  lines.push(separator('\u2550', 60));
-  lines.push('');
 
   process.stdout.write(lines.join('\n') + '\n');
 
