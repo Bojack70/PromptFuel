@@ -106,13 +106,19 @@ const PIPELINE = [
   { num: '05', title: 'Result', desc: 'Optimized prompt + intent + token savings + cost estimate' },
 ];
 
-const QUICKSTART = [
-  { label: 'Install',                    code: '$ pnpm install && pnpm build' },
+const QUICKSTART_USERS = [
   { label: 'Optimize a prompt',          code: '$ npx promptfuel optimize "I would like you to please explain how React hooks work in detail"' },
   { label: 'With a token budget',        code: '$ npx promptfuel optimize "Please help me debug this error step by step" --budget 10' },
   { label: 'Analyze project for savings',code: '$ npx promptfuel strategies ./my-project --model claude-sonnet-4-6' },
   { label: 'Launch web dashboard',       code: '$ npx promptfuel dashboard' },
   { label: 'Interactive TUI',            code: '$ npx promptfuel' },
+  { label: 'See all commands',           code: '$ npx promptfuel --help' },
+];
+
+const QUICKSTART_DEVS = [
+  { label: '1. Clone the repo',          code: '$ git clone https://github.com/Bojack70/PromptFuel.git && cd PromptFuel' },
+  { label: '2. Install & build',         code: '$ pnpm install && pnpm build' },
+  { label: '3. Run any command',         code: '$ npx promptfuel --help' },
 ];
 
 const SDK_EXAMPLE = `import { optimize, detectIntent, calculateCost, monitorContext } from '@promptfuel/sdk';
@@ -369,23 +375,44 @@ export function Landing() {
             <GradientText>Quick Start</GradientText>
           </h2>
           <p style={{ color: C.mutedFg, fontSize: '1.125rem', maxWidth: '36rem', margin: '0 auto' }}>
-            Up and running in under a minute.
+            No install needed — just use <code style={{ fontFamily: C.mono, fontSize: '1rem', color: C.primary }}>npx</code>.
           </p>
         </div>
-        <div style={{ maxWidth: '56rem', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          {QUICKSTART.map(step => (
-            <div key={step.label} style={{
-              borderRadius: '0.5rem', border: `1px solid ${C.border}`,
-              background: C.surfaceCode, padding: '1rem',
-            }}>
-              <p style={{ fontSize: '0.75rem', color: C.primary, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem', fontFamily: C.mono }}>
-                {step.label}
-              </p>
-              <code style={{ fontSize: '0.875rem', color: C.fg, wordBreak: 'break-all', fontFamily: C.mono }}>
-                {step.code}
-              </code>
-            </div>
-          ))}
+
+        <div style={{ maxWidth: '56rem', margin: '0 auto' }}>
+          {/* For users */}
+          <p style={{ fontSize: '0.75rem', fontWeight: 700, color: C.primary, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '1rem', fontFamily: C.mono }}>
+            For users
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '3rem' }}>
+            {QUICKSTART_USERS.map(step => (
+              <div key={step.label} style={{ borderRadius: '0.5rem', border: `1px solid ${C.border}`, background: C.surfaceCode, padding: '1rem' }}>
+                <p style={{ fontSize: '0.75rem', color: C.mutedFg, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem', fontFamily: C.mono }}>
+                  {step.label}
+                </p>
+                <code style={{ fontSize: '0.875rem', color: C.fg, wordBreak: 'break-all', fontFamily: C.mono }}>
+                  {step.code}
+                </code>
+              </div>
+            ))}
+          </div>
+
+          {/* For developers */}
+          <p style={{ fontSize: '0.75rem', fontWeight: 700, color: C.mutedFg, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '1rem', fontFamily: C.mono }}>
+            For developers (contributing / running from source)
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            {QUICKSTART_DEVS.map(step => (
+              <div key={step.label} style={{ borderRadius: '0.5rem', border: `1px solid ${C.border}`, background: C.surfaceCode, padding: '1rem' }}>
+                <p style={{ fontSize: '0.75rem', color: C.mutedFg, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem', fontFamily: C.mono }}>
+                  {step.label}
+                </p>
+                <code style={{ fontSize: '0.875rem', color: C.fg, wordBreak: 'break-all', fontFamily: C.mono }}>
+                  {step.code}
+                </code>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
