@@ -1181,20 +1181,20 @@ export function Dashboard() {
                 <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 14, color: '#1e293b' }}>Example</div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                   <div>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: '#dc2626', letterSpacing: '0.5px', marginBottom: 6 }}>BEFORE — 22 tokens</div>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: '#dc2626', letterSpacing: '0.5px', marginBottom: 6 }}>BEFORE — 23 tokens</div>
                     <div style={{ background: '#fff', border: '1px solid #fecaca', borderRadius: 6, padding: '10px 12px', fontSize: 13, color: '#64748b', lineHeight: 1.6 }}>
                       I was wondering if you could please provide me with a detailed and comprehensive explanation of how React hooks work in detail.
                     </div>
                   </div>
                   <div>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: '#059669', letterSpacing: '0.5px', marginBottom: 6 }}>AFTER — 9 tokens</div>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: '#059669', letterSpacing: '0.5px', marginBottom: 6 }}>AFTER — 12 tokens</div>
                     <div style={{ background: '#fff', border: '1px solid #bbf7d0', borderRadius: 6, padding: '10px 12px', fontSize: 13, color: '#1e293b', lineHeight: 1.6 }}>
-                      Explain how React hooks work.
+                      Provide a detailed explanation of how React hooks work in detail.
                     </div>
                   </div>
                 </div>
                 <div style={{ marginTop: 10, fontSize: 12, color: '#94a3b8', fontStyle: 'italic' }}>
-                  Removed: "I was wondering if you could", "please", "provide me with a", "detailed and comprehensive", "in detail" — same question, 59% fewer tokens.
+                  Removed filler: "I was wondering if you could", "please", "comprehensive" — intent preserved: "detailed" kept, 48% fewer tokens.
                 </div>
               </div>
             </div>

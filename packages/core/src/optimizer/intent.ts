@@ -58,8 +58,8 @@ const INTENT_SIGNALS: Record<Exclude<PromptIntentType, 'general'>, IntentSignal[
     { pattern: /\b(extract|inline|rename|move|split|merge|decompose)\s+(the\s+)?(function|method|class|module|variable)/i, weight: 2, label: 'refactor-action' },
   ],
   explain: [
-    { pattern: /\b(explain|describe|clarify|break\s*down|walk\s+me\s+through|help\s+me\s+understand)\b/i, weight: 3, label: 'explanation-verb' },
-    { pattern: /\b(concept|theory|principle|mechanism|how\s+(does|do)\s+(it|this|that)\s+work)\b/i, weight: 2, label: 'conceptual-noun' },
+    { pattern: /\b(explain|explanation|describe|description|clarify|clarification|break\s*down|walk\s+me\s+through|help\s+me\s+understand)\b/i, weight: 3, label: 'explanation-verb' },
+    { pattern: /\b(concept|theory|principle|mechanism|how\s+(does|do)\s+(it|this|that|\w+(\s+\w+)?)\s+work)\b/i, weight: 2, label: 'conceptual-noun' },
     { pattern: /\b(ELI5|in\s+simple\s+(terms|words)|for\s+a\s+beginner|in\s+layman'?s?\s+terms)\b/i, weight: 2, label: 'simplicity-request' },
     { pattern: /\bwhat\s+(is|are)\s+(a|an|the)\s+\w+/i, weight: 1, label: 'what-is-question' },
   ],
