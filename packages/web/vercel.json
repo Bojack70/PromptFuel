@@ -1,5 +1,5 @@
 {
-  "buildCommand": "pnpm --filter @promptfuel/web build",
+  "buildCommand": "pnpm --filter @promptfuel/core build && pnpm --filter @promptfuel/web build",
   "outputDirectory": "dist",
   "installCommand": "pnpm install --frozen-lockfile",
   "framework": "vite",
