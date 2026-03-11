@@ -179,7 +179,7 @@ export function Landing() {
             <a href="https://github.com/Bojack70/PromptFuel" target="_blank" rel="noopener noreferrer" className="pf-nav-link" style={{ display: 'flex', alignItems: 'center', gap: 6, color: C.mutedFg, textDecoration: 'none', transition: 'color 0.2s' }}>
               <GitHubIcon size={16} /> GitHub
             </a>
-            <a href="#/app" style={{
+            <a href="#/app" target="_blank" rel="noopener noreferrer" style={{
               display: 'inline-flex', alignItems: 'center',
               background: C.gradient, color: C.primaryFg,
               fontWeight: 600, padding: '0.4rem 1rem', borderRadius: '0.5rem',

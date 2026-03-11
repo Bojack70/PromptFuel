@@ -1386,6 +1386,42 @@ export function Dashboard() {
       {/* === INSIGHTS TAB === */}
       {tab === 'insights' && (
         <>
+          {/* ── Empty state ── */}
+          {(!claudeData || claudeData.totalMessages === 0) && (
+            <div style={{ textAlign: 'center', padding: '40px 24px' }}>
+              <div style={{ fontSize: 32, marginBottom: 16 }}>📊</div>
+              <div style={{ fontSize: 16, fontWeight: 600, color: '#1e293b', marginBottom: 8 }}>
+                No insights yet
+              </div>
+              <div style={{ fontSize: 13, color: '#64748b', marginBottom: 32, maxWidth: 360, margin: '0 auto 32px' }}>
+                Insights are generated from your Claude Code usage data. Run the dashboard from inside a project that uses Claude Code to get started.
+              </div>
+
+              {/* Steps */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 420, margin: '0 auto', textAlign: 'left' }}>
+                {[
+                  { step: '1', label: 'Install PromptFuel', code: 'npm install -g promptfuel' },
+                  { step: '2', label: 'Go to your project folder', code: 'cd your-project' },
+                  { step: '3', label: 'Launch the dashboard', code: 'npx promptfuel dashboard' },
+                ].map(item => (
+                  <div key={item.step} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 8, padding: '12px 16px' }}>
+                    <div style={{ width: 24, height: 24, borderRadius: '50%', background: '#3b82f6', color: '#fff', fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      {item.step}
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: '#1e293b', marginBottom: 4 }}>{item.label}</div>
+                      <code style={{ fontSize: 12, color: '#3b82f6', fontFamily: 'monospace', background: '#eff6ff', padding: '2px 8px', borderRadius: 4 }}>{item.code}</code>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div style={{ marginTop: 24, fontSize: 12, color: '#94a3b8' }}>
+                PromptFuel reads your local <code style={{ fontFamily: 'monospace', background: '#f1f5f9', padding: '1px 6px', borderRadius: 3 }}>~/.claude/</code> usage logs — no data leaves your machine.
+              </div>
+            </div>
+          )}
+
           {/* ── Claude Code Usage ── */}
           {claudeData && claudeData.totalMessages > 0 && (
             <>
