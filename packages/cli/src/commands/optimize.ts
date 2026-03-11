@@ -125,42 +125,22 @@ export async function runOptimize(
     `  Model  : ${model}`,
     `  Intent : ${intentLabel}`,
     ...(budgetLine ? [budgetLine] : []),
-    `  Input  cost rate: $${modelInfo.input.toFixed(2)}/1M tokens`,
-    `  Output cost rate: $${modelInfo.output.toFixed(2)}/1M tokens`,
     '',
     separator('─', 60),
-    '  VERBOSITY SCORE',
-    separator('─', 60),
-    `  [${verbosityBar}] ${result.verbosityScore}/100`,
-    '  (higher = more verbose / more room to optimize)',
-    '',
-    separator('─', 60),
-    '  ORIGINAL PROMPT',
+    '  ORIGINAL',
     separator('─', 60),
     `  "${truncate(promptText, 120)}"`,
     '',
-    `  Tokens : ${result.originalTokens.toLocaleString('en-US')} input + est. ${originalTokenCount.estimatedOutputTokens.toLocaleString('en-US')} output`,
-    `  Cost   : ${formatCost(originalCost.totalCost)} (input ${formatCost(originalCost.inputCost)} + output ${formatCost(originalCost.outputCost)})`,
-    '',
     separator('─', 60),
-    '  OPTIMIZED PROMPT',
+    '  OPTIMIZED',
     separator('─', 60),
     `  "${truncate(result.optimizedPrompt, 120)}"`,
-    '',
-    `  Tokens : ${result.optimizedTokens.toLocaleString('en-US')} input + est. ${optimizedTokenCount.estimatedOutputTokens.toLocaleString('en-US')} output`,
-    `  Cost   : ${formatCost(optimizedCost.totalCost)} (input ${formatCost(optimizedCost.inputCost)} + output ${formatCost(optimizedCost.outputCost)})`,
-    '',
-    separator('─', 60),
-    '  SAVINGS SUMMARY',
-    separator('─', 60),
-    `  Token reduction  : ${result.tokenReduction.toLocaleString('en-US')} tokens (${result.reductionPercent}%)`,
-    `  Cost savings     : ${formatCost(costSavings)}`,
     '',
   ];
 
   if (result.suggestions.length > 0) {
     lines.push(separator('─', 60));
-    lines.push(`  SUGGESTIONS (${result.suggestions.length} found)`);
+    lines.push(`  WHAT CHANGED (${result.suggestions.length} optimizations)`);
     lines.push(separator('─', 60));
     for (let i = 0; i < result.suggestions.length; i++) {
       const rendered = renderSuggestion(result.suggestions[i], i);
@@ -168,10 +148,18 @@ export async function runOptimize(
       lines.push('');
     }
   } else {
-    lines.push('  No specific suggestions — prompt looks clean!');
+    lines.push('  No changes — prompt looks clean!');
     lines.push('');
   }
 
+  lines.push(separator('─', 60));
+  lines.push('  SAVINGS SUMMARY');
+  lines.push(separator('─', 60));
+  lines.push(`  Token reduction  : ${result.tokenReduction.toLocaleString('en-US')} tokens (${result.reductionPercent}%)`);
+  lines.push(`  Cost savings     : ${formatCost(costSavings)}`);
+  lines.push(`  Before : ${result.originalTokens.toLocaleString('en-US')} tokens  →  After : ${result.optimizedTokens.toLocaleString('en-US')} tokens`);
+  lines.push(`  Cost   : ${formatCost(originalCost.totalCost)}  →  ${formatCost(optimizedCost.totalCost)}`);
+  lines.push('');
   lines.push(separator('\u2550', 60));
   lines.push('');
 
