@@ -27,7 +27,11 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build all packages
-        run: pnpm -r build
+        run: |
+          pnpm --filter @promptfuel/core build
+          pnpm --filter @promptfuel/web build
+          pnpm --filter promptfuel build
+          pnpm --filter @promptfuel/sdk build
 
       - name: Run core tests
         run: pnpm --filter @promptfuel/core test
