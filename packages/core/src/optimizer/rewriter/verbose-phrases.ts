@@ -185,9 +185,10 @@ const VERBOSE_MAP: Array<[RegExp, string]> = [
   [/go ahead and\s*/gi, ''],
   [/I'm looking for\s*/gi, ''],
   [/what I'm looking for is\s*/gi, ''],
-  // Standalone "please" — politeness token with no semantic value in LLM prompts
-  // Must come AFTER compound "please" phrases above so those are handled first
+  // Standalone politeness tokens — no semantic value in LLM prompts
+  // Must come AFTER compound "please/kindly" phrases above so those are handled first
   [/\bplease\b,?\s*/gi, ''],
+  [/\bkindly\b,?\s*/gi, ''],
 
   // --- Conversational affirmatives (acknowledge-then-instruct pattern) ---
   // Patterns are intentionally specific to avoid garbling mid-sentence adjectives

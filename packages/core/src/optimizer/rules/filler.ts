@@ -13,6 +13,8 @@ export const FILLER_PHRASES_MAP: Record<string, string> = {
   'i need you to': '',
   'can you please': '',
   'could you please': '',
+  'please kindly': '',
+  'kindly please': '',
   'i was wondering if you could': '',
   'i would appreciate it if you could': '',
   'i would really like it if': '',
