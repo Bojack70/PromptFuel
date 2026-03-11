@@ -14,26 +14,26 @@ ${d}  ────────────────────────�
 ${w}  Get started:${r}
 
   ${c}Analyze a prompt${r}
-  ${d}$${r} node packages/cli/dist/index.js analyze ${y}"Explain how React hooks work"${r}
+  ${d}$${r} npx promptfuel analyze ${y}"Explain how React hooks work"${r}
 
   ${c}Optimize a prompt${r}
-  ${d}$${r} node packages/cli/dist/index.js optimize ${y}"I would like you to please explain..."${r}
+  ${d}$${r} npx promptfuel optimize ${y}"I would like you to please explain..."${r}
 
   ${c}Optimize with a token budget${r}
-  ${d}$${r} node packages/cli/dist/index.js optimize ${y}"Your verbose prompt"${r} ${b}--budget 50${r}
+  ${d}$${r} npx promptfuel optimize ${y}"Your verbose prompt"${r} ${b}--budget 50${r}
 
   ${c}Analyze your project for token-saving strategies${r}
-  ${d}$${r} node packages/cli/dist/index.js strategies ${y}./my-project${r}
+  ${d}$${r} npx promptfuel strategies ${y}./my-project${r}
 
   ${c}Open the web dashboard${r}
-  ${d}$${r} node packages/cli/dist/index.js dashboard
-
-  ${c}Launch interactive TUI${r}
-  ${d}$${r} node packages/cli/dist/index.js
+  ${d}$${r} npx promptfuel dashboard
 
   ${c}See all commands${r}
-  ${d}$${r} node packages/cli/dist/index.js --help
+  ${d}$${r} npx promptfuel --help
 
 ${d}  ─────────────────────────────────────────────────────${r}
-  ${d}Once published: replace "node packages/cli/dist/index.js" with "npx promptfuel"${r}
+  ${d}Tip: if the above commands don't work yet, use this instead:${r}
+  ${d}     replace "npx promptfuel" with "node packages/cli/dist/index.js"${r}
+  ${d}     e.g.  node packages/cli/dist/index.js dashboard${r}
+  ${d}     (this is only needed until the package is available on npm)${r}
 `);
