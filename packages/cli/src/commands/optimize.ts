@@ -113,7 +113,7 @@ export async function runOptimize(
 
   const intentLabel = result.intent ? `${result.intent.type} (${Math.round(result.intent.confidence * 100)}% confidence)` : 'general';
   const budgetLine = budget !== undefined
-    ? `  Budget : ${budget.toLocaleString()} tokens${result.budget ? ` | met: ${result.budget.met ? 'yes' : 'no'} | gap: ${result.budget.remainingGap}` : ''}`
+    ? `  Budget : ${budget.toLocaleString('en-US')} tokens${result.budget ? ` | met: ${result.budget.met ? 'yes' : 'no'} | gap: ${result.budget.remainingGap}` : ''}`
     : null;
 
   const lines: string[] = [
@@ -139,7 +139,7 @@ export async function runOptimize(
     separator('─', 60),
     `  "${truncate(promptText, 120)}"`,
     '',
-    `  Tokens : ${result.originalTokens.toLocaleString()} input + est. ${originalTokenCount.estimatedOutputTokens.toLocaleString()} output`,
+    `  Tokens : ${result.originalTokens.toLocaleString('en-US')} input + est. ${originalTokenCount.estimatedOutputTokens.toLocaleString('en-US')} output`,
     `  Cost   : ${formatCost(originalCost.totalCost)} (input ${formatCost(originalCost.inputCost)} + output ${formatCost(originalCost.outputCost)})`,
     '',
     separator('─', 60),
@@ -147,13 +147,13 @@ export async function runOptimize(
     separator('─', 60),
     `  "${truncate(result.optimizedPrompt, 120)}"`,
     '',
-    `  Tokens : ${result.optimizedTokens.toLocaleString()} input + est. ${optimizedTokenCount.estimatedOutputTokens.toLocaleString()} output`,
+    `  Tokens : ${result.optimizedTokens.toLocaleString('en-US')} input + est. ${optimizedTokenCount.estimatedOutputTokens.toLocaleString('en-US')} output`,
     `  Cost   : ${formatCost(optimizedCost.totalCost)} (input ${formatCost(optimizedCost.inputCost)} + output ${formatCost(optimizedCost.outputCost)})`,
     '',
     separator('─', 60),
     '  SAVINGS SUMMARY',
     separator('─', 60),
-    `  Token reduction  : ${result.tokenReduction.toLocaleString()} tokens (${result.reductionPercent}%)`,
+    `  Token reduction  : ${result.tokenReduction.toLocaleString('en-US')} tokens (${result.reductionPercent}%)`,
     `  Cost savings     : ${formatCost(costSavings)}`,
     '',
   ];

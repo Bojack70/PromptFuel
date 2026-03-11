@@ -123,7 +123,7 @@ export async function runStrategies(
       lines.push(`     ${rec.description}`);
       lines.push('');
       if (rec.estimatedTokenSavings > 0) {
-        lines.push(`     Estimated savings: ~${rec.estimatedTokenSavings.toLocaleString()} tokens`);
+        lines.push(`     Estimated savings: ~${rec.estimatedTokenSavings.toLocaleString('en-US')} tokens`);
       }
       if (rec.estimatedCostSavings > 0) {
         lines.push(`     Cost savings: ~${formatCost(rec.estimatedCostSavings)}`);
@@ -135,7 +135,7 @@ export async function runStrategies(
     lines.push(separator('─', 60));
     lines.push(`  TOTAL POTENTIAL SAVINGS`);
     lines.push(separator('─', 60));
-    lines.push(`  Tokens : ~${analysis.totalEstimatedTokenSavings.toLocaleString()}`);
+    lines.push(`  Tokens : ~${analysis.totalEstimatedTokenSavings.toLocaleString('en-US')}`);
     lines.push(`  Cost   : ~${formatCost(analysis.totalEstimatedCostSavings)}`);
     lines.push('');
   }
