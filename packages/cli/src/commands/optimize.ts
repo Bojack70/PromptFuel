@@ -134,34 +134,16 @@ export async function runOptimize(
     '',
   ];
 
-  process.stdout.write(lines.join('\n') + '\n');
-
-  if (copy) {
+  // Auto-copy to clipboard (works in Claude Code and regular terminals)
+  if (result.tokenReduction > 0) {
     try {
       await clipboard.write(result.optimizedPrompt);
-      process.stdout.write('  Optimized prompt copied to clipboard.\n\n');
+      lines.push('  ✓ Optimized prompt copied to clipboard — just paste it!');
+      lines.push('');
     } catch {
-      process.stderr.write('  Warning: could not copy to clipboard.\n\n');
+      // clipboard unavailable (e.g. headless CI) — silently skip
     }
   }
 
-  // Interactive "Use this instead?" prompt
-  if (process.stdin.isTTY && !copy && result.tokenReduction > 0) {
-    const readline = await import('node:readline');
-    const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-    const answer = await new Promise<string>((resolve) => {
-      rl.question('  Use this optimized version? [Y/n] ', resolve);
-    });
-    rl.close();
-
-    if (!answer || answer.toLowerCase() === 'y' || answer.toLowerCase() === 'yes') {
-      try {
-        await clipboard.write(result.optimizedPrompt);
-        process.stdout.write('\n  ✓ Optimized prompt copied to clipboard!\n\n');
-      } catch {
-        process.stdout.write('\n  Optimized prompt:\n');
-        process.stdout.write(`  ${result.optimizedPrompt}\n\n`);
-      }
-    }
-  }
+  process.stdout.write(lines.join('\n') + '\n');
 }
