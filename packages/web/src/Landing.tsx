@@ -1,592 +1,413 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { listModels, getContextWindow } from '@promptfuel/core';
-import { LiveDemo } from './components/LiveDemo.js';
+import React, { useRef } from 'react';
 
-// ── Responsive hook ──
-function useMediaQuery(query: string): boolean {
-  const [matches, setMatches] = useState(() =>
-    typeof window !== 'undefined' ? window.matchMedia(query).matches : false
-  );
-  useEffect(() => {
-    const mql = window.matchMedia(query);
-    const handler = (e: MediaQueryListEvent) => setMatches(e.matches);
-    mql.addEventListener('change', handler);
-    return () => mql.removeEventListener('change', handler);
-  }, [query]);
-  return matches;
-}
-
-// ── Pricing data (inline to avoid extra imports) ──
-const MODEL_DATA: Record<string, { input: number; output: number; context: number; label: string }> = {
-  'gpt-4o':           { input: 2.50,  output: 10.00, context: 128000, label: 'GPT-4o' },
-  'gpt-4o-mini':      { input: 0.15,  output: 0.60,  context: 128000, label: 'GPT-4o Mini' },
-  'gpt-4-turbo':      { input: 10.00, output: 30.00, context: 128000, label: 'GPT-4 Turbo' },
-  'gpt-3.5-turbo':    { input: 0.50,  output: 1.50,  context: 16385,  label: 'GPT-3.5 Turbo' },
-  'o1':               { input: 15.00, output: 60.00, context: 200000, label: 'o1' },
-  'o1-mini':          { input: 3.00,  output: 12.00, context: 128000, label: 'o1 Mini' },
-  'o3':               { input: 10.00, output: 40.00, context: 200000, label: 'o3' },
-  'o3-mini':          { input: 1.10,  output: 4.40,  context: 200000, label: 'o3 Mini' },
-  'claude-opus-4-6':  { input: 15.00, output: 75.00, context: 200000, label: 'Claude Opus' },
-  'claude-sonnet-4-6':{ input: 3.00,  output: 15.00, context: 200000, label: 'Claude Sonnet' },
-  'claude-haiku-4-5': { input: 0.80,  output: 4.00,  context: 200000, label: 'Claude Haiku' },
-  'claude-3.5-sonnet':{ input: 3.00,  output: 15.00, context: 200000, label: 'Claude 3.5 Sonnet' },
-  'claude-3-opus':    { input: 15.00, output: 75.00, context: 200000, label: 'Claude 3 Opus' },
-  'claude-3-haiku':   { input: 0.25,  output: 1.25,  context: 200000, label: 'Claude 3 Haiku' },
+// ── Design tokens (from reference landing.html) ──────────────────────────────
+const C = {
+  bg:             'hsl(40, 20%, 97%)',
+  fg:             'hsl(220, 20%, 12%)',
+  card:           'hsl(0, 0%, 100%)',
+  primary:        'hsl(217, 91%, 55%)',
+  primaryFg:      'hsl(0, 0%, 100%)',
+  secondary:      'hsl(214, 15%, 92%)',
+  secondaryFg:    'hsl(220, 20%, 20%)',
+  muted:          'hsl(214, 10%, 93%)',
+  mutedFg:        'hsl(220, 10%, 42%)',
+  border:         'hsl(214, 10%, 88%)',
+  surfaceCode:    'hsl(214, 15%, 96%)',
+  surfaceElevated:'hsl(214, 12%, 94%)',
+  textBright:     'hsl(220, 20%, 10%)',
+  textDim:        'hsl(220, 10%, 55%)',
+  gradient:       'linear-gradient(135deg, hsl(217, 91%, 55%), hsl(230, 80%, 50%))',
+  shadowGlowSm:   '0 0 30px -8px hsla(217, 91%, 55%, 0.15)',
+  radius:         '12px',
+  mono:           "'JetBrains Mono', monospace",
 };
 
-const OPENAI_MODELS = ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-3.5-turbo', 'o1', 'o1-mini', 'o3', 'o3-mini'];
-const ANTHROPIC_MODELS = ['claude-opus-4-6', 'claude-sonnet-4-6', 'claude-haiku-4-5', 'claude-3.5-sonnet', 'claude-3-opus', 'claude-3-haiku'];
+// ── SVG Icons ─────────────────────────────────────────────────────────────────
+const FlameIcon = ({ size = 20 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" />
+  </svg>
+);
 
-function formatContext(n: number): string {
-  return n >= 1000 ? `${(n / 1000).toFixed(0)}K` : n.toString();
+const GitHubIcon = ({ size = 16 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4" />
+    <path d="M9 18c-4.51 2-5-2-7-2" />
+  </svg>
+);
+
+const TerminalIcon = ({ size = 16 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="4 17 10 11 4 5" />
+    <line x1="12" x2="20" y1="19" y2="19" />
+  </svg>
+);
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function GradientText({ children }: { children: React.ReactNode }) {
+  return (
+    <span style={{
+      background: C.gradient,
+      WebkitBackgroundClip: 'text',
+      WebkitTextFillColor: 'transparent',
+      backgroundClip: 'text',
+    }}>
+      {children}
+    </span>
+  );
 }
 
-// ── Section refs for smooth scroll ──
-const NAV_ITEMS = ['Features', 'How It Works', 'Models', 'Roadmap', 'Get Started'] as const;
+function TerminalWindow({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div style={{
+      borderRadius: C.radius,
+      border: `1px solid ${C.border}`,
+      background: C.surfaceCode,
+      overflow: 'hidden',
+      boxShadow: '0 25px 50px -12px rgba(0,0,0,0.15)',
+    }}>
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 8,
+        padding: '12px 16px', borderBottom: `1px solid ${C.border}`,
+      }}>
+        <div style={{ width: 12, height: 12, borderRadius: '50%', background: 'hsla(0,84%,60%,0.6)' }} />
+        <div style={{ width: 12, height: 12, borderRadius: '50%', background: 'hsla(217,91%,55%,0.4)' }} />
+        <div style={{ width: 12, height: 12, borderRadius: '50%', background: 'hsla(220,10%,42%,0.2)' }} />
+        <span style={{ marginLeft: 8, fontSize: 12, color: C.textDim, fontFamily: C.mono }}>{title}</span>
+      </div>
+      <div style={{ padding: '20px 24px', textAlign: 'left', fontSize: 14, lineHeight: 1.7, fontFamily: C.mono }}>
+        {children}
+      </div>
+    </div>
+  );
+}
 
+// ── Data ──────────────────────────────────────────────────────────────────────
+const FEATURES = [
+  { icon: '🧠', title: 'Intent Detection', desc: 'Classifies prompts into 6 intent types — debug, code-gen, refactor, explain, creative, general — with confidence scoring. Optimization adapts automatically per intent.' },
+  { icon: '🎯', title: 'Token Budget Targeting', desc: 'Set a target token count and auto-select the right compression level (1–4) to hit your budget without losing meaning.' },
+  { icon: '✏️', title: 'Smart Prompt Rewriter', desc: '4-pass rewriter — verbose phrases, sentence compression, voice transform, question restructuring — gated by detected intent to avoid over-optimizing.' },
+  { icon: '#',  title: 'Token Counter', desc: 'Exact token counts for OpenAI models via tiktoken, ~94% accurate for Claude. Know your token cost before you send.' },
+  { icon: '💲', title: 'Cost Calculator', desc: 'Real-time cost estimates with per-model pricing for 14 models — GPT-4o, o1, o3, Claude Opus/Sonnet/Haiku and more.' },
+  { icon: '⚡', title: 'Context Monitor', desc: 'Visual progress bar showing how much of your context window you\'ve used, with color-coded warnings as you approach the limit.' },
+  { icon: '💡', title: 'Strategy Advisor', desc: 'Analyzes your project config, conversation history, model usage, and prompt patterns — then surfaces actionable token-saving recommendations.' },
+  { icon: '🗂️', title: 'Cache Analysis', desc: 'Clusters your prompts to identify prompt-prefix caching opportunities. Shows which clusters benefit most and provides a step-by-step setup guide.' },
+  { icon: '📊', title: 'Web Dashboard', desc: 'Browser-based dashboard with Insights, Analyze & Optimize, History, and Strategies tabs — plus Claude Code usage stats and cost tracking.' },
+  { icon: '🌐', title: 'Chrome Extension', desc: 'Floating widget on ChatGPT and Claude that shows live token count and cost estimate as you type — before you hit send.' },
+  { icon: '⌨️', title: 'Interactive TUI', desc: 'Run promptfuel with no arguments to launch a full terminal UI — analyze, optimize, and browse history without leaving the shell.' },
+  { icon: '📦', title: 'Batch Processing', desc: 'Analyze or optimize multiple prompts at once from a JSON file. Ideal for auditing prompt libraries or pre-processing datasets offline.' },
+];
+
+const PIPELINE = [
+  { num: '01', title: 'Intent Detection', desc: 'debug · code-gen · refactor · explain · creative · general' },
+  { num: '02', title: 'Pattern Protection', desc: 'Preserve "step by step", code blocks, scope constraints, tone instructions' },
+  { num: '03', title: '4-Pass Rewriter', desc: 'Verbose phrases → sentence compression → voice transform → question restructuring' },
+  { num: '04', title: 'Budget Compression', desc: 'Progressive levels 1→4 until your target token count is met' },
+  { num: '05', title: 'Result', desc: 'Optimized prompt + intent + token savings + cost estimate' },
+];
+
+const QUICKSTART = [
+  { label: 'Install',                    code: '$ pnpm install && pnpm build' },
+  { label: 'Optimize a prompt',          code: '$ npx promptfuel optimize "I would like you to please explain how React hooks work in detail"' },
+  { label: 'With a token budget',        code: '$ npx promptfuel optimize "Please help me debug this error step by step" --budget 10' },
+  { label: 'Analyze project for savings',code: '$ npx promptfuel strategies ./my-project --model claude-sonnet-4-6' },
+  { label: 'Launch web dashboard',       code: '$ npx promptfuel dashboard' },
+  { label: 'Interactive TUI',            code: '$ npx promptfuel' },
+];
+
+const SDK_EXAMPLE = `import { optimize, detectIntent, calculateCost, monitorContext } from '@promptfuel/sdk';
+
+// Optimize a prompt — intent detected automatically
+const result = optimize(
+  'I would like you to please explain how database indexing works in detail',
+  { model: 'gpt-4o' }
+);
+
+console.log(result.intent);           // { type: "explain", confidence: 0.6 }
+console.log(result.optimizedPrompt);  // "Explain how database indexing works in detail"
+console.log(result.reductionPercent); // 42
+
+// Check cost before sending
+const cost = calculateCost(result.optimizedPrompt, 'gpt-4o');
+console.log(cost.inputCost);          // "$0.000023"
+
+// Monitor context window usage
+const status = monitorContext(messages, 'claude-sonnet-4-6');
+console.log(status.percentUsed);      // 34.2`;
+
+// ── Component ─────────────────────────────────────────────────────────────────
 export function Landing() {
-  const isMobile = useMediaQuery('(max-width: 768px)');
-  const [installTab, setInstallTab] = useState<'cli' | 'sdk' | 'extension'>('cli');
-  const [mobileNav, setMobileNav] = useState(false);
+  const featuresRef  = useRef<HTMLElement>(null);
+  const quickstartRef = useRef<HTMLElement>(null);
 
-  const featuresRef = useRef<HTMLDivElement>(null);
-  const howRef = useRef<HTMLDivElement>(null);
-  const modelsRef = useRef<HTMLDivElement>(null);
-  const roadmapRef = useRef<HTMLDivElement>(null);
-  const getStartedRef = useRef<HTMLDivElement>(null);
-
-  const sectionRefs: Record<string, React.RefObject<HTMLDivElement | null>> = {
-    'Features': featuresRef,
-    'How It Works': howRef,
-    'Models': modelsRef,
-    'Roadmap': roadmapRef,
-    'Get Started': getStartedRef,
-  };
-
-  const scrollTo = (label: string) => {
-    sectionRefs[label]?.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    setMobileNav(false);
-  };
+  const scrollTo = (ref: React.RefObject<HTMLElement | null>) =>
+    ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
   return (
-    <div style={{ background: '#ffffff', color: '#1a1a2e', fontFamily: "'Inter', sans-serif" }}>
+    <div style={{ background: C.bg, color: C.fg, fontFamily: "'Inter', system-ui, sans-serif", lineHeight: 1.6 }}>
+      <style>{`
+        @keyframes pulse-glow { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.8; } }
+        .pf-feature-card:hover { border-color: hsla(217,91%,55%,0.3) !important; background: hsl(214,12%,94%) !important; }
+        .pf-btn-primary:hover  { transform: scale(1.05) !important; }
+        .pf-btn-secondary:hover { background: hsl(214,12%,94%) !important; }
+        .pf-nav-link:hover     { color: hsl(220,20%,12%) !important; }
+        .pf-footer-link:hover  { color: hsl(220,20%,12%) !important; }
+      `}</style>
 
-      {/* ═══════ 1. NAVBAR ═══════ */}
+      {/* ══ NAVBAR ══════════════════════════════════════════════════════════ */}
       <nav style={{
-        position: 'sticky', top: 0, zIndex: 100, background: 'rgba(255,255,255,0.95)',
-        backdropFilter: 'blur(8px)', borderBottom: '1px solid #e5e7eb',
+        position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50,
+        borderBottom: `1px solid hsla(214,10%,88%,0.5)`,
+        background: 'hsla(40,20%,97%,0.8)',
+        backdropFilter: 'blur(20px)',
       }}>
         <div style={{
-          maxWidth: 1100, margin: '0 auto', padding: '0 24px',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 56,
+          maxWidth: '72rem', margin: '0 auto', padding: '0 1rem',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '3.5rem',
         }}>
-          <span style={{ fontSize: 20, fontWeight: 700, color: '#1a1a2e', letterSpacing: -0.5 }}>
+          <a href="#" style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 700, fontSize: '1.125rem', color: C.fg, textDecoration: 'none' }}>
+            <span style={{ color: C.primary }}><FlameIcon size={20} /></span>
             PromptFuel
-          </span>
-
-          {isMobile ? (
-            <button onClick={() => setMobileNav(!mobileNav)} style={hamburgerStyle}>
-              {mobileNav ? '✕' : '☰'}
+          </a>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 24, fontSize: '0.875rem' }}>
+            <button onClick={() => scrollTo(featuresRef)} className="pf-nav-link" style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.mutedFg, fontSize: '0.875rem', padding: 0, transition: 'color 0.2s' }}>
+              Features
             </button>
-          ) : (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 32 }}>
-              {NAV_ITEMS.map(item => (
-                <button key={item} onClick={() => scrollTo(item)} style={navLinkStyle}>
-                  {item}
-                </button>
-              ))}
-              <a href="#/app" style={navCTAStyle}>Open Dashboard</a>
-            </div>
-          )}
-        </div>
-        {/* Mobile dropdown */}
-        {isMobile && mobileNav && (
-          <div style={{ padding: '8px 24px 16px', borderTop: '1px solid #e5e7eb' }}>
-            {NAV_ITEMS.map(item => (
-              <button key={item} onClick={() => scrollTo(item)} style={{ ...navLinkStyle, display: 'block', padding: '10px 0' }}>
-                {item}
-              </button>
-            ))}
-            <a href="#/app" style={{ ...navCTAStyle, display: 'inline-block', marginTop: 8 }}>Open Dashboard</a>
-          </div>
-        )}
-      </nav>
-
-      {/* ═══════ 2. HERO ═══════ */}
-      <section style={{ ...sectionPadding, textAlign: 'center', paddingTop: isMobile ? 60 : 100, paddingBottom: isMobile ? 40 : 80 }}>
-        <div style={{ maxWidth: 720, margin: '0 auto' }}>
-          <h1 style={{ fontSize: isMobile ? 32 : 48, fontWeight: 700, lineHeight: 1.15, marginBottom: 20, letterSpacing: -1 }}>
-            Save tokens. Cut costs.{isMobile ? ' ' : <br />}Write better prompts.
-          </h1>
-          <p style={{ fontSize: isMobile ? 16 : 18, color: '#6b7280', lineHeight: 1.7, marginBottom: 32, maxWidth: 600, margin: '0 auto 32px' }}>
-            PromptFuel helps you spend less on AI with intent-aware prompt optimization, token budget targeting, and cost intelligence — across ChatGPT, Claude, and 14+ models.
-          </p>
-          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <button onClick={() => scrollTo('Get Started')} style={heroPrimaryBtn}>
-              Get Started
+            <button onClick={() => scrollTo(quickstartRef)} className="pf-nav-link" style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.mutedFg, fontSize: '0.875rem', padding: 0, transition: 'color 0.2s' }}>
+              Quick Start
             </button>
-            <a href="#/app" style={heroSecondaryBtn}>
-              Open Dashboard
+            <a href="https://github.com/Bojack70/PromptFuel" target="_blank" rel="noopener noreferrer" className="pf-nav-link" style={{ display: 'flex', alignItems: 'center', gap: 6, color: C.mutedFg, textDecoration: 'none', transition: 'color 0.2s' }}>
+              <GitHubIcon size={16} /> GitHub
+            </a>
+            <a href="#/app" style={{
+              display: 'inline-flex', alignItems: 'center',
+              background: C.gradient, color: C.primaryFg,
+              fontWeight: 600, padding: '0.4rem 1rem', borderRadius: '0.5rem',
+              textDecoration: 'none', fontSize: '0.875rem',
+            }}>
+              Dashboard →
             </a>
           </div>
         </div>
+      </nav>
 
-        {/* Terminal block */}
+      {/* ══ HERO ════════════════════════════════════════════════════════════ */}
+      <section style={{
+        position: 'relative', minHeight: '100vh',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        overflow: 'hidden', padding: '1rem', paddingTop: '3.5rem',
+      }}>
+        {/* Animated glow blob */}
         <div style={{
-          maxWidth: 560, margin: '48px auto 0', background: '#1a1a2e', borderRadius: 10,
-          padding: '20px 24px', textAlign: 'left', fontFamily: "'SF Mono', 'Fira Code', 'Consolas', monospace",
-          fontSize: 13, lineHeight: 1.8, color: '#a5b4fc', boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
-        }}>
-          <div style={{ color: '#6b7280', marginBottom: 4 }}>$ npx promptfuel optimize "verbose prompt" --budget 30</div>
-          <div><span style={{ color: '#22c55e' }}>✓</span> <span style={{ color: '#e2e8f0' }}>Intent:</span> <span style={{ color: '#c084fc' }}>debug</span> <span style={{ color: '#6b7280' }}>(87% confidence)</span></div>
-          <div><span style={{ color: '#22c55e' }}>✓</span> <span style={{ color: '#e2e8f0' }}>Original:</span> 47 tokens</div>
-          <div><span style={{ color: '#22c55e' }}>✓</span> <span style={{ color: '#e2e8f0' }}>Optimized:</span> 26 tokens — <span style={{ color: '#c084fc' }}>Level 2 compression</span></div>
-          <div><span style={{ color: '#22c55e' }}>✓</span> <span style={{ color: '#38bdf8' }}>Saved 44%</span> — $0.000052/call</div>
+          position: 'absolute', top: '33%', left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: 600, height: 600, borderRadius: '50%',
+          background: 'hsla(217,91%,55%,0.05)',
+          filter: 'blur(120px)', pointerEvents: 'none',
+          animation: 'pulse-glow 3s ease-in-out infinite',
+        }} />
+
+        <div style={{ position: 'relative', zIndex: 10, maxWidth: '56rem', margin: '0 auto', textAlign: 'center' }}>
+
+          {/* Badge */}
+          <div style={{
+            display: 'inline-flex', alignItems: 'center', gap: 8,
+            borderRadius: 9999, border: '1px solid hsla(217,91%,55%,0.3)',
+            background: C.surfaceElevated, padding: '0.375rem 1rem',
+            fontSize: '0.875rem', color: C.mutedFg, marginBottom: '2rem',
+          }}>
+            <span style={{ color: C.primary }}><FlameIcon size={16} /></span>
+            Open-source prompt optimization toolkit
+          </div>
+
+          <h1 style={{ fontSize: 'clamp(2.5rem, 6vw, 4.5rem)', fontWeight: 800, letterSpacing: '-0.025em', lineHeight: 1.1, marginBottom: '1.5rem' }}>
+            Save tokens.{' '}
+            <GradientText>Cut costs.</GradientText>
+            <br />Write better prompts.
+          </h1>
+
+          <p style={{ fontSize: 'clamp(1rem, 2vw, 1.25rem)', color: C.mutedFg, maxWidth: '40rem', margin: '0 auto 2.5rem', lineHeight: 1.7 }}>
+            Intent-aware prompt optimization, token budget targeting, and cost intelligence — across ChatGPT, Claude, and 14 models. Zero API calls required.
+          </p>
+
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', gap: 16, marginBottom: '3rem' }}>
+            <button onClick={() => scrollTo(quickstartRef)} className="pf-btn-primary" style={{
+              display: 'inline-flex', alignItems: 'center', gap: 8,
+              background: C.gradient, color: C.primaryFg,
+              fontWeight: 600, padding: '0.75rem 1.5rem', borderRadius: '0.5rem',
+              boxShadow: C.shadowGlowSm, border: 'none', cursor: 'pointer',
+              transition: 'transform 0.2s', fontSize: '1rem',
+            }}>
+              <TerminalIcon size={16} /> Get Started
+            </button>
+            <a href="https://github.com/Bojack70/PromptFuel" target="_blank" rel="noopener noreferrer" className="pf-btn-secondary" style={{
+              display: 'inline-flex', alignItems: 'center', gap: 8,
+              border: `1px solid ${C.border}`, background: C.secondary,
+              color: C.secondaryFg, fontWeight: 500,
+              padding: '0.75rem 1.5rem', borderRadius: '0.5rem', textDecoration: 'none',
+              transition: 'background 0.2s', fontSize: '1rem',
+            }}>
+              <GitHubIcon size={16} /> View on GitHub →
+            </a>
+          </div>
+
+          {/* Terminal demo */}
+          <div style={{ maxWidth: '40rem', margin: '0 auto' }}>
+            <TerminalWindow title="terminal">
+              <p style={{ color: C.mutedFg }}>
+                $ npx promptfuel optimize "Can you please help me debug this error step by step"
+              </p>
+              <p style={{ marginTop: 12, color: C.mutedFg }}>
+                <span style={{ color: C.primary, fontWeight: 600 }}>INTENT</span>{' '}
+                debug{' '}
+                <span style={{ color: C.textDim }}>(83% confidence)</span>
+              </p>
+              <p style={{ color: C.mutedFg }}>
+                <span style={{ color: C.primary, fontWeight: 600 }}>OPTIMIZED</span>{' '}
+                <span style={{ color: C.textBright }}>"Debug this error step by step."</span>
+              </p>
+              <p style={{ color: C.mutedFg }}>
+                <span style={{ color: C.primary, fontWeight: 600 }}>SAVINGS</span>{' '}
+                <span style={{ background: C.gradient, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', fontWeight: 600 }}>
+                  50% token reduction
+                </span>
+              </p>
+            </TerminalWindow>
+          </div>
         </div>
       </section>
 
-      {/* ═══════ 3. STATS BAR ═══════ */}
-      <section style={{ background: '#f8fafc', borderTop: '1px solid #e5e7eb', borderBottom: '1px solid #e5e7eb' }}>
+      {/* ══ FEATURES ════════════════════════════════════════════════════════ */}
+      <section ref={featuresRef} style={{ padding: '6rem 1rem' }}>
+        <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
+          <h2 style={{ fontSize: 'clamp(1.75rem, 4vw, 2.25rem)', fontWeight: 700, marginBottom: '1rem' }}>
+            Everything you need to <GradientText>cut AI costs</GradientText>
+          </h2>
+          <p style={{ color: C.mutedFg, fontSize: '1.125rem', maxWidth: '36rem', margin: '0 auto' }}>
+            A complete toolkit spanning CLI, browser extension, web dashboard, and SDK.
+          </p>
+        </div>
         <div style={{
-          maxWidth: 1100, margin: '0 auto', padding: '28px 24px',
-          display: 'flex', justifyContent: 'center', gap: isMobile ? 32 : 80,
-          flexWrap: 'wrap', textAlign: 'center',
+          maxWidth: '72rem', margin: '0 auto',
+          display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem',
         }}>
-          {[
-            { value: '150+', label: 'Optimization Rules' },
-            { value: '14+', label: 'Supported Models' },
-            { value: '~94%', label: 'Token Accuracy' },
-            { value: '5', label: 'Intent Types' },
-          ].map(s => (
-            <div key={s.label}>
-              <div style={{ fontSize: 28, fontWeight: 700, color: '#1a1a2e' }}>{s.value}</div>
-              <div style={{ fontSize: 13, color: '#6b7280', marginTop: 2 }}>{s.label}</div>
+          {FEATURES.map(f => (
+            <div key={f.title} className="pf-feature-card" style={{
+              borderRadius: C.radius, border: `1px solid ${C.border}`,
+              background: C.card, padding: '1.5rem',
+              transition: 'border-color 0.3s, background 0.3s',
+            }}>
+              <div style={{
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                width: '2.5rem', height: '2.5rem', borderRadius: '0.5rem',
+                background: 'hsla(217,91%,55%,0.1)', marginBottom: '1rem', fontSize: '1.25rem',
+              }}>
+                {f.icon}
+              </div>
+              <h3 style={{ fontWeight: 600, fontSize: '1.125rem', marginBottom: '0.5rem' }}>{f.title}</h3>
+              <p style={{ color: C.mutedFg, fontSize: '0.875rem', lineHeight: 1.6 }}>{f.desc}</p>
             </div>
           ))}
         </div>
       </section>
 
-      {/* ═══════ 4. LIVE DEMO ═══════ */}
-      <section style={{ ...sectionPadding }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 24px' }}>
-          <SectionTitle>Try It Now</SectionTitle>
-          <p style={{ textAlign: 'center', color: '#6b7280', fontSize: 15, marginBottom: 32, marginTop: -16 }}>
-            Paste a prompt and see intent detection, token budget targeting, and optimization suggestions.
+      {/* ══ HOW IT WORKS ════════════════════════════════════════════════════ */}
+      <section style={{ padding: '6rem 1rem', background: C.muted }}>
+        <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
+          <h2 style={{ fontSize: 'clamp(1.75rem, 4vw, 2.25rem)', fontWeight: 700, marginBottom: '1rem' }}>
+            How the <GradientText>pipeline</GradientText> works
+          </h2>
+          <p style={{ color: C.mutedFg, fontSize: '1.125rem', maxWidth: '36rem', margin: '0 auto' }}>
+            100% local. Rule-based and deterministic. No API calls.
           </p>
-          <LiveDemo />
         </div>
-      </section>
-
-      {/* ═══════ 5. FEATURES GRID ═══════ */}
-      <section ref={featuresRef} style={{ ...sectionPadding, background: '#f8fafc' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 24px' }}>
-          <SectionTitle>Features</SectionTitle>
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)',
-            gap: 20,
-          }}>
-            {FEATURES.map(f => (
-              <div key={f.title} style={featureCardStyle}>
-                <div style={{ fontSize: 28, marginBottom: 12 }}>{f.icon}</div>
-                <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 6 }}>{f.title}</div>
-                <div style={{ fontSize: 14, color: '#6b7280', lineHeight: 1.6 }}>{f.desc}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ═══════ 6. HOW IT WORKS ═══════ */}
-      <section ref={howRef} style={{ ...sectionPadding }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 24px' }}>
-          <SectionTitle>How It Works</SectionTitle>
-          <div style={{
-            display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
-            gap: isMobile ? 32 : 60, flexDirection: isMobile ? 'column' : 'row',
-            position: 'relative',
-          }}>
-            {STEPS.map((step, i) => (
-              <div key={i} style={{ textAlign: 'center', flex: 1, position: 'relative' }}>
-                <div style={{
-                  width: 48, height: 48, borderRadius: '50%', background: '#2563eb', color: '#fff',
-                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 20, fontWeight: 700, marginBottom: 16,
-                }}>
-                  {i + 1}
-                </div>
-                {/* Connecting line */}
-                {!isMobile && i < STEPS.length - 1 && (
-                  <div style={{
-                    position: 'absolute', top: 24, left: '60%', width: '80%',
-                    height: 2, background: '#e5e7eb',
-                  }} />
-                )}
-                <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 6 }}>{step.title}</div>
-                <div style={{ fontSize: 14, color: '#6b7280', lineHeight: 1.6 }}>{step.desc}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ═══════ 7. BEFORE / AFTER SHOWCASE ═══════ */}
-      <section style={{ ...sectionPadding, background: '#f8fafc' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 24px' }}>
-          <SectionTitle>Before &amp; After</SectionTitle>
-          <div style={{ maxWidth: 780, margin: '0 auto' }}>
-            {/* Intent badge */}
-            <div style={{ textAlign: 'center', marginBottom: 16 }}>
-              <span style={{
-                display: 'inline-block', background: '#f5f3ff', border: '1px solid #c4b5fd',
-                borderRadius: 24, padding: '5px 16px', fontSize: 13, fontWeight: 600,
-                color: '#7c3aed',
+        <div style={{
+          maxWidth: '56rem', margin: '0 auto',
+          display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '1.5rem',
+        }}>
+          {PIPELINE.map(step => (
+            <div key={step.num} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+              <div style={{
+                width: '3rem', height: '3rem', borderRadius: '50%',
+                background: C.surfaceElevated, border: `1px solid ${C.border}`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontWeight: 700, fontSize: '0.875rem', color: C.primary,
+                marginBottom: '0.75rem', fontFamily: C.mono,
               }}>
-                Intent: debug (87% confidence)
-              </span>
+                {step.num}
+              </div>
+              <h3 style={{ fontWeight: 600, fontSize: '0.875rem' }}>{step.title}</h3>
+              <p style={{ color: C.mutedFg, fontSize: '0.75rem', marginTop: '0.25rem' }}>{step.desc}</p>
             </div>
-            <div style={{
-              display: 'flex', gap: 20, flexDirection: isMobile ? 'column' : 'row',
+          ))}
+        </div>
+      </section>
+
+      {/* ══ CODE DEMO ═══════════════════════════════════════════════════════ */}
+      <section style={{ padding: '6rem 1rem' }}>
+        <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
+          <h2 style={{ fontSize: 'clamp(1.75rem, 4vw, 2.25rem)', fontWeight: 700, marginBottom: '1rem' }}>
+            Use it <GradientText>programmatically</GradientText>
+          </h2>
+          <p style={{ color: C.mutedFg, fontSize: '1.125rem', maxWidth: '36rem', margin: '0 auto' }}>
+            npm SDK for Node.js apps — analyze, optimize, and monitor tokens in your codebase.
+          </p>
+        </div>
+        <div style={{ maxWidth: '64rem', margin: '0 auto' }}>
+          <TerminalWindow title="sdk-example.ts">
+            <pre style={{ margin: 0, whiteSpace: 'pre-wrap', color: C.mutedFg, fontSize: '0.875rem', lineHeight: 1.7 }}>
+              {SDK_EXAMPLE}
+            </pre>
+          </TerminalWindow>
+        </div>
+      </section>
+
+      {/* ══ QUICK START ═════════════════════════════════════════════════════ */}
+      <section ref={quickstartRef} style={{ padding: '6rem 1rem', background: C.muted }}>
+        <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
+          <h2 style={{ fontSize: 'clamp(1.75rem, 4vw, 2.25rem)', fontWeight: 700, marginBottom: '1rem' }}>
+            <GradientText>Quick Start</GradientText>
+          </h2>
+          <p style={{ color: C.mutedFg, fontSize: '1.125rem', maxWidth: '36rem', margin: '0 auto' }}>
+            Up and running in under a minute.
+          </p>
+        </div>
+        <div style={{ maxWidth: '56rem', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          {QUICKSTART.map(step => (
+            <div key={step.label} style={{
+              borderRadius: '0.5rem', border: `1px solid ${C.border}`,
+              background: C.surfaceCode, padding: '1rem',
             }}>
-              {/* Before */}
-              <div style={{ flex: 1, background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 10, padding: 20 }}>
-                <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, color: '#ef4444', marginBottom: 10 }}>
-                  Before — 31 tokens
-                </div>
-                <div style={{ fontSize: 14, lineHeight: 1.7, color: '#374151' }}>
-                  Can you please help me debug this issue <span style={{ background: '#fde68a', padding: '0 3px', borderRadius: 3 }}>step by step</span> and provide a detailed and comprehensive explanation of why the function returns null?
-                </div>
-              </div>
-              {/* After */}
-              <div style={{ flex: 1, background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 10, padding: 20 }}>
-                <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, color: '#16a34a', marginBottom: 10 }}>
-                  After — 14 tokens
-                </div>
-                <div style={{ fontSize: 14, lineHeight: 1.7, color: '#374151' }}>
-                  Debug why function returns null. Explain <span style={{ background: '#bbf7d0', padding: '0 3px', borderRadius: 3 }}>step by step</span>.
-                </div>
-              </div>
+              <p style={{ fontSize: '0.75rem', color: C.primary, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem', fontFamily: C.mono }}>
+                {step.label}
+              </p>
+              <code style={{ fontSize: '0.875rem', color: C.fg, wordBreak: 'break-all', fontFamily: C.mono }}>
+                {step.code}
+              </code>
             </div>
-            {/* Badges */}
-            <div style={{ display: 'flex', gap: 10, justifyContent: 'center', marginTop: 20, flexWrap: 'wrap' }}>
-              <span style={{
-                display: 'inline-block', background: '#f0fdf4', border: '2px solid #16a34a',
-                borderRadius: 24, padding: '6px 20px', fontSize: 14, fontWeight: 700,
-                color: '#16a34a',
-              }}>
-                55% fewer tokens
-              </span>
-              <span style={{
-                display: 'inline-block', background: '#f5f3ff', border: '2px solid #7c3aed',
-                borderRadius: 24, padding: '6px 20px', fontSize: 14, fontWeight: 700,
-                color: '#7c3aed',
-              }}>
-                "step by step" preserved
-              </span>
-            </div>
-          </div>
+          ))}
         </div>
       </section>
 
-      {/* ═══════ 8. SUPPORTED MODELS ═══════ */}
-      <section ref={modelsRef} style={{ ...sectionPadding }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 24px' }}>
-          <SectionTitle>Supported Models</SectionTitle>
-          <div style={{ display: 'flex', gap: 24, flexDirection: isMobile ? 'column' : 'row' }}>
-            {/* OpenAI */}
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 12 }}>OpenAI</div>
-              <div style={{ border: '1px solid #e5e7eb', borderRadius: 8, overflow: 'hidden' }}>
-                <table style={tableStyle}>
-                  <thead>
-                    <tr style={{ background: '#f8fafc' }}>
-                      <th style={thStyle}>Model</th>
-                      <th style={thStyle}>Input</th>
-                      <th style={thStyle}>Output</th>
-                      <th style={thStyle}>Context</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {OPENAI_MODELS.map(id => {
-                      const m = MODEL_DATA[id];
-                      return (
-                        <tr key={id}>
-                          <td style={tdStyle}>{m.label}</td>
-                          <td style={tdStyle}>${m.input.toFixed(2)}</td>
-                          <td style={tdStyle}>${m.output.toFixed(2)}</td>
-                          <td style={tdStyle}>{formatContext(m.context)}</td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-            {/* Anthropic */}
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 12 }}>Anthropic</div>
-              <div style={{ border: '1px solid #e5e7eb', borderRadius: 8, overflow: 'hidden' }}>
-                <table style={tableStyle}>
-                  <thead>
-                    <tr style={{ background: '#f8fafc' }}>
-                      <th style={thStyle}>Model</th>
-                      <th style={thStyle}>Input</th>
-                      <th style={thStyle}>Output</th>
-                      <th style={thStyle}>Context</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {ANTHROPIC_MODELS.map(id => {
-                      const m = MODEL_DATA[id];
-                      return (
-                        <tr key={id}>
-                          <td style={tdStyle}>{m.label}</td>
-                          <td style={tdStyle}>${m.input.toFixed(2)}</td>
-                          <td style={tdStyle}>${m.output.toFixed(2)}</td>
-                          <td style={tdStyle}>{formatContext(m.context)}</td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+      {/* ══ FOOTER ══════════════════════════════════════════════════════════ */}
+      <footer style={{ borderTop: `1px solid ${C.border}`, padding: '3rem 1rem' }}>
+        <div style={{
+          maxWidth: '64rem', margin: '0 auto',
+          display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '1.5rem',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 700, fontSize: '1.125rem' }}>
+            <span style={{ color: C.primary }}><FlameIcon size={20} /></span>
+            PromptFuel
           </div>
-          <p style={{ textAlign: 'center', color: '#9ca3af', fontSize: 12, marginTop: 16 }}>
-            Prices per 1M tokens (USD). Context window in tokens.
-          </p>
-        </div>
-      </section>
-
-      {/* ═══════ 9. ROADMAP ═══════ */}
-      <section ref={roadmapRef} style={{ ...sectionPadding }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 24px' }}>
-          <SectionTitle>Roadmap</SectionTitle>
-          <p style={{ textAlign: 'center', color: '#6b7280', fontSize: 15, marginBottom: 40, marginTop: -16 }}>
-            Upcoming features across three tiers.
-          </p>
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)',
-            gap: 24,
+          <p style={{ fontSize: '0.875rem', color: C.mutedFg }}>Open-source · MIT License · Zero API calls</p>
+          <a href="https://github.com/Bojack70/PromptFuel" target="_blank" rel="noopener noreferrer" className="pf-footer-link" style={{
+            fontSize: '0.875rem', color: C.mutedFg, textDecoration: 'none',
+            display: 'inline-flex', alignItems: 'center', gap: 8, transition: 'color 0.2s',
           }}>
-            {ROADMAP_TIERS.map(tier => (
-              <div key={tier.name} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                <div style={{
-                  fontSize: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5,
-                  color: tier.color, textAlign: 'center',
-                }}>
-                  {tier.name}
-                </div>
-                {tier.items.map(item => (
-                  <div key={item.title} style={{
-                    background: '#ffffff', border: '1px solid #e5e7eb', borderRadius: 10,
-                    padding: 20, boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                      <div style={{ fontSize: 15, fontWeight: 600, color: '#1a1a2e' }}>{item.title}</div>
-                      <span style={{
-                        fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5,
-                        background: '#f0f9ff', color: '#2563eb', padding: '3px 8px', borderRadius: 4,
-                      }}>Coming Soon</span>
-                    </div>
-                    <div style={{ fontSize: 13, color: '#6b7280', lineHeight: 1.6 }}>{item.desc}</div>
-                  </div>
-                ))}
-              </div>
-            ))}
-          </div>
+            <GitHubIcon size={16} /> GitHub
+          </a>
         </div>
-      </section>
-
-      {/* ═══════ 10. GET STARTED (TABBED INSTALL) ═══════ */}
-      <section ref={getStartedRef} style={{ ...sectionPadding, background: '#f8fafc' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 24px' }}>
-          <SectionTitle>Get Started</SectionTitle>
-          <div style={{ maxWidth: 640, margin: '0 auto' }}>
-            {/* Tabs */}
-            <div style={{ display: 'flex', gap: 4, marginBottom: 20 }}>
-              {(['cli', 'sdk', 'extension'] as const).map(tab => (
-                <button
-                  key={tab}
-                  onClick={() => setInstallTab(tab)}
-                  style={{
-                    ...installTabStyle,
-                    background: installTab === tab ? '#2563eb' : '#ffffff',
-                    color: installTab === tab ? '#ffffff' : '#6b7280',
-                    border: installTab === tab ? '1px solid #2563eb' : '1px solid #e5e7eb',
-                  }}
-                >
-                  {tab === 'cli' ? 'CLI' : tab === 'sdk' ? 'SDK' : 'Chrome Extension'}
-                </button>
-              ))}
-            </div>
-
-            {installTab === 'cli' && (
-              <div>
-                <CodeBlock>{`# Install\nnpm install -g @promptfuel/cli\n\n# Optimize a prompt\npromptfuel optimize "your verbose prompt here"\n\n# Count tokens\npromptfuel tokens "your prompt" --model gpt-4o\n\n# Launch the dashboard\npromptfuel dashboard`}</CodeBlock>
-              </div>
-            )}
-
-            {installTab === 'sdk' && (
-              <div>
-                <CodeBlock>{`npm install @promptfuel/core`}</CodeBlock>
-                <div style={{ height: 12 }} />
-                <CodeBlock>{`import { optimize, countTokens, calculateCost } from '@promptfuel/core';\n\n// Intent-aware optimization with token budget targeting\nconst result = optimize(\n  "Please help me debug this step by step",\n  "gpt-4o",\n  { targetTokens: 20 }\n);\n\nconsole.log(result.intent);           // "debug" (87% confidence)\nconsole.log(result.optimizedPrompt);   // "Debug this step by step"\nconsole.log(result.budget);            // { level: 2, withinBudget: true }\nconsole.log(\`Saved \${result.reductionPercent}% tokens\`);\n\nconst cost = calculateCost(result.outputTokens, 500, "gpt-4o");\nconsole.log(cost.totalCost);`}</CodeBlock>
-              </div>
-            )}
-
-            {installTab === 'extension' && (
-              <div>
-                <CodeBlock>{`# Clone and build\ngit clone https://github.com/user/promptfuel.git\ncd promptfuel\npnpm install && pnpm build\n\n# Load in Chrome\n# 1. Open chrome://extensions\n# 2. Enable "Developer mode"\n# 3. Click "Load unpacked"\n# 4. Select packages/extension/dist`}</CodeBlock>
-              </div>
-            )}
-          </div>
-        </div>
-      </section>
-
-      {/* ═══════ 10. FOOTER ═══════ */}
-      <footer style={{
-        maxWidth: 1100, margin: '0 auto', padding: '24px',
-        textAlign: 'center', color: '#9ca3af', fontSize: 13,
-        borderTop: '1px solid #e5e7eb',
-      }}>
-        PromptFuel &middot; MIT License &middot; Open Source
       </footer>
     </div>
   );
 }
-
-// ── Sub-components ──
-
-function SectionTitle({ children }: { children: React.ReactNode }) {
-  return (
-    <h2 style={{
-      fontSize: 28, fontWeight: 700, textAlign: 'center', marginBottom: 40,
-      letterSpacing: -0.5, color: '#1a1a2e',
-    }}>
-      {children}
-    </h2>
-  );
-}
-
-function CodeBlock({ children }: { children: string }) {
-  return (
-    <pre style={{
-      background: '#1a1a2e', color: '#e2e8f0', borderRadius: 8,
-      padding: '16px 20px', fontSize: 13, lineHeight: 1.7, overflowX: 'auto',
-      fontFamily: "'SF Mono', 'Fira Code', 'Consolas', monospace",
-    }}>
-      {children}
-    </pre>
-  );
-}
-
-// ── Data ──
-
-const FEATURES = [
-  { icon: '✏️', title: 'Smart Rewriter', desc: 'Intent-aware optimization with 150+ rules — automatically gates passes based on detected prompt intent to preserve critical phrases.' },
-  { icon: '🔢', title: 'Token Counter', desc: 'Exact token counts for OpenAI models and ~94% accuracy for Claude models.' },
-  { icon: '💰', title: 'Cost Calculator', desc: 'Real-time per-model pricing across 14+ models from OpenAI and Anthropic.' },
-  { icon: '📊', title: 'Context Monitor', desc: 'Visual progress bar showing context window usage with color-coded warnings.' },
-  { icon: '📈', title: 'Cost Intelligence Dashboard', desc: 'Reads your real Claude Code usage data to show total tokens, costs, session breakdowns, and 5 actionable savings cards.' },
-  { icon: '🎯', title: 'Intent Detection', desc: 'Classifies prompts into 5 intent types (code-gen, debug, explain, refactor, general) with confidence scoring to tailor optimization.' },
-  { icon: '📐', title: 'Token Budget Targeting', desc: 'Set a target token count and PromptFuel auto-selects the right compression level (1-4) to hit your budget.' },
-  { icon: '🧩', title: 'Chrome Extension', desc: 'Floating widget that works directly on ChatGPT and Claude web interfaces.' },
-  { icon: '🗄️', title: 'Cache Savings Analyzer', desc: 'Finds repeated prompt patterns via Jaccard similarity clustering and estimates semantic caching savings.' },
-];
-
-const ROADMAP_TIERS = [
-  {
-    name: 'Pro',
-    color: '#2563eb',
-    items: [
-      { title: 'Prompt A/B Cost Analyzer', desc: 'Compare cost and quality of prompt variants side-by-side.' },
-      { title: 'Team Spend Analytics', desc: 'Aggregated token usage and cost dashboards across your team.' },
-      { title: 'Real-Time Anomaly Alerts', desc: 'Instant notifications when spending spikes unexpectedly.' },
-    ],
-  },
-  {
-    name: 'Business',
-    color: '#7c3aed',
-    items: [
-      { title: 'Cost Governance & Budget Controls', desc: 'Set hard spending limits and approval workflows per project.' },
-      { title: 'Intent Learning', desc: 'Custom intent types that learn from your prompt history and adapt optimization rules over time.' },
-      { title: 'Cost Forecasting', desc: 'Predict next-month AI spend based on usage trends and growth.' },
-    ],
-  },
-  {
-    name: 'Enterprise',
-    color: '#059669',
-    items: [
-      { title: 'Multi-Provider Failover', desc: 'Automatic model fallback across OpenAI, Anthropic, and more.' },
-      { title: 'SSO + Compliance', desc: 'Enterprise authentication with SOC 2 and audit logging.' },
-      { title: 'Cost Intelligence API', desc: 'Embed PromptFuel analytics into your own internal tools.' },
-    ],
-  },
-];
-
-const STEPS = [
-  { title: 'Paste your prompt', desc: 'Type or paste any prompt into the analyzer — works with any AI model.' },
-  { title: 'Get instant analysis', desc: 'See intent detection, token counts, cost estimates, context usage, and optimization suggestions across Analyze, History, Strategies, and Insights tabs.' },
-  { title: 'Apply optimization', desc: 'One click to apply suggestions — save tokens and reduce API costs immediately.' },
-];
-
-// ── Styles ──
-
-const sectionPadding: React.CSSProperties = {
-  padding: '80px 0',
-};
-
-const navLinkStyle: React.CSSProperties = {
-  background: 'none', border: 'none', fontSize: 14, color: '#6b7280',
-  cursor: 'pointer', fontFamily: "'Inter', sans-serif", fontWeight: 500,
-  padding: 0,
-};
-
-const navCTAStyle: React.CSSProperties = {
-  background: '#1a1a2e', color: '#ffffff', padding: '8px 18px',
-  borderRadius: 8, fontSize: 14, fontWeight: 600, textDecoration: 'none',
-  fontFamily: "'Inter', sans-serif",
-};
-
-const hamburgerStyle: React.CSSProperties = {
-  background: 'none', border: 'none', fontSize: 22, cursor: 'pointer',
-  color: '#1a1a2e', padding: 4,
-};
-
-const heroPrimaryBtn: React.CSSProperties = {
-  background: '#2563eb', color: '#ffffff', border: 'none', borderRadius: 8,
-  padding: '12px 28px', fontSize: 16, fontWeight: 600, cursor: 'pointer',
-  fontFamily: "'Inter', sans-serif",
-};
-
-const heroSecondaryBtn: React.CSSProperties = {
-  background: 'transparent', color: '#2563eb', border: '2px solid #2563eb',
-  borderRadius: 8, padding: '10px 28px', fontSize: 16, fontWeight: 600,
-  cursor: 'pointer', textDecoration: 'none', fontFamily: "'Inter', sans-serif",
-  display: 'inline-flex', alignItems: 'center',
-};
-
-const featureCardStyle: React.CSSProperties = {
-  background: '#ffffff', border: '1px solid #e5e7eb', borderRadius: 10,
-  padding: 24, boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-};
-
-const installTabStyle: React.CSSProperties = {
-  borderRadius: 6, padding: '8px 18px', fontSize: 13, fontWeight: 600,
-  cursor: 'pointer', fontFamily: "'Inter', sans-serif",
-};
-
-const tableStyle: React.CSSProperties = {
-  width: '100%', borderCollapse: 'collapse', fontSize: 13,
-};
-
-const thStyle: React.CSSProperties = {
-  textAlign: 'left', padding: '10px 12px', fontSize: 12,
-  fontWeight: 600, color: '#6b7280', borderBottom: '1px solid #e5e7eb',
-};
-
-const tdStyle: React.CSSProperties = {
-  padding: '8px 12px', borderBottom: '1px solid #f3f4f6', color: '#374151',
-};
