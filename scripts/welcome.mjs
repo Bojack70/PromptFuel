@@ -32,8 +32,4 @@ ${w}  Get started:${r}
   ${d}$${r} npx promptfuel --help
 
 ${d}  ─────────────────────────────────────────────────────${r}
-  ${d}Tip: if the above commands don't work yet, use this instead:${r}
-  ${d}     replace "npx promptfuel" with "node packages/cli/dist/index.js"${r}
-  ${d}     e.g.  node packages/cli/dist/index.js dashboard${r}
-  ${d}     (this is only needed until the package is available on npm)${r}
 `);
