@@ -5,6 +5,7 @@
   "description": "Real-time token estimation, cost forecasting, and prompt optimization for AI tools",
   "scripts": {
     "build": "pnpm -r build",
+    "postbuild": "node scripts/welcome.mjs",
     "dev": "pnpm -r --parallel dev",
     "test": "pnpm -r test",
     "lint": "pnpm -r lint",
