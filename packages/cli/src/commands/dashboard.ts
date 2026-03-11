@@ -18,16 +18,15 @@ const MIME_TYPES: Record<string, string> = {
 };
 
 function resolveWebDist(): string {
-  try {
-    const require = createRequire(import.meta.url);
-    const webPkgPath = require.resolve('@promptfuel/web/package.json');
-    return join(dirname(webPkgPath), 'dist');
-  } catch {
-    // Fallback: try relative path within monorepo
-    const monorepoPath = resolve(dirname(new URL(import.meta.url).pathname), '../../../web/dist');
-    if (existsSync(monorepoPath)) return monorepoPath;
-    throw new Error('Could not locate @promptfuel/web dist directory');
-  }
+  // When installed from npm: web-dist is bundled next to dist/
+  const bundled = resolve(dirname(new URL(import.meta.url).pathname), '../web-dist');
+  if (existsSync(bundled)) return bundled;
+
+  // Monorepo fallback (running from source)
+  const monorepo = resolve(dirname(new URL(import.meta.url).pathname), '../../../web/dist');
+  if (existsSync(monorepo)) return monorepo;
+
+  throw new Error('Could not locate web dashboard files');
 }
 
 function openBrowser(url: string): void {
@@ -44,14 +43,14 @@ export async function runDashboard(port: number = 3939): Promise<void> {
     distDir = resolveWebDist();
   } catch (err) {
     process.stderr.write('Error: Could not find web dashboard build.\n');
-    process.stderr.write('Run `pnpm --filter @promptfuel/web build` first.\n');
+    process.stderr.write('Try reinstalling: npm install -g promptfuel\n');
     process.exit(1);
   }
 
   const indexPath = join(distDir, 'index.html');
   if (!existsSync(indexPath)) {
     process.stderr.write('Error: Web dashboard not built (index.html missing).\n');
-    process.stderr.write('Run `pnpm --filter @promptfuel/web build` first.\n');
+    process.stderr.write('Try reinstalling: npm install -g promptfuel\n');
     process.exit(1);
   }
 

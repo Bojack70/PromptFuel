@@ -42,7 +42,7 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Publish @promptfuel/cli
-        run: pnpm --filter @promptfuel/cli publish --access public --no-git-checks
+      - name: Publish promptfuel (CLI)
+        run: pnpm --filter promptfuel publish --access public --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
