@@ -74,6 +74,8 @@ export function applyFillerRemoval(text: string): string {
   }
   // Clean up double spaces left by removals
   result = result.replace(/ {2,}/g, ' ').trim();
+  // Remove leading punctuation (comma, semicolon) left after filler removal
+  result = result.replace(/^[,;]\s*/, '');
   // Capitalize sentence starts after removal
   result = result.replace(/^\s*([a-z])/gm, (_, c) => c.toUpperCase());
   return result;

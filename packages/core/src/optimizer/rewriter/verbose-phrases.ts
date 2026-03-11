@@ -214,10 +214,16 @@ const VERBOSE_MAP: Array<[RegExp, string]> = [
   [/as a reminder,?\s+/gi, ''],
 
   // --- Weak hedges ---
+  // Handle "I think that" / "I believe that" — remove whole phrase including "that"
+  [/\bI think\s+that\s+/gi, ''],
+  [/\bI believe\s+that\s+/gi, ''],
   [/\bI think\s+(?=\w)/gi, ''],
   [/\bI believe\s+(?=\w)/gi, ''],
   [/so I was thinking\s+/gi, ''],
   [/I was thinking\s+/gi, ''],
+  // Weak hedge adverbs — reduce noise without changing meaning
+  [/\bprobably\s+(?=try|want|need|should|could|would|might)/gi, ''],
+  [/\bmaybe\s+you\s+should\s+/gi, 'you should '],
 ];
 
 export function applyVerbosePhrases(text: string): RewritePassResult {
