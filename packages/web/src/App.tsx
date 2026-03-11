@@ -975,7 +975,7 @@ export function Dashboard() {
       {/* Tab Navigation */}
       <div style={{ display: 'flex', gap: 4, marginBottom: 24, borderBottom: '1px solid #e2e8f0' }}>
         {([
-          { key: 'insights' as Tab, label: 'Insights' },
+          { key: 'insights' as Tab, label: 'Claude Code Insights' },
           { key: 'analyze' as Tab, label: 'Analyze & Optimize' },
           { key: 'history' as Tab, label: `History (${history.length})` },
           { key: 'strategies' as Tab, label: 'Strategies' },
@@ -1394,7 +1394,7 @@ export function Dashboard() {
                 No insights yet
               </div>
               <div style={{ fontSize: 13, color: '#64748b', marginBottom: 32, maxWidth: 360, margin: '0 auto 32px' }}>
-                Insights are generated from your Claude Code usage data. Run the dashboard from inside a project that uses Claude Code to get started.
+                This tab is for <strong>Claude Code users only</strong>. It reads your local <code style={{ fontFamily: 'monospace', background: '#f1f5f9', padding: '1px 6px', borderRadius: 3 }}>~/.claude/</code> usage logs to show token spend, cost, and savings opportunities. ChatGPT / OpenAI users — this tab won't have data for you.
               </div>
 
               {/* Steps */}
@@ -1417,7 +1417,7 @@ export function Dashboard() {
               </div>
 
               <div style={{ marginTop: 24, fontSize: 12, color: '#94a3b8' }}>
-                PromptFuel reads your local <code style={{ fontFamily: 'monospace', background: '#f1f5f9', padding: '1px 6px', borderRadius: 3 }}>~/.claude/</code> usage logs — no data leaves your machine.
+                No data leaves your machine — everything is read locally.
               </div>
             </div>
           )}
