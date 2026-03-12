@@ -95,6 +95,7 @@ const VERBOSE_MAP: Array<[RegExp, string]> = [
   [/make a decision/gi, 'decide'],
   [/make an attempt/gi, 'try'],
   [/it is possible to/gi, 'can'],
+  [/is it possible to/gi, 'can'],
   [/is able to/gi, 'can'],
   [/are able to/gi, 'can'],
 
@@ -197,6 +198,7 @@ const VERBOSE_MAP: Array<[RegExp, string]> = [
   // --- Conversational affirmatives (acknowledge-then-instruct pattern) ---
   // Patterns are intentionally specific to avoid garbling mid-sentence adjectives
   [/\byeah,?\s+/gi, ''],
+  [/\byes,?\s+/gi, ''],
   [/\bright,?\s+so\s+/gi, ''],
   // "yes, that's correct." / "yes that's right." — full affirmative sentence fragment
   [/\byes,?\s+that(?:'s| is)\s+(?:correct|right|good|great)[,.]?\s*/gi, ''],
