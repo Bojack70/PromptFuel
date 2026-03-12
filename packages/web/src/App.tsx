@@ -172,6 +172,7 @@ export function Dashboard() {
   const [insightsLoading, setInsightsLoading] = useState(false);
   const [claudePlan, setClaudePlan] = useState<ClaudePlan>(loadSavedPlan() || 'pro');
   const [targetTokens, setTargetTokens] = useState<number | undefined>(undefined);
+  const [aggressive, setAggressive] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
 
   const fetchClaudeData = useCallback(() => {
@@ -196,7 +197,7 @@ export function Dashboard() {
     savePlan(plan);
   }, []);
 
-  const analyze = useCallback((text: string, mdl: string, budget?: number) => {
+  const analyze = useCallback((text: string, mdl: string, budget?: number, isAggressive?: boolean) => {
     if (!text.trim()) {
       setAnalysis(null);
       return;
@@ -208,7 +209,10 @@ export function Dashboard() {
       [{ role: 'user', content: text }],
       mdl,
     );
-    const optimization = optimize(text, mdl, budget ? { targetTokens: budget } : undefined);
+    const optimization = optimize(text, mdl, {
+      ...(budget ? { targetTokens: budget } : {}),
+      ...(isAggressive ? { aggressive: true } : {}),
+    });
 
     setAnalysis({
       inputTokens: tokens.inputTokens,
@@ -226,12 +230,12 @@ export function Dashboard() {
     setCopied(false);
     setShowOptimized(false);
     clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => analyze(text, model, targetTokens), 200);
+    debounceRef.current = setTimeout(() => analyze(text, model, targetTokens, aggressive), 200);
   };
 
   const handleModelChange = (mdl: string) => {
     setModel(mdl);
-    if (prompt.trim()) analyze(prompt, mdl, targetTokens);
+    if (prompt.trim()) analyze(prompt, mdl, targetTokens, aggressive);
   };
 
   const handleBudgetChange = (value: string) => {
@@ -240,8 +244,14 @@ export function Dashboard() {
     setTargetTokens(budget);
     if (prompt.trim()) {
       clearTimeout(debounceRef.current);
-      debounceRef.current = setTimeout(() => analyze(prompt, model, budget), 300);
+      debounceRef.current = setTimeout(() => analyze(prompt, model, budget, aggressive), 300);
     }
+  };
+
+  const handleAggressiveToggle = () => {
+    const next = !aggressive;
+    setAggressive(next);
+    if (prompt.trim()) analyze(prompt, model, targetTokens, next);
   };
 
   const handleCopyOptimized = async () => {
@@ -969,6 +979,20 @@ export function Dashboard() {
               borderRadius: 6, padding: '6px 10px', fontSize: 13, width: 90,
             }}
           />
+          <div style={{ width: 1, height: 20, background: '#e2e8f0' }} />
+          <button
+            onClick={handleAggressiveToggle}
+            title="Removes hedge adverbs (very/really), weak qualifiers (just/simply/kind of), and low-value openers (basically/in summary)"
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer',
+              background: aggressive ? '#ef4444' : '#f1f5f9',
+              color: aggressive ? '#ffffff' : '#64748b',
+              border: aggressive ? '1px solid #ef4444' : '1px solid #e2e8f0',
+              borderRadius: 6, padding: '6px 10px', fontSize: 13, fontWeight: aggressive ? 600 : 400,
+            }}
+          >
+            ⚡ Aggressive
+          </button>
         </div>
       </div>
 

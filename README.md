@@ -128,6 +128,9 @@ promptfuel optimize "verbose prompt" --output | pbcopy
 
 # Use a specific model for token counting
 promptfuel optimize "verbose prompt" --model claude-sonnet-4-6
+
+# Maximum compression — removes hedge adverbs (very/really/extremely), weak qualifiers (just/simply/kind of), low-value openers (basically/in summary/to conclude)
+promptfuel optimize "verbose prompt" --aggressive
 ```
 
 ### Analyze Token Count & Cost
@@ -293,12 +296,13 @@ $ promptfuel strategies [dir]       Analyze project for token-saving strategies
 $ promptfuel batch <file.json>      Batch analyze prompts
 
 Options:
-  --model, -m     Model to use (default: gpt-4o)
-  --budget, -b    Target token count for budget-aware compression (levels 1-4)
-  --intent, -i    Override intent detection (debug|code-gen|refactor|explain|creative|general)
-  --copy, -c      Copy optimized prompt to clipboard
-  --output, -o    Output only the optimized prompt (for piping)
-  --port, -p      Port for web dashboard (default: 3939)
+  --model, -m       Model to use (default: gpt-4o)
+  --budget, -b      Target token count for budget-aware compression (levels 1-4)
+  --intent, -i      Override intent detection (debug|code-gen|refactor|explain|creative|general)
+  --aggressive, -a  Maximum compression: removes hedge adverbs, weak qualifiers, low-value openers
+  --copy, -c        Copy optimized prompt to clipboard
+  --output, -o      Output only the optimized prompt (for piping)
+  --port, -p        Port for web dashboard (default: 3939)
 ```
 
 ---
