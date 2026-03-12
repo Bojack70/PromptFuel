@@ -6,6 +6,7 @@ import { runBatch } from './commands/batch.js';
 const cli = meow(`
   Usage
     $ promptfuel                       Launch interactive TUI
+    $ promptfuel setup                 Add "pf" alias to your shell (run once)
     $ promptfuel dashboard             Open web dashboard in browser
     $ promptfuel analyze <prompt>      Analyze token count & cost
     $ promptfuel optimize <prompt>     Optimize a prompt
@@ -78,6 +79,12 @@ async function main() {
     case 'save': {
       const { runStrategies } = await import('./commands/strategies.js');
       await runStrategies(promptArg || undefined, { model });
+      break;
+    }
+
+    case 'setup': {
+      const { runSetup } = await import('./commands/setup.js');
+      await runSetup();
       break;
     }
 
