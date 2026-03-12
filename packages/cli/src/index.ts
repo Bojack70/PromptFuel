@@ -13,12 +13,13 @@ const cli = meow(`
     $ promptfuel batch <file.json>     Batch analyze prompts from JSON file
 
   Options
-    --model, -m     Model to use (default: gpt-4o)
-    --copy, -c      Copy optimized prompt to clipboard
-    --output, -o    Output only the optimized prompt (for piping)
-    --port, -p      Port for web dashboard (default: 3939)
-    --budget, -b    Target token budget (e.g. --budget 500)
-    --intent, -i    Override intent detection: debug | code-gen | refactor | explain | creative | general
+    --model, -m       Model to use (default: gpt-4o)
+    --copy, -c        Copy optimized prompt to clipboard
+    --output, -o      Output only the optimized prompt (for piping)
+    --port, -p        Port for web dashboard (default: 3939)
+    --budget, -b      Target token budget (e.g. --budget 500)
+    --intent, -i      Override intent detection: debug | code-gen | refactor | explain | creative | general
+    --aggressive, -a  Enable aggressive compression (removes hedge adverbs, weak qualifiers)
 
   Examples
     $ promptfuel analyze "Explain how React hooks work"
@@ -38,6 +39,7 @@ const cli = meow(`
     port: { type: 'number', shortFlag: 'p', default: 3939 },
     budget: { type: 'number', shortFlag: 'b' },
     intent: { type: 'string', shortFlag: 'i' },
+    aggressive: { type: 'boolean', shortFlag: 'a', default: false },
   },
 });
 
@@ -58,6 +60,7 @@ async function main() {
         outputOptimized: cli.flags.output,
         budget: cli.flags.budget,
         intent: cli.flags.intent as import('./commands/optimize.js').OptimizeOptions['intent'],
+        aggressive: cli.flags.aggressive,
       });
       break;
 

@@ -13,6 +13,7 @@ export interface PromptIntent {
 export interface OptimizeOptions {
   targetTokens?: number;       // token budget (optional)
   intent?: PromptIntentType;   // manual intent override (optional)
+  aggressive?: boolean;        // enable aggressive compression passes (optional)
 }
 
 export interface BudgetResult {

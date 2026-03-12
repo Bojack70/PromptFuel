@@ -47,13 +47,14 @@ export interface OptimizeOptions {
   outputOptimized: boolean;
   budget?: number;
   intent?: PromptIntentType;
+  aggressive?: boolean;
 }
 
 export async function runOptimize(
   promptArg: string | undefined,
   options: OptimizeOptions,
 ): Promise<void> {
-  const { model, copy, outputOptimized, budget, intent } = options;
+  const { model, copy, outputOptimized, budget, intent, aggressive } = options;
 
   let promptText: string;
 
@@ -84,6 +85,7 @@ export async function runOptimize(
   const result = optimize(promptText, model, {
     ...(budget !== undefined ? { targetTokens: budget } : {}),
     ...(intent !== undefined ? { intent } : {}),
+    ...(aggressive ? { aggressive: true } : {}),
   });
 
   const originalTokenCount = countTokens(promptText, model);
@@ -112,6 +114,7 @@ export async function runOptimize(
     '\u2591'.repeat(10 - Math.round(result.verbosityScore / 10));
 
   const intentLabel = result.intent ? `${result.intent.type} (${Math.round(result.intent.confidence * 100)}% confidence)` : 'general';
+  const aggressiveLabel = aggressive ? '  ·  aggressive' : '';
   const budgetLine = budget !== undefined
     ? `  Budget : ${budget.toLocaleString('en-US')} tokens${result.budget ? ` | met: ${result.budget.met ? 'yes' : 'no'} | gap: ${result.budget.remainingGap}` : ''}`
     : null;
@@ -123,7 +126,7 @@ export async function runOptimize(
 
   const lines: string[] = [
     '',
-    `  PromptFuel  ${model}  ·  ${intentLabel}${budgetLine ? `  ·  budget ${budget}t` : ''}`,
+    `  PromptFuel  ${model}  ·  ${intentLabel}${aggressiveLabel}${budgetLine ? `  ·  budget ${budget}t` : ''}`,
     '',
     `  BEFORE  "${truncate(promptText, 100)}"`,
     `  AFTER   "${truncate(result.optimizedPrompt, 100)}"`,

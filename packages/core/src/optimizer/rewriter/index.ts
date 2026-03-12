@@ -3,15 +3,17 @@ import { applyVerbosePhrases } from './verbose-phrases.js';
 import { applyQuestionRestructuring } from './question-restructuring.js';
 import { applyVoiceTransform } from './voice-transform.js';
 import { applySentenceCompression } from './sentence-compression.js';
+import { applyAggressivePhrases } from './aggressive-phrases.js';
 import { collapseSpaces } from './utils.js';
 
-export type RewritePassName = 'verbose-phrases' | 'sentence-compression' | 'voice-transform' | 'question-restructuring';
+export type RewritePassName = 'verbose-phrases' | 'sentence-compression' | 'voice-transform' | 'question-restructuring' | 'aggressive-phrases';
 
 const PASS_MAP: Record<RewritePassName, (text: string) => RewritePassResult> = {
   'verbose-phrases': applyVerbosePhrases,
   'sentence-compression': applySentenceCompression,
   'voice-transform': applyVoiceTransform,
   'question-restructuring': applyQuestionRestructuring,
+  'aggressive-phrases': applyAggressivePhrases,
 };
 
 const DEFAULT_ORDER: RewritePassName[] = [
@@ -19,6 +21,7 @@ const DEFAULT_ORDER: RewritePassName[] = [
   'sentence-compression',
   'voice-transform',
   'question-restructuring',
+  'aggressive-phrases',
 ];
 
 export function rewrite(text: string, includePasses?: RewritePassName[]): RewriteResult {

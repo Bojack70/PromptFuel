@@ -324,12 +324,16 @@ export function optimize(text: string, modelOrOptions?: string | OptimizeOptions
       targetTokens: opts.targetTokens,
     };
   } else {
-    // --- Standard optimization with intent gating ---
+    // --- Standard or aggressive optimization with intent gating ---
+    const aggressivePasses: RewritePassName[] = opts?.aggressive
+      ? [...ALL_REWRITER_PASSES, 'aggressive-phrases']
+      : ALL_REWRITER_PASSES;
+
     const result = runOptimizationPass(
       protectedText,
       ALL_DETECTOR_NAMES,
-      ALL_REWRITER_PASSES,
-      false,
+      aggressivePasses,
+      opts?.aggressive === true,
       config.skipDetectors,
       config.skipRewriterPasses,
     );
