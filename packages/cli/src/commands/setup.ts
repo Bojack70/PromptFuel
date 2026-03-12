@@ -10,7 +10,7 @@ function detectShellConfig(): { shell: string; configFile: string } | null {
   const shell = process.env.SHELL ?? '';
   const home = os.homedir();
 
-  if (shell.includes('zsh')) return { shell: 'zsh', configFile: path.join(home, '.zshrc') };
+  if (shell.includes('zsh')) return { shell: 'zsh', configFile: path.join(home, '.zshenv') };
   if (shell.includes('bash')) {
     // macOS bash uses .bash_profile, Linux uses .bashrc
     const bashProfile = path.join(home, '.bash_profile');
