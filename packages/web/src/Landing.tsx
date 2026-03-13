@@ -109,6 +109,8 @@ const PIPELINE = [
 ];
 
 const QUICKSTART_USERS = [
+  { label: '1. Install globally',        code: '$ npm install -g promptfuel' },
+  { label: '2. Add pf shortcut (once)',  code: '$ promptfuel setup' },
   { label: 'Optimize a prompt',          code: '$ pf optimize "I would like you to please explain how React hooks work in detail"' },
   { label: 'Maximum compression',        code: '$ pf optimize "You should basically just simply explain how this very complex system works" --aggressive' },
   { label: 'With a token budget',        code: '$ pf optimize "Please help me debug this error step by step" --budget 10' },
@@ -379,7 +381,7 @@ export function Landing() {
             <GradientText>Quick Start</GradientText>
           </h2>
           <p style={{ color: C.mutedFg, fontSize: '1.125rem', maxWidth: '36rem', margin: '0 auto' }}>
-            No install needed — just use <code style={{ fontFamily: C.mono, fontSize: '1rem', color: C.primary }}>npx</code>.
+            Install once, then use <code style={{ fontFamily: C.mono, fontSize: '1rem', color: C.primary }}>pf</code> from anywhere.
           </p>
         </div>
 
