@@ -2,7 +2,6 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-const ALIAS_LINE = '\nalias pf="promptfuel"\n';
 const MARKER = '# promptfuel alias';
 const FULL_BLOCK = `\n${MARKER}\nalias pf="promptfuel"\n`;
 
@@ -12,7 +11,6 @@ function detectShellConfig(): { shell: string; configFile: string } | null {
 
   if (shell.includes('zsh')) return { shell: 'zsh', configFile: path.join(home, '.zshenv') };
   if (shell.includes('bash')) {
-    // macOS bash uses .bash_profile, Linux uses .bashrc
     const bashProfile = path.join(home, '.bash_profile');
     const bashrc = path.join(home, '.bashrc');
     const configFile = process.platform === 'darwin' && fs.existsSync(bashProfile)
@@ -24,52 +22,78 @@ function detectShellConfig(): { shell: string; configFile: string } | null {
   return null;
 }
 
-export async function runSetup(): Promise<void> {
+function setupAlias(): { status: 'added' | 'exists' | 'unknown'; configFile?: string } {
   const detected = detectShellConfig();
+  if (!detected) return { status: 'unknown' };
 
-  if (!detected) {
-    process.stdout.write([
-      '',
-      '  Could not detect your shell automatically.',
-      '  Add this line manually to your shell config (~/.zshrc, ~/.bashrc, etc.):',
-      '',
-      '    alias pf="promptfuel"',
-      '',
-      '  Then reload with: source ~/.zshrc (or equivalent)',
-      '',
-    ].join('\n'));
-    return;
-  }
-
-  const { shell, configFile } = detected;
-
-  // Check if already installed
+  const { configFile } = detected;
   const existing = fs.existsSync(configFile) ? fs.readFileSync(configFile, 'utf8') : '';
-  if (existing.includes('alias pf="promptfuel"')) {
-    process.stdout.write([
-      '',
-      `  ✓ Alias already set up in ${configFile}`,
-      '',
-      '  Run: pf optimize "your prompt here"',
-      '',
-    ].join('\n'));
-    return;
+  if (existing.includes('alias pf="promptfuel"')) return { status: 'exists', configFile };
+
+  fs.appendFileSync(configFile, FULL_BLOCK, 'utf8');
+  return { status: 'added', configFile };
+}
+
+function setupMcp(): { status: 'added' | 'exists' | 'error'; error?: string } {
+  try {
+    const claudeDir = path.join(os.homedir(), '.claude');
+    const mcpFile = path.join(claudeDir, 'mcp.json');
+
+    // Ensure ~/.claude/ exists
+    if (!fs.existsSync(claudeDir)) fs.mkdirSync(claudeDir, { recursive: true });
+
+    // Read existing mcp.json or start fresh
+    let config: Record<string, unknown> = {};
+    if (fs.existsSync(mcpFile)) {
+      try { config = JSON.parse(fs.readFileSync(mcpFile, 'utf8')); } catch { /* malformed — overwrite */ }
+    }
+
+    // Check if already configured
+    const servers = (config.mcpServers ?? {}) as Record<string, unknown>;
+    if (servers.promptfuel) return { status: 'exists' };
+
+    // Add promptfuel MCP server
+    servers.promptfuel = { command: 'npx', args: ['@promptfuel/mcp'] };
+    config.mcpServers = servers;
+
+    fs.writeFileSync(mcpFile, JSON.stringify(config, null, 2) + '\n', 'utf8');
+    return { status: 'added' };
+  } catch (err) {
+    return { status: 'error', error: String(err) };
+  }
+}
+
+export async function runSetup(): Promise<void> {
+  const lines: string[] = [''];
+
+  // ── Alias setup ──────────────────────────────────────────────────────────
+  const alias = setupAlias();
+  if (alias.status === 'added') {
+    lines.push(`  ✓ Added alias pf="promptfuel" to ${alias.configFile}`);
+    lines.push(`    Reload your shell: source ${alias.configFile}`);
+  } else if (alias.status === 'exists') {
+    lines.push(`  ✓ Shell alias already set up (${alias.configFile})`);
+  } else {
+    lines.push('  ⚠ Could not detect shell — add manually to ~/.zshrc:');
+    lines.push('      alias pf="promptfuel"');
   }
 
-  // Append alias
-  fs.appendFileSync(configFile, FULL_BLOCK, 'utf8');
+  lines.push('');
 
-  process.stdout.write([
-    '',
-    `  ✓ Added alias pf="promptfuel" to ${configFile}`,
-    '',
-    '  Reload your shell to activate:',
-    `    source ${configFile}`,
-    '',
-    '  Then use:',
-    '    pf optimize "your prompt here"',
-    '    pf analyze "your prompt here"',
-    '    pf optimize "your prompt" --aggressive',
-    '',
-  ].join('\n'));
+  // ── MCP setup ────────────────────────────────────────────────────────────
+  const mcp = setupMcp();
+  if (mcp.status === 'added') {
+    lines.push('  ✓ Added PromptFuel MCP server to ~/.claude/mcp.json');
+    lines.push('    Restart Claude Code to activate — then ask Claude:');
+    lines.push('    "Optimize this prompt: ..."');
+    lines.push('    "Analyze strategies for this project"');
+  } else if (mcp.status === 'exists') {
+    lines.push('  ✓ MCP server already configured in ~/.claude/mcp.json');
+  } else {
+    lines.push(`  ⚠ Could not write ~/.claude/mcp.json: ${mcp.error}`);
+    lines.push('    Add manually: https://github.com/Bojack70/PromptFuel#mcp');
+  }
+
+  lines.push('');
+  process.stdout.write(lines.join('\n'));
 }
