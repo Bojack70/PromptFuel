@@ -93,7 +93,7 @@ const FEATURES = [
   { icon: '💡', title: 'Strategy Advisor', desc: 'Analyzes your project config, conversation history, model usage, and prompt patterns — then surfaces actionable token-saving recommendations.' },
   { icon: '🗂️', title: 'Cache Analysis', desc: 'Clusters your prompts to identify prompt-prefix caching opportunities. Shows which clusters benefit most and provides a step-by-step setup guide.' },
   { icon: '📊', title: 'Claude Code Insights', desc: 'Run `pf insights` to see real token usage and cost across all your Claude Code projects — by project, by model, with cache hit totals. Full details in the dashboard.' },
-  { icon: '🔌', title: 'MCP Server', desc: '6 tools inside Claude Code: optimize prompts, count tokens, compare model costs, scan project strategies, list models, and view usage insights — all without leaving chat.' },
+  { icon: '🔌', title: 'MCP Server', desc: '6 tools + auto-optimize mode inside Claude Code. Say "enable auto optimize" once and every message you send is automatically optimized for the rest of the session — no command needed.' },
   { icon: '🌍', title: 'Web Dashboard', desc: 'Opens directly to the Insights tab — powered by real Claude Code usage data. Plus Analyze & Optimize, History, and Strategies tabs.' },
   { icon: '🌐', title: 'Chrome Extension', desc: 'Floating widget on ChatGPT, Claude, and Gemini that shows live token count and cost estimate as you type — before you hit send.' },
   { icon: '⌨️', title: 'Interactive TUI', desc: 'Run promptfuel with no arguments to launch a full terminal UI — analyze, optimize, and browse history without leaving the shell.' },
@@ -110,6 +110,7 @@ const PIPELINE = [
 
 const QUICKSTART_USERS = [
   { label: '1. Install (sets up pf alias automatically)', code: '$ npm install -g promptfuel' },
+  { label: 'Auto-optimize every message (say this in Claude Code)', code: 'enable auto optimize' },
   { label: 'Optimize a prompt',          code: '$ pf optimize "I would like you to please explain how React hooks work in detail"' },
   { label: 'Maximum compression',        code: '$ pf optimize "You should basically just simply explain how this very complex system works" --aggressive' },
   { label: 'With a token budget',        code: '$ pf optimize "Please help me debug this error step by step" --budget 10' },

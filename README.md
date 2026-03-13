@@ -21,7 +21,7 @@ It works as a **CLI tool**, a **Chrome extension**, a **web dashboard**, an **MC
 | **Strategy Advisor** | Scans your project and suggests actionable ways to save tokens — like creating a CLAUDE.md so Claude doesn't re-read everything |
 | **Claude Code Insights** | Reads your real Claude Code usage from `~/.claude/projects/` — shows total tokens, cost by project and model, heaviest prompts, and session breakdowns |
 | **Web Dashboard** | Browser-based dashboard with 4 tabs — Analyze & Optimize, History, Strategies, and an **Insights** tab powered by real Claude Code usage data |
-| **MCP Server** | 6 tools available inside Claude Code — optimize prompts, count tokens, compare models, scan strategies, list models, and view Claude Code insights |
+| **MCP Server** | 6 tools + auto-optimize mode inside Claude Code — say "enable auto optimize" once and every message is optimized automatically for the rest of the session |
 | **Cache Savings Analyzer** | Clusters similar prompts via Jaccard similarity to estimate semantic caching savings and provides setup guides |
 | **Chrome Extension** | Floating widget on ChatGPT & Claude that shows tokens + cost in real-time |
 
@@ -327,7 +327,7 @@ npx promptfuel setup
 
 This adds the `pf` shell alias **and** writes the MCP config to `~/.claude/mcp.json`. Restart Claude Code, then the tools are available in every conversation.
 
-### Available MCP Tools (6)
+### Available MCP Tools (6) + Auto-Optimize Mode
 
 | Tool | What it does |
 | --- | --- |
@@ -338,11 +338,29 @@ This adds the `pf` shell alias **and** writes the MCP config to `~/.claude/mcp.j
 | `list_models` | List all 23 supported model IDs |
 | `claude_insights` | Read `~/.claude/projects/` and show token usage + cost across all projects |
 
+### Auto-Optimize Mode
+
+Say this once in Claude Code to enable session-wide automatic optimization:
+
+```
+enable auto optimize
+```
+
+After that, every message you send is automatically optimized before Claude responds. Claude shows a one-line savings summary per message:
+
+```
+✓ Optimized: saved 14 tokens (41% reduction)
+```
+
+No need to type `pf optimize` every time. Activate once, works for the entire session.
+
 ### Usage in Claude Code
 
 Once set up, just ask Claude naturally:
 
 ```
+enable auto optimize
+
 Optimize this prompt: "Can you please help me understand how async/await works"
 
 Count the tokens in my system prompt for claude-sonnet-4-6
@@ -669,7 +687,7 @@ promptfuel/
 │   ├── sdk/         # npm package for developers
 │   ├── cli/         # Terminal commands, TUI dashboard, web server, insights reader
 │   ├── web/         # React web dashboard
-│   ├── mcp/         # MCP server for Claude Code (6 tools)
+│   ├── mcp/         # MCP server for Claude Code (6 tools + auto-optimize prompt)
 │   └── extension/   # Chrome extension (Manifest V3, ChatGPT + Claude + Gemini)
 ├── package.json
 ├── pnpm-workspace.yaml
