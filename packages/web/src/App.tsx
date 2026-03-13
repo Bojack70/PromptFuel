@@ -158,8 +158,8 @@ function inferPlan(byModel: Array<{ model: string; messages: number }>, totalMes
   return (opusRatio > 0.3 && opusMessages > 20) ? 'max' : 'pro';
 }
 
-export function Dashboard() {
-  const [tab, setTab] = useState<Tab>('analyze');
+export function Dashboard({ initialTab }: { initialTab?: string } = {}) {
+  const [tab, setTab] = useState<Tab>((initialTab as Tab) ?? 'analyze');
   const [prompt, setPrompt] = useState('');
   const [model, setModel] = useState('gpt-4o');
   const [analysis, setAnalysis] = useState<AnalysisState | null>(null);

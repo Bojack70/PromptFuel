@@ -12,8 +12,12 @@ function Router() {
     return () => window.removeEventListener('hashchange', onHashChange);
   }, []);
 
-  if (route === '#/app') {
-    return <DashboardPage />;
+  if (route.startsWith('#/app')) {
+    // Parse ?tab=insights from the hash e.g. #/app?tab=insights
+    const search = route.includes('?') ? route.slice(route.indexOf('?')) : '';
+    const params = new URLSearchParams(search);
+    const initialTab = params.get('tab') ?? undefined;
+    return <DashboardPage initialTab={initialTab} />;
   }
 
   return <Landing />;

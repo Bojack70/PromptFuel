@@ -92,8 +92,10 @@ const FEATURES = [
   { icon: '⚡', title: 'Context Monitor', desc: 'Visual progress bar showing how much of your context window you\'ve used, with color-coded warnings as you approach the limit.' },
   { icon: '💡', title: 'Strategy Advisor', desc: 'Analyzes your project config, conversation history, model usage, and prompt patterns — then surfaces actionable token-saving recommendations.' },
   { icon: '🗂️', title: 'Cache Analysis', desc: 'Clusters your prompts to identify prompt-prefix caching opportunities. Shows which clusters benefit most and provides a step-by-step setup guide.' },
-  { icon: '📊', title: 'Web Dashboard', desc: 'Browser-based dashboard with Insights, Analyze & Optimize, History, and Strategies tabs — plus Claude Code usage stats and cost tracking.' },
-  { icon: '🌐', title: 'Chrome Extension', desc: 'Floating widget on ChatGPT and Claude that shows live token count and cost estimate as you type — before you hit send.' },
+  { icon: '📊', title: 'Claude Code Insights', desc: 'Run `promptfuel insights` to see real token usage and cost across all your Claude Code projects — by project, by model, with cache hit totals. Full details in the dashboard.' },
+  { icon: '🔌', title: 'MCP Server', desc: '6 tools inside Claude Code: optimize prompts, count tokens, compare model costs, scan project strategies, list models, and view usage insights — all without leaving chat.' },
+  { icon: '🌍', title: 'Web Dashboard', desc: 'Opens directly to the Insights tab — powered by real Claude Code usage data. Plus Analyze & Optimize, History, and Strategies tabs.' },
+  { icon: '🌐', title: 'Chrome Extension', desc: 'Floating widget on ChatGPT, Claude, and Gemini that shows live token count and cost estimate as you type — before you hit send.' },
   { icon: '⌨️', title: 'Interactive TUI', desc: 'Run promptfuel with no arguments to launch a full terminal UI — analyze, optimize, and browse history without leaving the shell.' },
   { icon: '📦', title: 'Batch Processing', desc: 'Analyze or optimize multiple prompts at once from a JSON file. Ideal for auditing prompt libraries or pre-processing datasets offline.' },
 ];
@@ -111,7 +113,8 @@ const QUICKSTART_USERS = [
   { label: 'Maximum compression',        code: '$ npx promptfuel optimize "You should basically just simply explain how this very complex system works" --aggressive' },
   { label: 'With a token budget',        code: '$ npx promptfuel optimize "Please help me debug this error step by step" --budget 10' },
   { label: 'Analyze project for savings',code: '$ npx promptfuel strategies ./my-project --model claude-sonnet-4-6' },
-  { label: 'Launch web dashboard',       code: '$ npx promptfuel dashboard' },
+  { label: 'Claude Code usage insights', code: '$ npx promptfuel insights' },
+  { label: 'Full dashboard (Insights tab)', code: '$ npx promptfuel dashboard' },
   { label: 'Interactive TUI',            code: '$ npx promptfuel' },
   { label: 'See all commands',           code: '$ npx promptfuel --help' },
 ];

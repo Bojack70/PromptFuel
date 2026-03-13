@@ -1,8 +1,10 @@
 import { createServer } from 'node:http';
 import { readFileSync, existsSync, statSync } from 'node:fs';
 import { join, extname, dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import { execFile } from 'node:child_process';
+import { buildClaudeData } from './claude-data.js';
 
 const MIME_TYPES: Record<string, string> = {
   '.html': 'text/html; charset=utf-8',
@@ -18,12 +20,15 @@ const MIME_TYPES: Record<string, string> = {
 };
 
 function resolveWebDist(): string {
+  // fileURLToPath properly decodes %20 → spaces in paths with spaces
+  const __dir = dirname(fileURLToPath(import.meta.url));
+
   // When installed from npm: web-dist is bundled next to dist/
-  const bundled = resolve(dirname(new URL(import.meta.url).pathname), '../web-dist');
+  const bundled = resolve(__dir, '../web-dist');
   if (existsSync(bundled)) return bundled;
 
   // Monorepo fallback (running from source)
-  const monorepo = resolve(dirname(new URL(import.meta.url).pathname), '../../../web/dist');
+  const monorepo = resolve(__dir, '../../../packages/web/dist');
   if (existsSync(monorepo)) return monorepo;
 
   throw new Error('Could not locate web dashboard files');
@@ -56,6 +61,20 @@ export async function runDashboard(port: number = 3939): Promise<void> {
 
   const server = createServer((req, res) => {
     const urlPath = req.url?.split('?')[0] ?? '/';
+
+    // Serve real Claude Code usage data from ~/.claude/
+    if (urlPath === '/__claude-data') {
+      try {
+        const data = buildClaudeData();
+        res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify(data));
+      } catch {
+        res.writeHead(500);
+        res.end('{"error":"Failed to read Claude Code data"}');
+      }
+      return;
+    }
+
     let filePath = join(distDir, urlPath === '/' ? 'index.html' : urlPath);
 
     // Prevent path traversal
@@ -107,7 +126,7 @@ export async function runDashboard(port: number = 3939): Promise<void> {
     process.stdout.write('  ╚══════════════════════════════════════════╝\n');
     process.stdout.write('\n');
 
-    openBrowser(url);
+    openBrowser(`${url}/#/app?tab=insights`);
   });
 
   // Keep process alive until interrupted

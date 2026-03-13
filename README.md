@@ -4,7 +4,7 @@
 
 PromptFuel is an open-source toolkit that helps you spend less on AI with intent-aware prompt optimization, token budget targeting, and cost intelligence — across ChatGPT, Claude, and 14+ models.
 
-It works as a **CLI tool**, a **Chrome extension**, a **web dashboard**, and an **npm SDK** — all powered by a shared local engine with zero API calls required.
+It works as a **CLI tool**, a **Chrome extension**, a **web dashboard**, an **MCP server for Claude Code**, and an **npm SDK** — all powered by a shared local engine with zero API calls required.
 
 ---
 
@@ -19,7 +19,9 @@ It works as a **CLI tool**, a **Chrome extension**, a **web dashboard**, and an 
 | **Cost Calculator** | Real-time cost estimates with per-model pricing for 14+ models |
 | **Context Monitor** | Visual progress bar showing how much of your context window you've used |
 | **Strategy Advisor** | Scans your project and suggests actionable ways to save tokens — like creating a CLAUDE.md so Claude doesn't re-read everything |
-| **Web Dashboard** | Browser-based dashboard with 4 tabs — Analyze & Optimize, History, Strategies, and an **Insights** tab that reads your real Claude Code usage data to surface costs, session breakdowns, and 5 actionable savings cards |
+| **Claude Code Insights** | Reads your real Claude Code usage from `~/.claude/projects/` — shows total tokens, cost by project and model, heaviest prompts, and session breakdowns |
+| **Web Dashboard** | Browser-based dashboard with 4 tabs — Analyze & Optimize, History, Strategies, and an **Insights** tab powered by real Claude Code usage data |
+| **MCP Server** | 6 tools available inside Claude Code — optimize prompts, count tokens, compare models, scan strategies, list models, and view Claude Code insights |
 | **Cache Savings Analyzer** | Clusters similar prompts via Jaccard similarity to estimate semantic caching savings and provides setup guides |
 | **Chrome Extension** | Floating widget on ChatGPT & Claude that shows tokens + cost in real-time |
 
@@ -37,8 +39,8 @@ pnpm build
 # Optimize a prompt (intent is detected automatically)
 npx promptfuel optimize "I would like you to please explain how React hooks work in detail"
 
-# Optimize with a token budget target
-npx promptfuel optimize "Please help me debug this error step by step" --budget 10
+# See your Claude Code usage across all projects
+npx promptfuel insights
 ```
 
 ---
@@ -185,36 +187,8 @@ promptfuel strategies
   TOTAL POTENTIAL SAVINGS
   Tokens : ~8,000
   Cost   : ~$0.0240
-
-  Preview: CLAUDE.md
-  ─────────────────────────────────
-  │ # my-app
-  │ A React application for...
-  │ ## Tech Stack
-  │ - react
-  │ - typescript
-  │ ...
-  ─────────────────────────────────
-
-  Create CLAUDE.md? [Y/n]
 ════════════════════════════════════════════════════════════
 ```
-
-**What it detects:**
-
-| Strategy | What it checks | Impact |
-| --- | --- | --- |
-| Missing CLAUDE.md | No project context file for Claude | HIGH — saves ~5,000 tokens/session |
-| Missing .cursorrules | No Cursor rules file | MEDIUM — saves ~3,000 tokens/session |
-| Oversized README | README > 5KB used as AI context | MEDIUM |
-| Repeated context | Same text pasted across multiple messages | HIGH |
-| Conversation pruning | Old messages no longer referenced | HIGH |
-| Long messages | Single message > 2,000 tokens | MEDIUM |
-| Expensive model | Using $15/1M model for simple prompts | MEDIUM |
-| Missing format constraints | No output format guidance in prompts | HIGH — reduces output by 30-60% |
-| High verbosity | Prompts consistently score > 40/100 verbosity | MEDIUM |
-| System prompt bloat | Initial prompt > 500 tokens in long conversation | HIGH |
-| Claude cache opportunity | Claude users without prompt caching | HIGH |
 
 ```bash
 # Scan a specific directory
@@ -224,6 +198,41 @@ promptfuel strategies ./my-project
 promptfuel save
 ```
 
+### Claude Code Insights
+
+The `insights` command reads your real Claude Code session data from `~/.claude/projects/` and shows token usage, cost, and activity across all your projects:
+
+```bash
+promptfuel insights
+```
+
+**Output:**
+```
+  PromptFuel — Claude Code Insights
+  ════════════════════════════════════════════════════
+
+  6 projects · 36 sessions
+  Total tokens : 930,050
+  Est. cost    : $47.04
+  Cache hits   : 197,236,786 tokens
+
+  TOP PROJECTS
+  ────────────────────────────────────────────────────
+  promptfuel                   667,359  $34.52
+  suggestions                  177,841  $7.71
+  Claude                        55,468  $4.01
+
+  MODELS
+  ────────────────────────────────────────────────────
+  claude-opus-4-6                555,102  $41.48
+  claude-sonnet-4-6              374,941  $5.56
+
+  → Full details (heaviest prompts, session health, action cards):
+    Run: promptfuel dashboard
+```
+
+For the full breakdown — heaviest individual prompts, session-by-session details, and 5 actionable savings cards — run `promptfuel dashboard` which opens the Insights tab with all of that data.
+
 ### Web Dashboard
 
 Open a full insights dashboard in your browser:
@@ -232,19 +241,19 @@ Open a full insights dashboard in your browser:
 promptfuel dashboard
 ```
 
-This starts a local server at `http://localhost:3939` and opens your browser automatically.
+This starts a local server at `http://localhost:3939`, serves real Claude Code usage data from `~/.claude/projects/`, and opens your browser directly to the **Insights tab**.
 
 The dashboard has four tabs:
 
-- **Analyze & Optimize** — Paste a prompt, see intent detection, token counts, costs, and optimization suggestions in real-time. Apply optimizations with one click.
-- **History** — Track all your optimizations over time. See total tokens saved, cost saved, and before/after for each optimization.
-- **Strategies** — Paste a conversation transcript to analyze it for token-saving opportunities.
-- **Insights** — Reads your real Claude Code usage data from `~/.claude/projects/` JSONL files and surfaces total tokens, costs, usage breakdowns by date and model, session details, and heaviest prompts. Includes 5 action cards:
+- **Insights** *(opens by default)* — Reads your real Claude Code usage data and surfaces total tokens, costs, session breakdowns, heaviest prompts, and 5 actionable savings cards:
   - **Auto-Optimize Prompts** — batch-optimize your most expensive prompts
   - **Model Savings Calculator** — see how much you'd save switching models
   - **Session Health Alerts** — flags sessions with unusually high spend
   - **CLAUDE.md Generator** — generates a project context file to reduce repeat explanations
   - **Cache Savings Analyzer** — clusters similar prompts and estimates semantic cache savings
+- **Analyze & Optimize** — Paste a prompt, see intent detection, token counts, costs, and optimization suggestions in real-time.
+- **History** — Track all your optimizations over time.
+- **Strategies** — Paste a conversation transcript to analyze it for token-saving opportunities.
 
 ```bash
 # Use a custom port
@@ -289,10 +298,12 @@ promptfuel batch prompts.json --model gpt-4o
 
 ```
 $ promptfuel                        Launch interactive TUI
-$ promptfuel dashboard              Open web dashboard in browser
+$ promptfuel setup                  Add "pf" alias + configure MCP (run once)
+$ promptfuel dashboard              Open web dashboard → Insights tab
 $ promptfuel analyze <prompt>       Analyze token count & cost
 $ promptfuel optimize <prompt>      Optimize a prompt
 $ promptfuel strategies [dir]       Analyze project for token-saving strategies
+$ promptfuel insights               Show Claude Code usage across all projects
 $ promptfuel batch <file.json>      Batch analyze prompts
 
 Options:
@@ -303,6 +314,61 @@ Options:
   --copy, -c        Copy optimized prompt to clipboard
   --output, -o      Output only the optimized prompt (for piping)
   --port, -p        Port for web dashboard (default: 3939)
+```
+
+---
+
+## MCP Server for Claude Code
+
+PromptFuel includes an MCP server (`@promptfuel/mcp`) that brings all its tools directly into Claude Code chat — no terminal switching required.
+
+### Setup (one-time)
+
+```bash
+npx promptfuel setup
+```
+
+This adds the `pf` shell alias **and** writes the MCP config to `~/.claude/mcp.json`. Restart Claude Code, then the tools are available in every conversation.
+
+### Available MCP Tools (6)
+
+| Tool | What it does |
+| --- | --- |
+| `optimize_prompt` | Optimize a prompt — returns optimized text, token savings, % reduction, what changed |
+| `count_tokens` | Count tokens for a text + estimated API cost for a given model |
+| `compare_models` | Compare cost of a prompt across multiple models side-by-side |
+| `analyze_strategies` | Scan a project directory and return actionable token-saving recommendations |
+| `list_models` | List all 14 supported model IDs |
+| `claude_insights` | Read `~/.claude/projects/` and show token usage + cost across all projects |
+
+### Usage in Claude Code
+
+Once set up, just ask Claude naturally:
+
+```
+Optimize this prompt: "Can you please help me understand how async/await works"
+
+Count the tokens in my system prompt for claude-sonnet-4-6
+
+Compare the cost of this prompt across GPT-4o, Claude Sonnet, and Haiku
+
+Scan this project for token-saving opportunities
+
+Show my Claude Code usage insights
+```
+
+### Manual config (if not using `promptfuel setup`)
+
+```json
+// ~/.claude/mcp.json
+{
+  "mcpServers": {
+    "promptfuel": {
+      "command": "npx",
+      "args": ["@promptfuel/mcp"]
+    }
+  }
+}
 ```
 
 ---
@@ -346,6 +412,7 @@ Click it to expand the detail panel:
 | --- | --- |
 | ChatGPT | `chat.openai.com`, `chatgpt.com` |
 | Claude | `claude.ai` |
+| Gemini | `gemini.google.com` |
 
 ---
 
@@ -589,9 +656,10 @@ promptfuel/
 ├── packages/
 │   ├── core/        # Shared engine (tokenizer, optimizer, intent, rewriter, cost, monitor, strategies)
 │   ├── sdk/         # npm package for developers
-│   ├── cli/         # Terminal commands, TUI dashboard, web server
+│   ├── cli/         # Terminal commands, TUI dashboard, web server, insights reader
 │   ├── web/         # React web dashboard
-│   └── extension/   # Chrome extension (Manifest V3)
+│   ├── mcp/         # MCP server for Claude Code (6 tools)
+│   └── extension/   # Chrome extension (Manifest V3, ChatGPT + Claude + Gemini)
 ├── package.json
 ├── pnpm-workspace.yaml
 └── tsconfig.base.json
@@ -602,6 +670,7 @@ promptfuel/
 @promptfuel/cli ──────┐
 @promptfuel/sdk ──────┤
 @promptfuel/web ──────┼──► @promptfuel/core
+@promptfuel/mcp ──────┤
 @promptfuel/extension ┘
 ```
 
@@ -625,6 +694,7 @@ pnpm clean            # Remove all dist folders
 pnpm --filter @promptfuel/core test        # Run core tests
 pnpm --filter @promptfuel/cli build        # Build CLI
 pnpm --filter @promptfuel/web dev          # Web dev server
+pnpm --filter @promptfuel/mcp build        # Build MCP server
 pnpm --filter @promptfuel/extension build  # Build Chrome extension
 ```
 

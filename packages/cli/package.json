@@ -1,13 +1,16 @@
 {
   "name": "promptfuel",
-  "version": "1.0.15",
+  "version": "1.0.19",
   "description": "Interactive CLI and TUI for token counting, cost estimation, and prompt optimization",
   "type": "module",
   "bin": {
     "promptfuel": "./dist/index.js"
   },
   "main": "./dist/index.js",
-  "files": ["dist", "web-dist"],
+  "files": [
+    "dist",
+    "web-dist"
+  ],
   "scripts": {
     "prebuild": "node -e \"const {cpSync,mkdirSync}=require('fs');mkdirSync('./web-dist',{recursive:true});cpSync('../web/dist','./web-dist',{recursive:true,force:true})\"",
     "build": "tsup",
@@ -29,7 +32,17 @@
     "typescript": "^5.7.2",
     "vitest": "^2.1.8"
   },
-  "keywords": ["ai", "tokens", "cost", "prompt", "optimization", "openai", "claude", "cli", "tui"],
+  "keywords": [
+    "ai",
+    "tokens",
+    "cost",
+    "prompt",
+    "optimization",
+    "openai",
+    "claude",
+    "cli",
+    "tui"
+  ],
   "license": "MIT",
   "repository": {
     "type": "git",

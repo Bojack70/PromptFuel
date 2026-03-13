@@ -12,6 +12,7 @@ const cli = meow(`
     $ promptfuel optimize <prompt>     Optimize a prompt
     $ promptfuel strategies [dir]      Analyze project for token-saving strategies
     $ promptfuel batch <file.json>     Batch analyze prompts from JSON file
+    $ promptfuel insights              Show Claude Code token usage across all projects
 
   Options
     --model, -m       Model to use (default: gpt-4o)
@@ -31,6 +32,7 @@ const cli = meow(`
     $ promptfuel dashboard --port 4000
     $ promptfuel strategies ./my-project
     $ promptfuel batch prompts.json --model gpt-4o
+    $ promptfuel insights
 `, {
   importMeta: import.meta,
   flags: {
@@ -85,6 +87,12 @@ async function main() {
     case 'setup': {
       const { runSetup } = await import('./commands/setup.js');
       await runSetup();
+      break;
+    }
+
+    case 'insights': {
+      const { runInsights } = await import('./commands/insights.js');
+      await runInsights();
       break;
     }
 

@@ -171,6 +171,112 @@ server.tool(
   }
 );
 
+// ── Tool: claude_insights ────────────────────────────────────────────────
+server.tool(
+  'claude_insights',
+  'Show Claude Code token usage and cost breakdown across all projects by reading ~/.claude/projects/ session logs.',
+  {},
+  async () => {
+    const { readdirSync, readFileSync, existsSync } = await import('node:fs');
+    const { join } = await import('node:path');
+    const { homedir } = await import('node:os');
+
+    const claudeDir = join(homedir(), '.claude', 'projects');
+    if (!existsSync(claudeDir)) {
+      return { content: [{ type: 'text', text: 'No Claude Code usage data found at ~/.claude/projects/' }] };
+    }
+
+    const projectFolders = readdirSync(claudeDir, { withFileTypes: true })
+      .filter(e => e.isDirectory())
+      .map(e => e.name);
+
+    function folderToName(folder: string): string {
+      const home = homedir().replace(/\//g, '-');
+      let stripped = folder.startsWith(home) ? folder.slice(home.length) : folder;
+      stripped = stripped.replace(/^-/, '');
+      const parts = stripped.split('-').filter(Boolean);
+      return parts[parts.length - 1] ?? folder;
+    }
+
+    const projects: Array<{ name: string; sessions: number; inputTokens: number; outputTokens: number; cacheReadTokens: number; costUSD: number }> = [];
+    const modelTotals = new Map<string, { input: number; output: number; cost: number }>();
+    let totalSessions = 0;
+
+    for (const folder of projectFolders) {
+      const folderPath = join(claudeDir, folder);
+      const jsonlFiles = readdirSync(folderPath).filter((f: string) => f.endsWith('.jsonl'));
+      const stats = { name: folderToName(folder), sessions: jsonlFiles.length, inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, costUSD: 0 };
+
+      // Deduplicate by message ID — streaming sends multiple partial entries per message
+      const seen = new Map<string, { input: number; output: number; cacheRead: number; model: string }>();
+
+      for (const file of jsonlFiles) {
+        try {
+          const lines = readFileSync(join(folderPath, file), 'utf-8').split('\n');
+          for (const line of lines) {
+            if (!line.trim()) continue;
+            try {
+              const entry = JSON.parse(line);
+              if (entry.type !== 'assistant' || !entry.message?.usage) continue;
+              const u = entry.message.usage;
+              const msgId: string = entry.message.id ?? entry.uuid;
+              if (!msgId) continue;
+              seen.set(msgId, { input: u.input_tokens ?? 0, output: u.output_tokens ?? 0, cacheRead: u.cache_read_input_tokens ?? 0, model: entry.message.model ?? 'unknown' });
+            } catch { /* bad JSON line */ }
+          }
+        } catch { /* file read error */ }
+      }
+
+      for (const { input, output, cacheRead, model } of seen.values()) {
+        stats.inputTokens += input;
+        stats.outputTokens += output;
+        stats.cacheReadTokens += cacheRead;
+        try {
+          const cost = calculateCost(input, output, model);
+          stats.costUSD += cost.totalCost;
+          const m = modelTotals.get(model) ?? { input: 0, output: 0, cost: 0 };
+          m.input += input; m.output += output; m.cost += cost.totalCost;
+          modelTotals.set(model, m);
+        } catch { /* unsupported model */ }
+      }
+
+      totalSessions += stats.sessions;
+      projects.push(stats);
+    }
+
+    const sorted = projects.sort((a, b) => b.costUSD - a.costUSD);
+    const totalCost = sorted.reduce((s, p) => s + p.costUSD, 0);
+    const totalTokens = sorted.reduce((s, p) => s + p.inputTokens + p.outputTokens, 0);
+    const totalCacheRead = sorted.reduce((s, p) => s + p.cacheReadTokens, 0);
+    const sortedModels = [...modelTotals.entries()].sort((a, b) => b[1].cost - a[1].cost);
+
+    const lines = [
+      `**Claude Code Insights — ${projectFolders.length} projects · ${totalSessions} sessions**`,
+      ``,
+      `- Total tokens: ${totalTokens.toLocaleString('en-US')}`,
+      `- Est. cost: ${formatCost(totalCost)}`,
+      `- Cache hits: ${totalCacheRead.toLocaleString('en-US')} tokens`,
+      ``,
+      `**Top Projects:**`,
+    ];
+
+    for (const p of sorted.slice(0, 5)) {
+      const tokens = (p.inputTokens + p.outputTokens).toLocaleString('en-US');
+      lines.push(`- ${p.name}: ${tokens} tokens · ${formatCost(p.costUSD)}`);
+    }
+
+    if (sortedModels.length > 0) {
+      lines.push(``, `**Models Used:**`);
+      for (const [model, data] of sortedModels) {
+        const tokens = (data.input + data.output).toLocaleString('en-US');
+        lines.push(`- ${model}: ${tokens} tokens · ${formatCost(data.cost)}`);
+      }
+    }
+
+    return { content: [{ type: 'text', text: lines.join('\n') }] };
+  }
+);
+
 // ── Tool: list_models ─────────────────────────────────────────────────────
 server.tool(
   'list_models',
