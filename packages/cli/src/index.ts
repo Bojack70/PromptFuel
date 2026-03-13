@@ -4,35 +4,20 @@ import { runOptimize } from './commands/optimize.js';
 import { runBatch } from './commands/batch.js';
 
 const cli = meow(`
-  Usage
-    $ promptfuel                       Launch interactive TUI
-    $ promptfuel setup                 Add "pf" alias to your shell (run once)
-    $ promptfuel dashboard             Open web dashboard in browser
-    $ promptfuel analyze <prompt>      Analyze token count & cost
-    $ promptfuel optimize <prompt>     Optimize a prompt
-    $ promptfuel strategies [dir]      Analyze project for token-saving strategies
-    $ promptfuel batch <file.json>     Batch analyze prompts from JSON file
-    $ promptfuel insights              Show Claude Code token usage across all projects
+  Commands
+    pf                        Launch interactive TUI
+    pf setup                  Add "pf" alias to your shell (run once)
+    pf optimize <prompt>      Optimize a prompt
+    pf analyze <prompt>       Analyze token count & cost
+    pf strategies [dir]       Analyze project for token-saving strategies
+    pf insights               Claude Code token usage across all projects
+    pf dashboard              Open web dashboard (Insights tab)
+    pf batch <file.json>      Batch analyze prompts from JSON
 
-  Options
-    --model, -m       Model to use (default: gpt-4o)
-    --copy, -c        Copy optimized prompt to clipboard
-    --output, -o      Output only the optimized prompt (for piping)
-    --port, -p        Port for web dashboard (default: 3939)
-    --budget, -b      Target token budget (e.g. --budget 500)
-    --intent, -i      Override intent detection: debug | code-gen | refactor | explain | creative | general
-    --aggressive, -a  Enable aggressive compression (removes hedge adverbs, weak qualifiers)
-
-  Examples
-    $ promptfuel analyze "Explain how React hooks work"
-    $ echo "Your prompt" | promptfuel analyze --model claude-sonnet-4-6
-    $ promptfuel optimize "I would like you to please explain..." --copy
-    $ promptfuel optimize "verbose prompt" --output | pbcopy
-    $ promptfuel optimize "verbose prompt" --budget 300 --intent code-gen
-    $ promptfuel dashboard --port 4000
-    $ promptfuel strategies ./my-project
-    $ promptfuel batch prompts.json --model gpt-4o
-    $ promptfuel insights
+  Flags
+    -m  Model (default: gpt-4o)   -c  Copy to clipboard
+    -b  Token budget               -a  Aggressive compression
+    -o  Output only (for piping)   -p  Dashboard port (default: 3939)
 `, {
   importMeta: import.meta,
   flags: {
