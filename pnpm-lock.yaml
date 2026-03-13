@@ -98,8 +98,8 @@ importers:
         specifier: ^1.0.0
         version: 1.27.1(zod@3.25.76)
       '@promptfuel/core':
-        specifier: workspace:*
-        version: link:../core
+        specifier: ^1.0.3
+        version: 1.0.3
       zod:
         specifier: ^3.23.0
         version: 3.25.76
@@ -850,6 +850,9 @@ packages:
 
   '@promptfuel/core@1.0.0':
     resolution: {integrity: sha512-0resgpCa+EJs4V362ZOdAhraVkwz2S9zn+FJNFpgI29mKzbHs5LCAMxgmLedmZOjT1hWvCOuou3UXILMXTKOFw==}
+
+  '@promptfuel/core@1.0.3':
+    resolution: {integrity: sha512-0+z2szDO7VtrFLkgQN6waX6QbijJo0T631FQN1I85ZbvvxArw47vBA4qW4Kzb3nf1LlpKdSoYtCh/OP5xHqe9Q==}
 
   '@rolldown/pluginutils@1.0.0-beta.27':
     resolution: {integrity: sha512-+d0F4MKMCbeVUJwG96uQ4SgAznZNSq93I3V+9NHA4OpvqG8mRCpGdKmK8l/dl02h2CCDHwW2FqilnTyDcAnqjA==}
@@ -3177,6 +3180,10 @@ snapshots:
     optional: true
 
   '@promptfuel/core@1.0.0':
+    dependencies:
+      js-tiktoken: 1.0.21
+
+  '@promptfuel/core@1.0.3':
     dependencies:
       js-tiktoken: 1.0.21
 

@@ -1,6 +1,6 @@
 {
   "name": "promptfuel",
-  "version": "1.0.19",
+  "version": "1.0.21",
   "description": "Interactive CLI and TUI for token counting, cost estimation, and prompt optimization",
   "type": "module",
   "bin": {
@@ -12,7 +12,7 @@
     "web-dist"
   ],
   "scripts": {
-    "prebuild": "node -e \"const {cpSync,mkdirSync}=require('fs');mkdirSync('./web-dist',{recursive:true});cpSync('../web/dist','./web-dist',{recursive:true,force:true})\"",
+    "prebuild": "node -e \"const {cpSync,mkdirSync,rmSync}=require('fs');rmSync('./web-dist',{recursive:true,force:true});mkdirSync('./web-dist',{recursive:true});cpSync('../web/dist','./web-dist',{recursive:true})\"",
     "build": "tsup",
     "dev": "tsup --watch",
     "test": "vitest run",
