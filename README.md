@@ -2,7 +2,7 @@
 
 **Save tokens. Cut costs. Write better prompts.**
 
-PromptFuel is an open-source toolkit that helps you spend less on AI with intent-aware prompt optimization, token budget targeting, and cost intelligence — across ChatGPT, Claude, and 14+ models.
+PromptFuel is an open-source toolkit that helps you spend less on AI with intent-aware prompt optimization, token budget targeting, and cost intelligence — across ChatGPT, Claude, Gemini, and 23+ models.
 
 It works as a **CLI tool**, a **Chrome extension**, a **web dashboard**, an **MCP server for Claude Code**, and an **npm SDK** — all powered by a shared local engine with zero API calls required.
 
@@ -16,7 +16,7 @@ It works as a **CLI tool**, a **Chrome extension**, a **web dashboard**, an **MC
 | **Token Budget Targeting** | Set a target token count and PromptFuel auto-selects the right compression level (1–4) to hit your budget |
 | **Smart Prompt Rewriter** | Intent-aware rewriter with 150+ rules — automatically gates passes based on detected intent to avoid over-optimizing |
 | **Token Counter** | Exact token counts for OpenAI models, ~94% accurate for Claude |
-| **Cost Calculator** | Real-time cost estimates with per-model pricing for 14+ models |
+| **Cost Calculator** | Real-time cost estimates with per-model pricing for 23+ models |
 | **Context Monitor** | Visual progress bar showing how much of your context window you've used |
 | **Strategy Advisor** | Scans your project and suggests actionable ways to save tokens — like creating a CLAUDE.md so Claude doesn't re-read everything |
 | **Claude Code Insights** | Reads your real Claude Code usage from `~/.claude/projects/` — shows total tokens, cost by project and model, heaviest prompts, and session breakdowns |
@@ -30,17 +30,17 @@ It works as a **CLI tool**, a **Chrome extension**, a **web dashboard**, an **MC
 ## Quick Start
 
 ```bash
-# Install dependencies
-pnpm install
+# Install globally
+npm install -g promptfuel
 
-# Build all packages
-pnpm build
+# One-time setup: adds "pf" alias + configures MCP for Claude Code
+promptfuel setup
 
 # Optimize a prompt (intent is detected automatically)
-npx promptfuel optimize "I would like you to please explain how React hooks work in detail"
+pf optimize "I would like you to please explain how React hooks work in detail"
 
 # See your Claude Code usage across all projects
-npx promptfuel insights
+pf insights
 ```
 
 ---
@@ -52,7 +52,7 @@ npx promptfuel insights
 The `optimize` command detects prompt intent, rewrites for maximum token savings, and shows a detailed before/after comparison:
 
 ```bash
-promptfuel optimize "Can you please help me debug this error step by step and provide a detailed explanation"
+pf optimize "Can you please help me debug this error step by step and provide a detailed explanation"
 ```
 
 **Output:**
@@ -91,7 +91,7 @@ When you confirm, the optimized prompt is copied to your clipboard.
 **With a token budget:**
 
 ```bash
-promptfuel optimize "verbose prompt here" --budget 15
+pf optimize "verbose prompt here" --budget 15
 ```
 
 PromptFuel progressively applies compression levels (1–4) until your token target is met:
@@ -117,36 +117,36 @@ PromptFuel progressively applies compression levels (1–4) until your token tar
 
 ```bash
 # Copy optimized prompt to clipboard automatically
-promptfuel optimize "verbose prompt" --copy
+pf optimize "verbose prompt" --copy
 
 # Set a token budget target
-promptfuel optimize "verbose prompt" --budget 20
+pf optimize "verbose prompt" --budget 20
 
 # Override intent detection manually
-promptfuel optimize "verbose prompt" --intent debug
+pf optimize "verbose prompt" --intent debug
 
 # Output only the optimized text (great for piping)
-promptfuel optimize "verbose prompt" --output | pbcopy
+pf optimize "verbose prompt" --output | pbcopy
 
 # Use a specific model for token counting
-promptfuel optimize "verbose prompt" --model claude-sonnet-4-6
+pf optimize "verbose prompt" --model claude-sonnet-4-6
 
 # Maximum compression — removes hedge adverbs (very/really/extremely), weak qualifiers (just/simply/kind of), low-value openers (basically/in summary/to conclude)
-promptfuel optimize "verbose prompt" --aggressive
+pf optimize "verbose prompt" --aggressive
 ```
 
 ### Analyze Token Count & Cost
 
 ```bash
-promptfuel analyze "Explain how React hooks work" --model gpt-4o
+pf analyze "Explain how React hooks work" --model gpt-4o
 ```
 
 Shows token count, estimated output tokens, cost breakdown, and context window usage.
 
 ```bash
 # Pipe from stdin
-echo "Your prompt" | promptfuel analyze
-cat my-prompt.txt | promptfuel analyze --model claude-haiku-4-5
+echo "Your prompt" | pf analyze
+cat my-prompt.txt | pf analyze --model claude-haiku-4-5
 ```
 
 ### Token-Saving Strategy Advisor
@@ -154,7 +154,7 @@ cat my-prompt.txt | promptfuel analyze --model claude-haiku-4-5
 The `strategies` command scans your project directory and recommends actionable ways to save tokens:
 
 ```bash
-promptfuel strategies
+pf strategies
 ```
 
 **Output:**
@@ -192,10 +192,10 @@ promptfuel strategies
 
 ```bash
 # Scan a specific directory
-promptfuel strategies ./my-project
+pf strategies ./my-project
 
 # Alias
-promptfuel save
+pf save
 ```
 
 ### Claude Code Insights
@@ -203,7 +203,7 @@ promptfuel save
 The `insights` command reads your real Claude Code session data from `~/.claude/projects/` and shows token usage, cost, and activity across all your projects:
 
 ```bash
-promptfuel insights
+pf insights
 ```
 
 **Output:**
@@ -238,7 +238,7 @@ For the full breakdown — heaviest individual prompts, session-by-session detai
 Open a full insights dashboard in your browser:
 
 ```bash
-promptfuel dashboard
+pf dashboard
 ```
 
 This starts a local server at `http://localhost:3939`, serves real Claude Code usage data from `~/.claude/projects/`, and opens your browser directly to the **Insights tab**.
@@ -257,7 +257,7 @@ The dashboard has four tabs:
 
 ```bash
 # Use a custom port
-promptfuel dashboard --port 4000
+pf dashboard --port 4000
 ```
 
 ### Interactive TUI
@@ -265,7 +265,7 @@ promptfuel dashboard --port 4000
 Launch a terminal dashboard with live token counting as you type:
 
 ```bash
-promptfuel
+pf
 ```
 
 **Keyboard shortcuts:**
@@ -282,7 +282,7 @@ promptfuel
 Analyze multiple prompts from a JSON file:
 
 ```bash
-promptfuel batch prompts.json --model gpt-4o
+pf batch prompts.json --model gpt-4o
 ```
 
 **Input format:**
@@ -338,7 +338,7 @@ This adds the `pf` shell alias **and** writes the MCP config to `~/.claude/mcp.j
 | `count_tokens` | Count tokens for a text + estimated API cost for a given model |
 | `compare_models` | Compare cost of a prompt across multiple models side-by-side |
 | `analyze_strategies` | Scan a project directory and return actionable token-saving recommendations |
-| `list_models` | List all 14 supported model IDs |
+| `list_models` | List all 23 supported model IDs |
 | `claude_insights` | Read `~/.claude/projects/` and show token usage + cost across all projects |
 
 ### Usage in Claude Code
@@ -595,6 +595,20 @@ app.use('/api/chat', promptFuelMiddleware({ model: 'gpt-4o', warnAt: 0.75 }));
 | `claude-3-opus` | $15.00/1M | $75.00/1M | 200K |
 | `claude-3-haiku` | $0.25/1M | $1.25/1M | 200K |
 
+### Google (Gemini)
+
+| Model | Input | Output | Context |
+| --- | --- | --- | --- |
+| `gemini-3.1-pro` | $2.00/1M | $12.00/1M | 1M |
+| `gemini-2.5-pro` | $1.25/1M | $10.00/1M | 1M |
+| `gemini-3-flash` | $0.50/1M | $3.00/1M | 1M |
+| `gemini-2.5-flash` | $0.30/1M | $2.50/1M | 1M |
+| `gemini-2.5-flash-lite` | $0.10/1M | $0.40/1M | 1M |
+| `gemini-2.0-flash` | $0.10/1M | $0.40/1M | 1M |
+| `gemini-2.0-flash-lite` | $0.075/1M | $0.30/1M | 1M |
+| `gemini-1.5-pro` | $1.25/1M | $5.00/1M | 2M |
+| `gemini-1.5-flash` | $0.075/1M | $0.30/1M | 1M |
+
 Default model is `gpt-4o`. Use `--model` (CLI) or `model` option (SDK) to switch.
 
 ---
@@ -684,7 +698,7 @@ All consumer packages depend on `@promptfuel/core`. No cross-dependencies.
 pnpm install          # Install all dependencies
 pnpm build            # Build all packages
 pnpm dev              # Watch mode (all packages)
-pnpm test             # Run all tests (71 tests across 6 files)
+pnpm test             # Run all tests (124 core tests)
 pnpm lint             # Lint all packages
 pnpm clean            # Remove all dist folders
 ```
