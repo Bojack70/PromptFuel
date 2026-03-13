@@ -1428,21 +1428,21 @@ export function Dashboard({ initialTab }: { initialTab?: string } = {}) {
                 {[
                   {
                     step: '1',
-                    label: 'Install PromptFuel globally',
-                    hint: 'Run this once in any terminal window (iTerm, Terminal.app, etc.)',
+                    label: 'Install PromptFuel',
+                    hint: '📟 Run in your terminal (iTerm, Terminal.app, or the terminal tab in VS Code)',
                     code: 'npm install -g promptfuel',
                   },
                   {
                     step: '2',
-                    label: 'Navigate to your project folder',
-                    hint: 'In the same terminal, replace my-project with your actual folder name',
-                    code: 'cd ~/my-project',
+                    label: 'Open this dashboard',
+                    hint: '📟 Run in your terminal — works from any folder, opens browser automatically',
+                    code: 'promptfuel dashboard',
                   },
                   {
                     step: '3',
-                    label: 'Launch the dashboard',
-                    hint: 'Run this from inside your project folder — it reads your local Claude Code logs',
-                    code: 'promptfuel dashboard',
+                    label: 'Or get a quick summary first',
+                    hint: '📟 Run in your terminal — shows token usage & cost across all projects instantly',
+                    code: 'promptfuel insights',
                   },
                 ].map(item => (
                   <div key={item.step} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 8, padding: '12px 16px' }}>
@@ -1459,7 +1459,7 @@ export function Dashboard({ initialTab }: { initialTab?: string } = {}) {
               </div>
 
               <div style={{ marginTop: 24, fontSize: 12, color: '#94a3b8' }}>
-                No data leaves your machine — everything is read locally.
+                No data leaves your machine — everything is read from <code style={{ fontFamily: 'monospace', background: '#f1f5f9', padding: '1px 4px', borderRadius: 3 }}>~/.claude/</code> locally.
               </div>
             </div>
           )}
