@@ -5,6 +5,7 @@ export interface PlatformAdapter {
   getInputElement(): Element | null;
   getInjectionPoint(): Element | null;
   getConversationMessages(): string[];
+  getSelectedModel(): string | null;
   attachInputListener(callback: (text: string) => void): void;
   detachInputListener(): void;
 }

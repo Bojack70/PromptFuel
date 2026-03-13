@@ -50,6 +50,20 @@ export const chatgptAdapter: PlatformAdapter = {
     return input.closest('form') ?? input.parentElement;
   },
 
+  getSelectedModel(): string | null {
+    // ChatGPT model switcher is usually a button at the top of the interface
+    const candidates = document.querySelectorAll('button, [role="button"], [role="option"]');
+    for (const el of candidates) {
+      const text = el.textContent?.toLowerCase().trim() ?? '';
+      if (!text) continue;
+      if (text.includes('gpt-4o mini') || text.includes('4o mini')) return 'gpt-4o-mini';
+      if (text.includes('gpt-4o') || text.includes('4o')) return 'gpt-4o';
+      if (text.includes('gpt-4 turbo') || text.includes('4 turbo')) return 'gpt-4-turbo';
+      if (text.includes('gpt-3.5') || text.includes('3.5 turbo')) return 'gpt-3.5-turbo';
+    }
+    return null;
+  },
+
   getConversationMessages(): string[] {
     const messages: string[] = [];
     const elements = document.querySelectorAll(SELECTORS.messageContainer);

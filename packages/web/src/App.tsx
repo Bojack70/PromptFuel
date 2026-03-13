@@ -1424,16 +1424,32 @@ export function Dashboard() {
               {/* Steps */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 420, margin: '0 auto', textAlign: 'left' }}>
                 {[
-                  { step: '1', label: 'Install PromptFuel', code: 'npm install -g promptfuel' },
-                  { step: '2', label: 'Go to your project folder', code: 'cd your-project' },
-                  { step: '3', label: 'Launch the dashboard', code: 'npx promptfuel dashboard' },
+                  {
+                    step: '1',
+                    label: 'Install PromptFuel globally',
+                    hint: 'Run this once in any terminal window (iTerm, Terminal.app, etc.)',
+                    code: 'npm install -g promptfuel',
+                  },
+                  {
+                    step: '2',
+                    label: 'Navigate to your project folder',
+                    hint: 'In the same terminal, replace my-project with your actual folder name',
+                    code: 'cd ~/my-project',
+                  },
+                  {
+                    step: '3',
+                    label: 'Launch the dashboard',
+                    hint: 'Run this from inside your project folder — it reads your local Claude Code logs',
+                    code: 'promptfuel dashboard',
+                  },
                 ].map(item => (
                   <div key={item.step} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 8, padding: '12px 16px' }}>
                     <div style={{ width: 24, height: 24, borderRadius: '50%', background: '#3b82f6', color: '#fff', fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                       {item.step}
                     </div>
                     <div>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: '#1e293b', marginBottom: 4 }}>{item.label}</div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: '#1e293b', marginBottom: 2 }}>{item.label}</div>
+                      <div style={{ fontSize: 11, color: '#94a3b8', marginBottom: 6 }}>{item.hint}</div>
                       <code style={{ fontSize: 12, color: '#3b82f6', fontFamily: 'monospace', background: '#eff6ff', padding: '2px 8px', borderRadius: 4 }}>{item.code}</code>
                     </div>
                   </div>

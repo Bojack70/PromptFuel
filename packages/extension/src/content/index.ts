@@ -2,11 +2,14 @@ import { countTokens, calculateCost, formatCost, optimize, monitorContext } from
 import type { PlatformAdapter } from './platforms/types.js';
 import { chatgptAdapter } from './platforms/chatgpt.js';
 import { claudeAdapter } from './platforms/claude.js';
+import { geminiAdapter } from './platforms/gemini.js';
 import { DOMObserver } from './observer.js';
 
 let currentModel = 'gpt-4o';
 let widgetContainer: HTMLDivElement | null = null;
 let shadowRoot: ShadowRoot | null = null;
+let lastPageDetectedModel: string | null = null; // last model read from the page
+let userOverrodeModel = false; // true when user manually picked from widget dropdown
 
 function detectPlatform(): PlatformAdapter | null {
   const host = window.location.hostname;
@@ -16,6 +19,10 @@ function detectPlatform(): PlatformAdapter | null {
   if (host.includes('claude.ai')) {
     currentModel = 'claude-sonnet-4-6';
     return claudeAdapter;
+  }
+  if (host.includes('gemini.google.com')) {
+    currentModel = 'gemini-2.5-pro';
+    return geminiAdapter;
   }
   return null;
 }
@@ -213,6 +220,11 @@ function createWidget(): void {
     ['gpt-4-turbo', 'GPT-4 Turbo'], ['gpt-3.5-turbo', 'GPT-3.5 Turbo'],
     ['claude-opus-4-6', 'Claude Opus'], ['claude-sonnet-4-6', 'Claude Sonnet'],
     ['claude-haiku-4-5', 'Claude Haiku'],
+    ['gemini-3.1-pro', 'Gemini 3.1 Pro'], ['gemini-3-flash', 'Gemini 3 Flash'],
+    ['gemini-2.5-pro', 'Gemini 2.5 Pro'], ['gemini-2.5-flash', 'Gemini 2.5 Flash'],
+    ['gemini-2.5-flash-lite', 'Gemini 2.5 Flash Lite'],
+    ['gemini-2.0-flash', 'Gemini 2.0 Flash'], ['gemini-2.0-flash-lite', 'Gemini 2.0 Flash Lite'],
+    ['gemini-1.5-pro', 'Gemini 1.5 Pro'], ['gemini-1.5-flash', 'Gemini 1.5 Flash'],
   ];
   for (const [val, lbl] of models) {
     const opt = document.createElement('option');
@@ -237,6 +249,7 @@ function createWidget(): void {
 
   modelSelect.addEventListener('change', () => {
     currentModel = modelSelect.value;
+    userOverrodeModel = true;
     try {
       chrome.runtime.sendMessage({ type: 'SET_MODEL', model: currentModel });
     } catch { /* service worker may be inactive */ }
@@ -490,35 +503,63 @@ function getWidgetStyles(): string {
   `;
 }
 
+function syncModelFromPage(adapter: ReturnType<typeof detectPlatform>): void {
+  if (!adapter) return;
+  const detected = adapter.getSelectedModel();
+  if (!detected) return;
+
+  const pageModelChanged = detected !== lastPageDetectedModel;
+  lastPageDetectedModel = detected;
+
+  // If page model changed, clear user override so we follow the page again
+  if (pageModelChanged) userOverrodeModel = false;
+
+  // Don't overwrite a manual widget selection unless the page model actually changed
+  if (userOverrodeModel) return;
+
+  const modelSelect = shadowRoot?.getElementById('pf-model-select') as HTMLSelectElement | null;
+  if (detected !== currentModel) {
+    currentModel = detected;
+    if (modelSelect) modelSelect.value = currentModel;
+    try {
+      chrome.runtime.sendMessage({ type: 'SET_MODEL', model: currentModel });
+    } catch { /* service worker may be inactive */ }
+  } else if (modelSelect && modelSelect.value !== currentModel) {
+    modelSelect.value = currentModel;
+  }
+}
+
+function syncModelWithRetry(adapter: ReturnType<typeof detectPlatform>): void {
+  // Try immediately, then retry at 500ms / 1.5s / 3s to handle slow renders
+  [0, 500, 1500, 3000].forEach((delay) => {
+    setTimeout(() => syncModelFromPage(adapter), delay);
+  });
+}
+
 // Main initialization
 function init(): void {
   const adapter = detectPlatform();
   if (!adapter) return;
 
-  // Load saved model and sync UI
-  try {
-    chrome.runtime.sendMessage({ type: 'GET_SETTINGS' }, (settings) => {
-      if (chrome.runtime.lastError) return;
-      if (settings?.model) {
-        currentModel = settings.model;
-        // Sync model select dropdown if widget already created
-        const modelSelect = shadowRoot?.getElementById('pf-model-select') as HTMLSelectElement | null;
-        if (modelSelect) modelSelect.value = currentModel;
-      }
-    });
-  } catch { /* service worker may be inactive */ }
+  // Auto-detect model from the page, poll every 2s for changes (model switcher)
+  const modelPollInterval = setInterval(() => syncModelFromPage(adapter), 2000);
+  // Stop polling after 5 min to avoid idle overhead
+  setTimeout(() => clearInterval(modelPollInterval), 5 * 60 * 1000);
 
   const observer = new DOMObserver();
 
   // Watch for the input element to appear
   const inputSelector = adapter.name === 'chatgpt'
     ? '#prompt-textarea, textarea[data-id="root"], div[contenteditable="true"][id="prompt-textarea"]'
-    : '.ProseMirror[contenteditable="true"], div[contenteditable="true"]';
+    : adapter.name === 'gemini'
+      ? 'div[contenteditable="true"][aria-label], rich-textarea div[contenteditable="true"], div[contenteditable="true"].ql-editor, div[contenteditable="true"]'
+      : '.ProseMirror[contenteditable="true"], div[contenteditable="true"]';
 
   observer.watch({
     selector: inputSelector,
     onFound: () => {
       createWidget();
+      syncModelWithRetry(adapter);
       // Detach first to prevent stacking listeners on repeated onFound calls
       adapter.detachInputListener();
       adapter.attachInputListener((text) => {

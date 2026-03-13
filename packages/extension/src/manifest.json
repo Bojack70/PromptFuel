@@ -18,7 +18,7 @@
     }
   },
   "background": {
-    "service_worker": "service-worker.js",
+    "service_worker": "src/background/service-worker.ts",
     "type": "module"
   },
   "content_scripts": [
@@ -26,9 +26,10 @@
       "matches": [
         "https://chat.openai.com/*",
         "https://chatgpt.com/*",
-        "https://claude.ai/*"
+        "https://claude.ai/*",
+        "https://gemini.google.com/*"
       ],
-      "js": ["content.js"],
+      "js": ["src/content/index.ts"],
       "run_at": "document_idle"
     }
   ],

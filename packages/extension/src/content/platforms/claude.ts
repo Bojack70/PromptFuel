@@ -38,6 +38,19 @@ export const claudeAdapter: PlatformAdapter = {
     return input.closest(SELECTORS.inputArea) ?? input.parentElement;
   },
 
+  getSelectedModel(): string | null {
+    // Search buttons/spans near the composer for model name text
+    const candidates = document.querySelectorAll('button, [role="button"], [role="option"], span');
+    for (const el of candidates) {
+      const text = el.textContent?.toLowerCase().trim() ?? '';
+      if (!text) continue;
+      if (text.includes('opus')) return 'claude-opus-4-6';
+      if (text.includes('sonnet')) return 'claude-sonnet-4-6';
+      if (text.includes('haiku')) return 'claude-haiku-4-5';
+    }
+    return null;
+  },
+
   getConversationMessages(): string[] {
     const messages: string[] = [];
     const elements = document.querySelectorAll(SELECTORS.messageContainer);

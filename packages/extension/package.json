@@ -5,7 +5,7 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "build": "vite build && cp src/manifest.json dist/manifest.json",
+    "build": "vite build",
     "dev": "vite",
     "lint": "tsc --noEmit"
   },
