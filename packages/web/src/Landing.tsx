@@ -88,7 +88,7 @@ const FEATURES = [
   { icon: '🎯', title: 'Token Budget Targeting', desc: 'Set a target token count and auto-select the right compression level (1–4) to hit your budget without losing meaning.' },
   { icon: '✏️', title: 'Smart Prompt Rewriter', desc: '4-pass rewriter — verbose phrases, sentence compression, voice transform, question restructuring — gated by detected intent to avoid over-optimizing.' },
   { icon: '#',  title: 'Token Counter', desc: 'Exact token counts for OpenAI models via tiktoken, ~94% accurate for Claude. Know your token cost before you send.' },
-  { icon: '💲', title: 'Cost Calculator', desc: 'Real-time cost estimates with per-model pricing for 14 models — GPT-4o, o1, o3, Claude Opus/Sonnet/Haiku and more.' },
+  { icon: '💲', title: 'Cost Calculator', desc: 'Real-time cost estimates with per-model pricing for 23 models — GPT-4o, o1, o3, Claude Opus/Sonnet/Haiku, Gemini and more.' },
   { icon: '⚡', title: 'Context Monitor', desc: 'Visual progress bar showing how much of your context window you\'ve used, with color-coded warnings as you approach the limit.' },
   { icon: '💡', title: 'Strategy Advisor', desc: 'Analyzes your project config, conversation history, model usage, and prompt patterns — then surfaces actionable token-saving recommendations.' },
   { icon: '🗂️', title: 'Cache Analysis', desc: 'Clusters your prompts to identify prompt-prefix caching opportunities. Shows which clusters benefit most and provides a step-by-step setup guide.' },
@@ -127,12 +127,13 @@ const QUICKSTART_DEVS = [
   { label: '3. Run any command',         code: '$ pf --help' },
 ];
 
-const SDK_EXAMPLE = `import { optimize, detectIntent, calculateCost, monitorContext } from '@promptfuel/sdk';
+const SDK_EXAMPLE = `import { PromptFuel } from '@promptfuel/sdk';
+
+const pf = new PromptFuel({ model: 'gpt-4o' });
 
 // Optimize a prompt — intent detected automatically
-const result = optimize(
-  'I would like you to please explain how database indexing works in detail',
-  { model: 'gpt-4o' }
+const result = pf.optimize(
+  'I would like you to please explain how database indexing works in detail'
 );
 
 console.log(result.intent);           // { type: "explain", confidence: 0.6 }
@@ -140,12 +141,13 @@ console.log(result.optimizedPrompt);  // "Explain how database indexing works in
 console.log(result.reductionPercent); // 42
 
 // Check cost before sending
-const cost = calculateCost(result.optimizedPrompt, 'gpt-4o');
-console.log(cost.inputCost);          // "$0.000023"
+const analysis = pf.analyze(result.optimizedPrompt);
+console.log(analysis.cost.total);     // "$0.000023"
 
 // Monitor context window usage
-const status = monitorContext(messages, 'claude-sonnet-4-6');
-console.log(status.percentUsed);      // 34.2`;
+const monitor = pf.createMonitor('claude-sonnet-4-6');
+monitor.addMessage({ role: 'user', content: result.optimizedPrompt });
+console.log(monitor.getStatus().percentUsed); // 34.2`;
 
 // ── Component ─────────────────────────────────────────────────────────────────
 export function Landing() {
@@ -239,7 +241,7 @@ export function Landing() {
           </h1>
 
           <p style={{ fontSize: 'clamp(1rem, 2vw, 1.25rem)', color: C.mutedFg, maxWidth: '40rem', margin: '0 auto 2.5rem', lineHeight: 1.7 }}>
-            Intent-aware prompt optimization, token budget targeting, and cost intelligence — across ChatGPT, Claude, and 14 models. Zero API calls required.
+            Intent-aware prompt optimization, token budget targeting, and cost intelligence — across ChatGPT, Claude, Gemini, and 23 models. Zero API calls required.
           </p>
 
           <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', gap: 16, marginBottom: '3rem' }}>
