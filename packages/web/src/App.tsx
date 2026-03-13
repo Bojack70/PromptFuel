@@ -1304,7 +1304,7 @@ export function Dashboard({ initialTab }: { initialTab?: string } = {}) {
                   badgeBg: '#d1fae5',
                   title: 'Scan your project folder from the terminal',
                   desc: 'Gets project-level recommendations based on your actual files (CLAUDE.md, package.json, README, etc.).',
-                  code: 'promptfuel strategies',
+                  code: 'pf strategies',
                   hint: '📟 Run in your terminal from inside your project folder',
                 },
                 {
@@ -1314,7 +1314,7 @@ export function Dashboard({ initialTab }: { initialTab?: string } = {}) {
                   title: 'Ask Claude Code directly (MCP)',
                   desc: 'If you have the PromptFuel MCP server set up, just ask Claude in chat:',
                   code: 'Use analyze_strategies to scan this project',
-                  hint: '💬 Type this in Claude Code chat (run promptfuel setup first if not configured)',
+                  hint: '💬 Type this in Claude Code chat (run pf setup first if not configured)',
                 },
               ].map((opt, i) => (
                 <div key={i} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', background: '#fff', border: '1px solid #e2e8f0', borderRadius: 8, padding: '12px 16px' }}>
@@ -1478,13 +1478,13 @@ export function Dashboard({ initialTab }: { initialTab?: string } = {}) {
                     step: '2',
                     label: 'Open this dashboard',
                     hint: '📟 Run in your terminal — works from any folder, opens browser automatically',
-                    code: 'promptfuel dashboard',
+                    code: 'pf dashboard',
                   },
                   {
                     step: '3',
                     label: 'Or get a quick summary first',
                     hint: '📟 Run in your terminal — shows token usage & cost across all projects instantly',
-                    code: 'promptfuel insights',
+                    code: 'pf insights',
                   },
                 ].map(item => (
                   <div key={item.step} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 8, padding: '12px 16px' }}>

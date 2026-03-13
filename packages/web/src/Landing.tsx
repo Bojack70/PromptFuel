@@ -92,7 +92,7 @@ const FEATURES = [
   { icon: '⚡', title: 'Context Monitor', desc: 'Visual progress bar showing how much of your context window you\'ve used, with color-coded warnings as you approach the limit.' },
   { icon: '💡', title: 'Strategy Advisor', desc: 'Analyzes your project config, conversation history, model usage, and prompt patterns — then surfaces actionable token-saving recommendations.' },
   { icon: '🗂️', title: 'Cache Analysis', desc: 'Clusters your prompts to identify prompt-prefix caching opportunities. Shows which clusters benefit most and provides a step-by-step setup guide.' },
-  { icon: '📊', title: 'Claude Code Insights', desc: 'Run `promptfuel insights` to see real token usage and cost across all your Claude Code projects — by project, by model, with cache hit totals. Full details in the dashboard.' },
+  { icon: '📊', title: 'Claude Code Insights', desc: 'Run `pf insights` to see real token usage and cost across all your Claude Code projects — by project, by model, with cache hit totals. Full details in the dashboard.' },
   { icon: '🔌', title: 'MCP Server', desc: '6 tools inside Claude Code: optimize prompts, count tokens, compare model costs, scan project strategies, list models, and view usage insights — all without leaving chat.' },
   { icon: '🌍', title: 'Web Dashboard', desc: 'Opens directly to the Insights tab — powered by real Claude Code usage data. Plus Analyze & Optimize, History, and Strategies tabs.' },
   { icon: '🌐', title: 'Chrome Extension', desc: 'Floating widget on ChatGPT, Claude, and Gemini that shows live token count and cost estimate as you type — before you hit send.' },
@@ -109,20 +109,20 @@ const PIPELINE = [
 ];
 
 const QUICKSTART_USERS = [
-  { label: 'Optimize a prompt',          code: '$ npx promptfuel optimize "I would like you to please explain how React hooks work in detail"' },
-  { label: 'Maximum compression',        code: '$ npx promptfuel optimize "You should basically just simply explain how this very complex system works" --aggressive' },
-  { label: 'With a token budget',        code: '$ npx promptfuel optimize "Please help me debug this error step by step" --budget 10' },
-  { label: 'Analyze project for savings',code: '$ npx promptfuel strategies' },
-  { label: 'Claude Code usage insights', code: '$ npx promptfuel insights' },
-  { label: 'Full dashboard (Insights tab)', code: '$ npx promptfuel dashboard' },
-  { label: 'Interactive TUI',            code: '$ npx promptfuel' },
-  { label: 'See all commands',           code: '$ npx promptfuel --help' },
+  { label: 'Optimize a prompt',          code: '$ pf optimize "I would like you to please explain how React hooks work in detail"' },
+  { label: 'Maximum compression',        code: '$ pf optimize "You should basically just simply explain how this very complex system works" --aggressive' },
+  { label: 'With a token budget',        code: '$ pf optimize "Please help me debug this error step by step" --budget 10' },
+  { label: 'Analyze project for savings',code: '$ pf strategies' },
+  { label: 'Claude Code usage insights', code: '$ pf insights' },
+  { label: 'Full dashboard (Insights tab)', code: '$ pf dashboard' },
+  { label: 'Interactive TUI',            code: '$ pf' },
+  { label: 'See all commands',           code: '$ pf --help' },
 ];
 
 const QUICKSTART_DEVS = [
   { label: '1. Clone the repo',          code: '$ git clone https://github.com/Bojack70/PromptFuel.git && cd PromptFuel' },
   { label: '2. Install & build',         code: '$ pnpm install && pnpm build' },
-  { label: '3. Run any command',         code: '$ npx promptfuel --help' },
+  { label: '3. Run any command',         code: '$ pf --help' },
 ];
 
 const SDK_EXAMPLE = `import { optimize, detectIntent, calculateCost, monitorContext } from '@promptfuel/sdk';
@@ -265,7 +265,7 @@ export function Landing() {
           <div style={{ maxWidth: '40rem', margin: '0 auto' }}>
             <TerminalWindow title="terminal">
               <p style={{ color: C.mutedFg }}>
-                $ npx promptfuel optimize "Can you please help me debug this error step by step"
+                $ pf optimize "Can you please help me debug this error step by step"
               </p>
               <p style={{ marginTop: 12, color: C.mutedFg }}>
                 <span style={{ color: C.primary, fontWeight: 600 }}>INTENT</span>{' '}
