@@ -2,7 +2,10 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
-import { optimize, countTokens, calculateCost, formatCost, listModels } from '@promptfuel/core';
+import { readdirSync, readFileSync, existsSync, statSync } from 'node:fs';
+import { join, relative } from 'node:path';
+import { optimize, countTokens, calculateCost, formatCost, listModels, analyzeStrategies } from '@promptfuel/core';
+import type { StrategyContext } from '@promptfuel/core';
 
 const server = new McpServer({
   name: 'promptfuel',
@@ -93,6 +96,78 @@ server.tool(
     }
 
     return { content: [{ type: 'text', text: rows.join('\n') }] };
+  }
+);
+
+// ── Tool: analyze_strategies ─────────────────────────────────────────────
+server.tool(
+  'analyze_strategies',
+  'Scan a project directory and return actionable token-saving strategy recommendations — things like adding a CLAUDE.md, using prompt caching, or switching models.',
+  {
+    directory: z.string().optional().describe('Absolute path to the project directory to scan. Defaults to the current working directory.'),
+    model: z.string().optional().describe('Model ID to calculate cost savings for. Defaults to claude-sonnet-4-6'),
+  },
+  async ({ directory, model = 'claude-sonnet-4-6' }) => {
+    const projectDir = directory ?? process.cwd();
+
+    if (!existsSync(projectDir) || !statSync(projectDir).isDirectory()) {
+      return { content: [{ type: 'text', text: `Error: "${projectDir}" is not a valid directory.` }] };
+    }
+
+    // Scan project files (max depth 3, skip common noise)
+    function scanDir(dir: string, depth = 0): string[] {
+      if (depth > 3) return [];
+      const results: string[] = [];
+      try {
+        for (const entry of readdirSync(dir, { withFileTypes: true })) {
+          if (entry.name.startsWith('.') && entry.name !== '.cursorrules') continue;
+          if (['node_modules', 'dist', 'build', '.git', 'coverage'].includes(entry.name)) continue;
+          const full = join(dir, entry.name);
+          if (entry.isFile()) results.push(relative(projectDir, full));
+          else if (entry.isDirectory()) results.push(...scanDir(full, depth + 1));
+        }
+      } catch { /* permission errors */ }
+      return results;
+    }
+
+    const projectFiles = scanDir(projectDir);
+    const fileContents: Record<string, string> = {};
+    for (const f of ['package.json', 'README.md', 'CLAUDE.md', '.cursorrules', 'tsconfig.json']) {
+      const path = join(projectDir, f);
+      if (existsSync(path)) {
+        try { fileContents[f] = readFileSync(path, 'utf-8'); } catch { /* ignore */ }
+      }
+    }
+
+    const context: StrategyContext = { projectDir, projectFiles, fileContents, model };
+    const analysis = analyzeStrategies(context);
+
+    if (analysis.recommendations.length === 0) {
+      return { content: [{ type: 'text', text: `✓ No recommendations — your project looks well-optimized!\n\n${analysis.projectSummary}` }] };
+    }
+
+    const lines = [
+      `**PromptFuel Strategy Analysis**`,
+      ``,
+      analysis.projectSummary,
+      ``,
+      `**${analysis.recommendations.length} Recommendations:**`,
+      ``,
+    ];
+
+    for (let i = 0; i < analysis.recommendations.length; i++) {
+      const rec = analysis.recommendations[i];
+      const impact = rec.impact === 'high' ? '🔴 HIGH' : rec.impact === 'medium' ? '🟡 MED' : '⚪ LOW';
+      lines.push(`${i + 1}. ${impact} **${rec.name}**`);
+      lines.push(`   ${rec.description}`);
+      if (rec.estimatedTokenSavings > 0) lines.push(`   Savings: ~${rec.estimatedTokenSavings.toLocaleString('en-US')} tokens / ~${formatCost(rec.estimatedCostSavings)}`);
+      lines.push(`   Action: ${rec.actionDescription}`);
+      lines.push('');
+    }
+
+    lines.push(`**Total potential savings: ~${analysis.totalEstimatedTokenSavings.toLocaleString('en-US')} tokens / ~${formatCost(analysis.totalEstimatedCostSavings)}**`);
+
+    return { content: [{ type: 'text', text: lines.join('\n') }] };
   }
 );
 
