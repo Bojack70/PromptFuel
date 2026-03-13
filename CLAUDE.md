@@ -21,4 +21,5 @@ Actively suggest a model switch based on these boundaries.
 - 3-File Rule: Change impacts >3 unrelated modules or requires tracing logic across the system
 - 2-Fail Rule: Implementation fails tests twice on Sonnet — stop and suggest Opus for a deep audit
 - High-Stakes: Any change to core database schema, security/auth logic, or central state management
+- Research/Strategy Rule: Task requires deriving an answer from conflicting or ambiguous evidence (not just retrieving and summarizing), OR the output directly drives a high-stakes product/business decision (positioning, pricing, pivots)
 - After Opus resolves the problem, IMMEDIATELY suggest /model sonnet
