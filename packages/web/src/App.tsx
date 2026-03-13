@@ -1287,6 +1287,55 @@ export function Dashboard({ initialTab }: { initialTab?: string } = {}) {
       {/* === STRATEGIES TAB === */}
       {tab === 'strategies' && (
         <>
+          <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10, padding: '20px 24px', marginBottom: 20 }}>
+            <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 12, color: '#1e293b' }}>Two ways to get strategies for your project</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {[
+                {
+                  badge: 'OPTION A',
+                  badgeColor: '#2563eb',
+                  badgeBg: '#dbeafe',
+                  title: 'Paste a conversation below',
+                  desc: 'Copy any conversation from Claude or ChatGPT and paste it into the box below. Works for any AI tool — no install needed.',
+                },
+                {
+                  badge: 'OPTION B',
+                  badgeColor: '#059669',
+                  badgeBg: '#d1fae5',
+                  title: 'Scan your project folder from the terminal',
+                  desc: 'Gets project-level recommendations based on your actual files (CLAUDE.md, package.json, README, etc.).',
+                  code: 'promptfuel strategies',
+                  hint: '📟 Run in your terminal from inside your project folder',
+                },
+                {
+                  badge: 'OPTION C',
+                  badgeColor: '#7c3aed',
+                  badgeBg: '#ede9fe',
+                  title: 'Ask Claude Code directly (MCP)',
+                  desc: 'If you have the PromptFuel MCP server set up, just ask Claude in chat:',
+                  code: 'Use analyze_strategies to scan this project',
+                  hint: '💬 Type this in Claude Code chat (run promptfuel setup first if not configured)',
+                },
+              ].map((opt, i) => (
+                <div key={i} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', background: '#fff', border: '1px solid #e2e8f0', borderRadius: 8, padding: '12px 16px' }}>
+                  <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 6px', borderRadius: 3, background: opt.badgeBg, color: opt.badgeColor, whiteSpace: 'nowrap', marginTop: 2 }}>
+                    {opt.badge}
+                  </span>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: '#1e293b', marginBottom: 2 }}>{opt.title}</div>
+                    <div style={{ fontSize: 12, color: '#64748b', marginBottom: opt.code ? 6 : 0 }}>{opt.desc}</div>
+                    {opt.code && (
+                      <>
+                        <code style={{ fontSize: 12, color: '#1e40af', fontFamily: 'monospace', background: '#eff6ff', padding: '2px 8px', borderRadius: 4 }}>{opt.code}</code>
+                        <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 4 }}>{opt.hint}</div>
+                      </>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
           <div style={{ ...sectionStyle, marginBottom: 20 }}>
             <div style={sectionHeader}>Conversation Analysis</div>
             <p style={{ fontSize: 13, color: '#64748b', marginBottom: 12 }}>
@@ -1396,54 +1445,6 @@ export function Dashboard({ initialTab }: { initialTab?: string } = {}) {
                 </div>
               </div>
 
-              <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10, padding: '20px 24px' }}>
-                <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 12, color: '#1e293b' }}>Two ways to get strategies for your project</div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  {[
-                    {
-                      badge: 'OPTION A',
-                      badgeColor: '#2563eb',
-                      badgeBg: '#dbeafe',
-                      title: 'Paste a conversation above',
-                      desc: 'Copy any conversation from Claude or ChatGPT and paste it into the box above. Works for any AI tool — no install needed.',
-                    },
-                    {
-                      badge: 'OPTION B',
-                      badgeColor: '#059669',
-                      badgeBg: '#d1fae5',
-                      title: 'Scan your project folder from the terminal',
-                      desc: 'Gets project-level recommendations based on your actual files (CLAUDE.md, package.json, README, etc.).',
-                      code: 'promptfuel strategies',
-                      hint: '📟 Run in your terminal from inside your project folder',
-                    },
-                    {
-                      badge: 'OPTION C',
-                      badgeColor: '#7c3aed',
-                      badgeBg: '#ede9fe',
-                      title: 'Ask Claude Code directly (MCP)',
-                      desc: 'If you have the PromptFuel MCP server set up, just ask Claude in chat:',
-                      code: 'Use analyze_strategies to scan this project',
-                      hint: '💬 Type this in Claude Code chat (run promptfuel setup first if not configured)',
-                    },
-                  ].map((opt, i) => (
-                    <div key={i} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', background: '#fff', border: '1px solid #e2e8f0', borderRadius: 8, padding: '12px 16px' }}>
-                      <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 6px', borderRadius: 3, background: opt.badgeBg, color: opt.badgeColor, whiteSpace: 'nowrap', marginTop: 2 }}>
-                        {opt.badge}
-                      </span>
-                      <div>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: '#1e293b', marginBottom: 2 }}>{opt.title}</div>
-                        <div style={{ fontSize: 12, color: '#64748b', marginBottom: opt.code ? 6 : 0 }}>{opt.desc}</div>
-                        {opt.code && (
-                          <>
-                            <code style={{ fontSize: 12, color: '#1e40af', fontFamily: 'monospace', background: '#eff6ff', padding: '2px 8px', borderRadius: 4 }}>{opt.code}</code>
-                            <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 4 }}>{opt.hint}</div>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
             </div>
           )}
         </>
