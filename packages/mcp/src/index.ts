@@ -289,6 +289,30 @@ server.tool(
   }
 );
 
+// ── Prompt: auto_optimize ─────────────────────────────────────────────────
+server.prompt(
+  'auto_optimize',
+  'Enable auto-optimization mode — every message you send will be automatically optimized before Claude responds',
+  async () => ({
+    messages: [{
+      role: 'user' as const,
+      content: {
+        type: 'text' as const,
+        text: [
+          'Auto-optimize mode is now ON.',
+          '',
+          'For every message I send for the rest of this conversation:',
+          '1. Call the optimize_prompt tool on my exact message text.',
+          '2. Show a one-line summary: "✓ Optimized: saved X tokens (Y% reduction)" — or "✓ Already concise" if no savings.',
+          '3. Then respond to the optimized version as normal.',
+          '',
+          'Do this automatically and silently for every message without me having to ask.',
+        ].join('\n'),
+      },
+    }],
+  })
+);
+
 // ── Start server ──────────────────────────────────────────────────────────
 const transport = new StdioServerTransport();
 await server.connect(transport);
