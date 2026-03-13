@@ -112,7 +112,7 @@ const QUICKSTART_USERS = [
   { label: 'Optimize a prompt',          code: '$ npx promptfuel optimize "I would like you to please explain how React hooks work in detail"' },
   { label: 'Maximum compression',        code: '$ npx promptfuel optimize "You should basically just simply explain how this very complex system works" --aggressive' },
   { label: 'With a token budget',        code: '$ npx promptfuel optimize "Please help me debug this error step by step" --budget 10' },
-  { label: 'Analyze project for savings',code: '$ npx promptfuel strategies ./my-project --model claude-sonnet-4-6' },
+  { label: 'Analyze project for savings',code: '$ npx promptfuel strategies' },
   { label: 'Claude Code usage insights', code: '$ npx promptfuel insights' },
   { label: 'Full dashboard (Insights tab)', code: '$ npx promptfuel dashboard' },
   { label: 'Interactive TUI',            code: '$ npx promptfuel' },
