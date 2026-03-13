@@ -109,8 +109,7 @@ const PIPELINE = [
 ];
 
 const QUICKSTART_USERS = [
-  { label: '1. Install globally',        code: '$ npm install -g promptfuel' },
-  { label: '2. Add pf shortcut (once)',  code: '$ promptfuel setup' },
+  { label: '1. Install (sets up pf alias automatically)', code: '$ npm install -g promptfuel' },
   { label: 'Optimize a prompt',          code: '$ pf optimize "I would like you to please explain how React hooks work in detail"' },
   { label: 'Maximum compression',        code: '$ pf optimize "You should basically just simply explain how this very complex system works" --aggressive' },
   { label: 'With a token budget',        code: '$ pf optimize "Please help me debug this error step by step" --budget 10' },

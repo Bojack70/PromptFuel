@@ -30,11 +30,8 @@ It works as a **CLI tool**, a **Chrome extension**, a **web dashboard**, an **MC
 ## Quick Start
 
 ```bash
-# Install globally
+# Install globally — automatically adds "pf" alias + configures MCP for Claude Code
 npm install -g promptfuel
-
-# One-time setup: adds "pf" alias + configures MCP for Claude Code
-promptfuel setup
 
 # Optimize a prompt (intent is detected automatically)
 pf optimize "I would like you to please explain how React hooks work in detail"
