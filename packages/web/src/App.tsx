@@ -1473,13 +1473,13 @@ export function Dashboard({ initialTab }: { initialTab?: string } = {}) {
                   {
                     step: '2',
                     label: 'Get a quick CLI summary',
-                    hint: '📟 Your system terminal, from any folder — prints token usage & cost across all Claude Code projects',
+                    hint: '📟 Any terminal including Claude Code — prints token usage & cost across all Claude Code projects',
                     code: 'pf insights',
                   },
                   {
                     step: '3',
                     label: 'Open the full dashboard',
-                    hint: '📟 Your system terminal, from any folder — opens this page locally with your real ~/.claude/ data loaded',
+                    hint: '📟 Any terminal including Claude Code — opens this page locally with your real ~/.claude/ data loaded',
                     code: 'pf dashboard',
                   },
                 ].map(item => (
