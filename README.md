@@ -23,7 +23,7 @@ It works as a **CLI tool**, a **Chrome extension**, a **web dashboard**, an **MC
 | **Web Dashboard** | Browser-based dashboard with 4 tabs — Analyze & Optimize, History, Strategies, and an **Insights** tab powered by real Claude Code usage data |
 | **MCP Server** | 6 tools + auto-optimize mode inside Claude Code — say "enable auto optimize" once and every message is optimized automatically for the rest of the session |
 | **Cache Savings Analyzer** | Clusters similar prompts via Jaccard similarity to estimate semantic caching savings and provides setup guides |
-| **Chrome Extension** | Floating widget on ChatGPT & Claude that shows tokens + cost in real-time |
+| **Chrome Extension** | Floating widget on ChatGPT, Claude, and Gemini that shows tokens + cost in real-time |
 
 ---
 
@@ -39,6 +39,20 @@ pf optimize "I would like you to please explain how React hooks work in detail"
 # See your Claude Code usage across all projects
 pf insights
 ```
+
+---
+
+## Uninstall
+
+```bash
+# Removes shell alias + MCP config, then tells you the npm command
+pf uninstall
+
+# Or just run npm uninstall — the preuninstall hook cleans up automatically
+npm uninstall -g promptfuel
+```
+
+Both approaches remove the `pf` shell alias from your shell config and the `promptfuel` entry from `~/.claude/mcp.json`.
 
 ---
 
@@ -296,6 +310,7 @@ pf batch prompts.json --model gpt-4o
 ```
 $ promptfuel                        Launch interactive TUI
 $ promptfuel setup                  Add "pf" alias + configure MCP (run once)
+$ promptfuel uninstall              Remove alias + MCP config, then npm uninstall
 $ promptfuel dashboard              Open web dashboard → Insights tab
 $ promptfuel analyze <prompt>       Analyze token count & cost
 $ promptfuel optimize <prompt>      Optimize a prompt
@@ -331,7 +346,7 @@ This adds the `pf` shell alias **and** writes the MCP config to `~/.claude/mcp.j
 
 | Tool | What it does |
 | --- | --- |
-| `optimize_prompt` | Optimize a prompt — returns optimized text, token savings, % reduction, what changed |
+| `optimize_prompt` | Optimize a prompt — returns optimized text, token savings, % reduction, what changed. Supports `budget` (target token count), `intent` override, and `aggressive` compression |
 | `count_tokens` | Count tokens for a text + estimated API cost for a given model |
 | `compare_models` | Compare cost of a prompt across multiple models side-by-side |
 | `analyze_strategies` | Scan a project directory and return actionable token-saving recommendations |
@@ -363,6 +378,10 @@ enable auto optimize
 
 Optimize this prompt: "Can you please help me understand how async/await works"
 
+optimize_prompt "Debug this error step by step" budget:200 aggressive:true
+
+optimize_prompt "Can you please help me refactor this function" intent:refactor
+
 Count the tokens in my system prompt for claude-sonnet-4-6
 
 Compare the cost of this prompt across GPT-4o, Claude Sonnet, and Haiku
@@ -390,7 +409,7 @@ Show my Claude Code usage insights
 
 ## Chrome Extension
 
-The Chrome extension adds real-time token and cost monitoring directly inside ChatGPT and Claude.
+The Chrome extension adds real-time token and cost monitoring directly inside ChatGPT, Claude, and Gemini.
 
 ### Installation
 
@@ -401,7 +420,7 @@ pnpm --filter @promptfuel/extension build
 1. Open Chrome → `chrome://extensions`
 2. Enable **Developer mode** (toggle in top-right)
 3. Click **Load unpacked** → select `packages/extension/dist`
-4. Go to [chat.openai.com](https://chat.openai.com) or [claude.ai](https://claude.ai)
+4. Go to [chat.openai.com](https://chat.openai.com), [claude.ai](https://claude.ai), or [gemini.google.com](https://gemini.google.com)
 
 ### What You Get
 

@@ -121,6 +121,7 @@ const QUICKSTART_USERS = [
   { label: 'Full dashboard (Insights tab)', code: '$ pf dashboard' },
   { label: 'Interactive TUI',            code: '$ pf' },
   { label: 'See all commands',           code: '$ pf --help' },
+  { label: 'Uninstall (removes alias + MCP config automatically)', code: '$ pf uninstall' },
 ];
 
 const QUICKSTART_DEVS = [

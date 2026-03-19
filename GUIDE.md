@@ -1,6 +1,6 @@
 # PromptFuel — User Guide
 
-A complete toolkit for intent-aware prompt optimization, token budget targeting, cost intelligence, and context monitoring for ChatGPT and Claude.
+A complete toolkit for intent-aware prompt optimization, token budget targeting, cost intelligence, and context monitoring for ChatGPT, Claude, and Gemini.
 
 ---
 
@@ -8,11 +8,16 @@ A complete toolkit for intent-aware prompt optimization, token budget targeting,
 
 - [Quick Start](#quick-start)
 - [Installation](#installation)
+- [Uninstall](#uninstall)
 - [CLI Tool](#cli-tool)
-  - [Analyze Command](#analyze-command)
   - [Optimize Command](#optimize-command)
+  - [Analyze Command](#analyze-command)
   - [Batch Command](#batch-command)
-  - [Interactive Dashboard](#interactive-dashboard)
+  - [Strategy Advisor](#strategy-advisor)
+  - [Claude Code Insights](#claude-code-insights)
+  - [Interactive TUI](#interactive-tui)
+  - [Web Dashboard](#web-dashboard)
+- [MCP Server for Claude Code](#mcp-server-for-claude-code)
 - [Chrome Extension](#chrome-extension)
 - [Web Interface](#web-interface)
   - [Insights Tab](#insights-tab)
@@ -22,7 +27,6 @@ A complete toolkit for intent-aware prompt optimization, token budget targeting,
   - [Token Budget Targeting](#token-budget-targeting)
   - [Context Monitoring](#context-monitoring)
   - [Claude Cache Analysis](#claude-cache-analysis)
-  - [Cache Analysis API](#cache-analysis-api)
   - [Custom Optimization Rules](#custom-optimization-rules)
   - [Express Middleware](#express-middleware)
 - [Supported Models](#supported-models)
@@ -34,118 +38,81 @@ A complete toolkit for intent-aware prompt optimization, token budget targeting,
 ## Quick Start
 
 ```bash
-# Install dependencies
-pnpm install
+# Install globally — automatically adds "pf" alias + configures MCP for Claude Code
+npm install -g promptfuel
 
-# Build all packages
-pnpm build
+# Optimize a prompt (intent detected automatically)
+pf optimize "I would like you to please explain how React hooks work in detail"
 
-# Analyze a prompt
-npx promptfuel analyze "Explain how React hooks work"
+# Optimize with a token budget
+pf optimize "Please help me debug this error step by step" --budget 10
 
-# Optimize a verbose prompt (intent is detected automatically)
-npx promptfuel optimize "I would like you to please explain how React hooks work in detail"
+# Auto-optimize every message in Claude Code (say this once in Claude Code)
+enable auto optimize
 
-# Optimize with a token budget target
-npx promptfuel optimize "Please help me debug this error step by step" --budget 10
+# See your Claude Code token usage across all projects
+pf insights
 
 # Launch the interactive dashboard
-npx promptfuel
+pf
 ```
 
 ---
 
 ## Installation
 
-PromptFuel requires **Node.js 18+** and **pnpm**.
+PromptFuel requires **Node.js 18+**.
 
 ```bash
-# Clone and install
-git clone <repo-url>
-cd promptfuel
+# Install globally (recommended)
+npm install -g promptfuel
+```
+
+This automatically:
+- Installs the `promptfuel` binary and `pf` alias
+- Configures the MCP server in `~/.claude/mcp.json` for Claude Code
+
+**For development (running from source):**
+
+```bash
+git clone https://github.com/Bojack70/PromptFuel.git
+cd PromptFuel
 pnpm install
 pnpm build
 ```
 
-To use the CLI globally:
+---
+
+## Uninstall
 
 ```bash
-pnpm --filter @promptfuel/cli build
-npm link packages/cli
+# Option 1: Use the uninstall command (removes alias + MCP config, then shows npm command)
+pf uninstall
+
+# Option 2: Just run npm uninstall — preuninstall hook cleans up automatically
+npm uninstall -g promptfuel
 ```
+
+Both options remove:
+- The `alias pf="promptfuel"` line from your shell config (`.zshenv` / `.bashrc` / `config.fish`)
+- The `promptfuel` entry from `~/.claude/mcp.json`
 
 ---
 
 ## CLI Tool
-
-The CLI provides four modes: `analyze`, `optimize`, `batch`, and an interactive dashboard.
-
-### Analyze Command
-
-Count tokens and estimate costs for a prompt.
-
-```bash
-promptfuel analyze "Your prompt here" --model gpt-4o
-```
-
-**Example:**
-
-```bash
-$ promptfuel analyze "Write a Python function that calculates fibonacci numbers recursively"
-```
-
-Output:
-
-```
-══════════════════════════════════════════════════
-  PromptFuel — Prompt Analysis
-══════════════════════════════════════════════════
-
-  Model        : gpt-4o
-  Context      : 128,000 tokens
-
-──────────────────────────────────────────────────
-  TOKEN BREAKDOWN
-──────────────────────────────────────────────────
-  Input tokens         : 10
-  Est. output tokens   : 800
-  Total tokens         : 810
-
-──────────────────────────────────────────────────
-  COST ESTIMATE
-──────────────────────────────────────────────────
-  Input cost           : $0.000025   (@ $2.50/1M tokens)
-  Est. output cost     : $0.0080     (@ $10.00/1M tokens)
-  Total cost           : $0.0080
-
-──────────────────────────────────────────────────
-  CONTEXT WINDOW USAGE
-──────────────────────────────────────────────────
-  [░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 0%  [OK]
-  10 / 128,000 tokens used
-  127,990 tokens remaining
-══════════════════════════════════════════════════
-```
-
-You can also pipe input from stdin:
-
-```bash
-echo "Explain quantum computing" | promptfuel analyze --model claude-sonnet-4-6
-cat my-prompt.txt | promptfuel analyze
-```
 
 ### Optimize Command
 
 Get intent-aware optimization suggestions and a cleaned-up version of your prompt.
 
 ```bash
-promptfuel optimize "Your verbose prompt" --model gpt-4o
+pf optimize "Your verbose prompt" --model gpt-4o
 ```
 
 **Example with intent detection:**
 
 ```bash
-$ promptfuel optimize "Can you please help me debug this error step by step and provide a detailed explanation"
+$ pf optimize "Can you please help me debug this error step by step and provide a detailed explanation"
 ```
 
 Output:
@@ -191,7 +158,7 @@ Output:
 **With a token budget:**
 
 ```bash
-$ promptfuel optimize "verbose prompt here" --budget 15
+$ pf optimize "verbose prompt here" --budget 15
 ```
 
 PromptFuel progressively applies compression levels (1–4) until your token target is met:
@@ -199,27 +166,86 @@ PromptFuel progressively applies compression levels (1–4) until your token tar
 | Level | What it applies |
 | --- | --- |
 | 1 (light) | Filler removal, formatting cleanup |
-| 2 (moderate) | - redundancy, duplicates, verbose phrases, sentence compression |
-| 3 (aggressive) | - all detectors, all rewriter passes |
-| 4 (maximum) | - context truncation |
+| 2 (moderate) | + redundancy, duplicates, verbose phrases, sentence compression |
+| 3 (aggressive) | + all detectors, all rewriter passes |
+| 4 (maximum) | + context truncation |
+
+Intent-gating applies at every level — protected patterns (e.g. "step by step" in debug prompts) are never removed regardless of compression level.
 
 **Useful flags:**
 
 ```bash
 # Copy the optimized prompt to clipboard
-promptfuel optimize "verbose prompt" --copy
+pf optimize "verbose prompt" --copy
 
 # Set a token budget target
-promptfuel optimize "verbose prompt" --budget 20
+pf optimize "verbose prompt" --budget 20
 
 # Override intent detection manually
-promptfuel optimize "verbose prompt" --intent debug
+pf optimize "verbose prompt" --intent debug
+
+# Maximum compression (removes hedge adverbs, weak qualifiers, low-value openers)
+pf optimize "verbose prompt" --aggressive
 
 # Output only the optimized text (great for piping)
-promptfuel optimize "verbose prompt" --output | pbcopy
+pf optimize "verbose prompt" --output | pbcopy
 
-# Use a specific model
-promptfuel optimize "verbose prompt" --model claude-haiku-4-5
+# Use a specific model for token counting
+pf optimize "verbose prompt" --model claude-sonnet-4-6
+```
+
+### Analyze Command
+
+Count tokens and estimate costs for a prompt.
+
+```bash
+pf analyze "Your prompt here" --model gpt-4o
+```
+
+**Example:**
+
+```bash
+$ pf analyze "Write a Python function that calculates fibonacci numbers recursively"
+```
+
+Output:
+
+```
+══════════════════════════════════════════════════
+  PromptFuel — Prompt Analysis
+══════════════════════════════════════════════════
+
+  Model        : gpt-4o
+  Context      : 128,000 tokens
+
+──────────────────────────────────────────────────
+  TOKEN BREAKDOWN
+──────────────────────────────────────────────────
+  Input tokens         : 10
+  Est. output tokens   : 800
+  Total tokens         : 810
+
+──────────────────────────────────────────────────
+  COST ESTIMATE
+──────────────────────────────────────────────────
+  Input cost           : $0.000025   (@ $2.50/1M tokens)
+  Est. output cost     : $0.0080     (@ $10.00/1M tokens)
+  Total cost           : $0.0080
+
+──────────────────────────────────────────────────
+  CONTEXT WINDOW USAGE
+──────────────────────────────────────────────────
+  [░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 0%  [OK]
+  10 / 128,000 tokens used
+  127,990 tokens remaining
+══════════════════════════════════════════════════
+```
+
+You can also pipe input from stdin:
+
+```bash
+echo "Explain quantum computing" | pf analyze --model claude-sonnet-4-6
+cat my-prompt.txt | pf analyze
 ```
 
 ### Batch Command
@@ -227,7 +253,7 @@ promptfuel optimize "verbose prompt" --model claude-haiku-4-5
 Analyze multiple prompts at once from a JSON file.
 
 ```bash
-promptfuel batch prompts.json --model gpt-4o
+pf batch prompts.json --model gpt-4o
 ```
 
 **Input file format — simple string array:**
@@ -246,11 +272,7 @@ promptfuel batch prompts.json --model gpt-4o
 [
   {
     "name": "Code generation",
-    "content": "I would like you to please write a Python function that calculates the factorial of a number. Please make sure to handle edge cases."
-  },
-  {
-    "name": "Simple question",
-    "content": "What is the capital of France?"
+    "content": "I would like you to please write a Python function that calculates the factorial of a number."
   },
   {
     "name": "Claude task",
@@ -260,66 +282,37 @@ promptfuel batch prompts.json --model gpt-4o
 ]
 ```
 
-**Example output:**
+### Strategy Advisor
 
-```
-══════════════════════════════════════════════════════════
-  PromptFuel — Batch Analysis Report
-══════════════════════════════════════════════════════════
-
-  Model      : gpt-4o
-  Prompts    : 3 analyzed
-  Optimizable: 1 of 3 (33%)
-
-────────────────────────────────────────────────────────
-  SUMMARY
-────────────────────────────────────────────────────────
-  Total input tokens       : 62
-  After optimization       : 49
-  Total tokens saved       : 13 (21%)
-  Total estimated cost     : $0.0214
-  After optimization       : $0.0201
-  Potential savings        : $0.000033
-
-────────────────────────────────────────────────────────
-  TOP OPTIMIZATION OPPORTUNITIES (ranked by token savings)
-────────────────────────────────────────────────────────
-  1. "Code generation"
-     Intent: code-gen (75% confidence)
-     Tokens: 35 → 22 (-13, 37%)
-     Cost:   $0.0088 → $0.0055 (save $0.000033)
-     Tip:    Remove filler phrase: "I would like you to"
-
-  2. "Simple question"
-     Intent: general
-     Tokens: 8 → 8 (-0, 0%)
-     Tip:    None
-
-  3. "Claude task"
-     Intent: general
-     Tokens: 19 → 19 (-0, 0%)
-     Tip:    None
-══════════════════════════════════════════════════════════
-```
-
-### Interactive Dashboard
-
-Launch a full-screen terminal UI by running `promptfuel` with no arguments:
+Scan your project directory for actionable token-saving recommendations.
 
 ```bash
-promptfuel
-# or
-promptfuel dashboard
+pf strategies
+
+# Scan a specific directory
+pf strategies ./my-project
 ```
 
-The dashboard includes:
-- **Token Panel** — live token count as you type
-- **Cost Panel** — real-time cost estimation
-- **Context Bar** — visual progress bar of context window usage
-- **Prompt Input** — paste or type your prompt
-- **Optimizer View** — suggestions shown after pressing `o`
+### Claude Code Insights
+
+Read your real Claude Code session data and show token usage + cost across all projects.
+
+```bash
+pf insights
+```
+
+For the full breakdown with heaviest prompts, session details, and 5 action cards, run `pf dashboard`.
+
+### Interactive TUI
+
+Launch a full-screen terminal UI by running `pf` with no arguments:
+
+```bash
+pf
+```
 
 **Keyboard shortcuts:**
+
 | Key | Action |
 | --- | --- |
 | `q` | Quit |
@@ -328,11 +321,122 @@ The dashboard includes:
 | `c` | Copy optimized prompt |
 | `Tab` | Switch between panels |
 
+### Web Dashboard
+
+Open a full insights dashboard in your browser:
+
+```bash
+pf dashboard
+
+# Use a custom port
+pf dashboard --port 4000
+```
+
+Starts a local server at `http://localhost:3939` and opens the **Insights tab** with your real Claude Code usage data.
+
+### All CLI Commands
+
+```
+$ pf                          Launch interactive TUI
+$ pf setup                    Add "pf" alias + configure MCP (run once)
+$ pf uninstall                Remove alias + MCP config, then npm uninstall
+$ pf optimize <prompt>        Optimize a prompt
+$ pf analyze <prompt>         Analyze token count & cost
+$ pf strategies [dir]         Analyze project for token-saving strategies
+$ pf insights                 Show Claude Code usage across all projects
+$ pf dashboard                Open web dashboard (Insights tab)
+$ pf batch <file.json>        Batch analyze prompts
+
+Options:
+  --model, -m       Model (default: gpt-4o)
+  --budget, -b      Target token count for budget-aware compression (levels 1-4)
+  --intent, -i      Override intent detection (debug|code-gen|refactor|explain|creative|general)
+  --aggressive, -a  Maximum compression
+  --copy, -c        Copy optimized prompt to clipboard
+  --output, -o      Output only the optimized prompt (for piping)
+  --port, -p        Port for web dashboard (default: 3939)
+```
+
+---
+
+## MCP Server for Claude Code
+
+PromptFuel includes an MCP server (`@promptfuel/mcp`) that brings all its tools directly into Claude Code — no terminal switching required.
+
+### Setup (one-time)
+
+Run after installing:
+
+```bash
+pf setup
+```
+
+Or it runs automatically as part of `npm install -g promptfuel`. Restart Claude Code once, then tools are available in every conversation.
+
+### Available Tools (6)
+
+| Tool | What it does |
+| --- | --- |
+| `optimize_prompt` | Optimize a prompt — supports `budget` (target token count), `intent` override, `aggressive` compression |
+| `count_tokens` | Count tokens + estimated API cost for a model |
+| `compare_models` | Compare cost of a prompt across multiple models |
+| `analyze_strategies` | Scan a project directory for token-saving recommendations |
+| `list_models` | List all 23 supported model IDs |
+| `claude_insights` | Read `~/.claude/projects/` and show token usage + cost |
+
+### Auto-Optimize Mode
+
+Say this once in Claude Code:
+
+```
+enable auto optimize
+```
+
+Every subsequent message is automatically optimized for the rest of the session. Claude shows a one-line savings summary per message:
+
+```
+✓ Optimized: saved 14 tokens (41% reduction)
+```
+
+### Usage Examples
+
+```
+enable auto optimize
+
+Optimize this prompt: "Can you please help me understand how async/await works"
+
+optimize_prompt "Debug this error step by step" budget:200 aggressive:true
+
+optimize_prompt "Can you please refactor this function" intent:refactor
+
+Count the tokens in my system prompt for claude-sonnet-4-6
+
+Compare the cost of this prompt across GPT-4o, Claude Sonnet, and Haiku
+
+Scan this project for token-saving opportunities
+
+Show my Claude Code usage insights
+```
+
+### Manual Config
+
+```json
+// ~/.claude/mcp.json
+{
+  "mcpServers": {
+    "promptfuel": {
+      "command": "npx",
+      "args": ["@promptfuel/mcp"]
+    }
+  }
+}
+```
+
 ---
 
 ## Chrome Extension
 
-The Chrome extension adds real-time token and cost monitoring directly inside ChatGPT and Claude.
+The Chrome extension adds real-time token and cost monitoring directly inside ChatGPT, Claude, and Gemini.
 
 ### Installation
 
@@ -345,7 +449,7 @@ pnpm --filter @promptfuel/extension build
 2. Enable **Developer mode** (toggle in top-right)
 3. Click **Load unpacked**
 4. Select the `packages/extension/dist` folder
-5. Navigate to [chat.openai.com](https://chat.openai.com) or [claude.ai](https://claude.ai)
+5. Navigate to ChatGPT, Claude, or Gemini
 
 ### Features
 
@@ -361,13 +465,12 @@ Click the badge to expand the **detail panel**:
 - **Optimize** — click to see suggestions for the current prompt
 - **Side-by-Side Compare** — view original vs optimized prompt side by side
 - **Apply Optimized** — replace your prompt with the optimized version
-- **Model Selector** — switch between models
+- **Model Selector** — switch between models (auto-detected from the page)
 
 **Popup** (click the extension icon):
 - Current session stats (tokens used, cost)
 - Spending trends (today, this week, week-over-week change)
 - Average tokens per prompt
-- Model selector
 - Reset session button
 
 ### Supported Sites
@@ -376,6 +479,9 @@ Click the badge to expand the **detail panel**:
 | --- | --- |
 | ChatGPT | `chat.openai.com/*`, `chatgpt.com/*` |
 | Claude | `claude.ai/*` |
+| Gemini | `gemini.google.com/*` |
+
+Model is auto-detected from the page with retry logic (0 / 500ms / 1.5s / 3s). Manual model selection in the widget overrides auto-detection.
 
 ---
 
@@ -391,9 +497,6 @@ pnpm --filter @promptfuel/web dev
 
 # Build for production
 pnpm --filter @promptfuel/web build
-
-# Preview production build
-pnpm --filter @promptfuel/web preview
 ```
 
 ### Features
@@ -409,7 +512,7 @@ pnpm --filter @promptfuel/web preview
 9. **Show Optimized Prompt** — toggle to preview the cleaned-up version
 10. **Apply Optimization** — replaces the textarea content with the optimized prompt
 11. **Copy Optimized** — copies the optimized prompt to clipboard
-12. **Model Selector** — choose from 14+ models
+12. **Model Selector** — choose from 23+ models
 
 ### Insights Tab
 
@@ -457,7 +560,6 @@ const pf = new PromptFuel({ model: 'gpt-4o' });
 // Analyze a prompt
 const analysis = pf.analyze('Explain how database indexing works');
 console.log(analysis.tokens.input);     // 7
-console.log(analysis.tokens.total);     // 307
 console.log(analysis.cost.total);       // "$0.003008"
 
 // Optimize a prompt (intent is detected automatically)
@@ -468,39 +570,26 @@ console.log(result.intent);             // { type: "explain", confidence: 0.6, .
 console.log(result.tokenReduction);     // 8
 console.log(result.reductionPercent);   // 42
 console.log(result.optimizedPrompt);    // "Explain how database indexing works in detail"
-console.log(result.suggestions.length); // 2
-
-// Switch models
-pf.setModel('claude-sonnet-4-6');
-const claudeAnalysis = pf.analyze('Same prompt, different pricing');
 
 // List all supported models
 console.log(PromptFuel.listModels());
-// ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-3.5-turbo', 'o1', ...]
-
-// Get model pricing info
-const info = PromptFuel.getModelInfo('gpt-4o');
-console.log(info);
-// { input: 2.50, output: 10.00, context: 128000 }
 ```
 
 ### Intent Detection
 
-Every call to `optimize()` automatically classifies the prompt into one of 6 intent types. You can also use `detectIntent()` standalone.
+Every call to `optimize()` automatically classifies the prompt into one of 6 intent types.
 
 ```typescript
 import { optimize, detectIntent } from '@promptfuel/core';
 
-// Standalone intent detection
 const intent = detectIntent('Help me debug this error step by step');
 console.log(intent.type);           // "debug"
 console.log(intent.confidence);     // 0.83
 console.log(intent.matchedSignals); // ["error-keyword", "reasoning-marker"]
 
-// Intent affects optimization — "step by step" is preserved for debug prompts
+// "step by step" is preserved for debug prompts
 const result = optimize('Please help me debug this error step by step', 'gpt-4o');
 console.log(result.optimizedPrompt); // "Debug this error step by step"
-console.log(result.intent);          // { type: "debug", confidence: 0.83, ... }
 ```
 
 **6 intent types and what they protect:**
@@ -514,19 +603,10 @@ console.log(result.intent);          // { type: "debug", confidence: 0.83, ... }
 | `creative` | "write a story", tone/style instructions | Tone and style directives |
 | `general` | No strong signals detected | Nothing — full optimization applied |
 
-**What intent-gating does:**
-
-Each intent type has a configuration that controls:
-- **Skipped detectors** — e.g. debug skips `weak-hedging` (tentative language is fine in debugging)
-- **Skipped rewriter passes** — e.g. debug skips `question-restructuring` and `voice-transform`
-- **Protected patterns** — regex patterns whose matches are preserved through optimization (e.g. "step by step", code blocks, error messages)
-- **Compression level** — `light`, `moderate`, or `aggressive` default compression
-
 You can override intent detection manually:
 
 ```typescript
 const result = optimize('some prompt', 'gpt-4o', { intent: 'code-gen' });
-console.log(result.intent); // { type: "code-gen", confidence: 1, matchedSignals: ["manual-override"] }
 ```
 
 ### Token Budget Targeting
@@ -543,37 +623,21 @@ const result = optimize(
 );
 
 console.log(result.budget);
-// {
-//   levelApplied: 2,      // compression level used (1-4)
-//   targetMet: true,       // whether the budget was hit
-//   remainingGap: 0,       // tokens over budget (0 if met)
-//   targetTokens: 12
-// }
+// { levelApplied: 2, targetMet: true, remainingGap: 0, targetTokens: 12 }
 console.log(result.optimizedTokens); // 10
-console.log(result.intent);          // { type: "debug", ... }
+
+// Combine with intent override
+const r2 = optimize('some prompt', 'gpt-4o', { targetTokens: 20, intent: 'code-gen' });
 ```
 
-**How budget compression works:**
-
-The optimizer tries each level in order and stops when the token target is met:
+**Budget compression levels:**
 
 | Level | Detectors | Rewriter Passes | Context Truncation |
 | --- | --- | --- | --- |
 | 1 (light) | filler, formatting | none | no |
-| 2 (moderate) | - redundancy, duplicates | verbose-phrases, sentence-compression | no |
+| 2 (moderate) | + redundancy, duplicates | verbose-phrases, sentence-compression | no |
 | 3 (aggressive) | all 7 detectors | all 4 passes | no |
 | 4 (maximum) | all 7 detectors | all 4 passes | yes |
-
-Intent-gating still applies at each level — protected patterns are never removed regardless of compression level.
-
-You can combine budget targeting with manual intent override:
-
-```typescript
-const result = optimize('some prompt', 'gpt-4o', {
-  targetTokens: 20,
-  intent: 'code-gen',
-});
-```
 
 ### Context Monitoring
 
@@ -585,21 +649,16 @@ import { PromptFuel } from '@promptfuel/sdk';
 const pf = new PromptFuel({ model: 'gpt-4o' });
 const monitor = pf.createMonitor();
 
-// Add messages as the conversation progresses
 monitor.addMessage({ role: 'system', content: 'You are a helpful assistant.' });
 monitor.addMessage({ role: 'user', content: 'Explain React hooks.' });
 monitor.addMessage({ role: 'assistant', content: 'React hooks are functions...' });
-monitor.addMessage({ role: 'user', content: 'Show me an example with useState.' });
 
 const status = monitor.getStatus();
-console.log(status.totalTokens);      // 47
 console.log(status.percentUsed);      // 0 (of 128k context)
 console.log(status.warning);          // "green"
 console.log(status.remainingTokens);  // 127953
-console.log(status.contextWindow);    // 128000
 
-// Reset when starting a new conversation
-monitor.clear();
+monitor.clear(); // reset for new conversation
 ```
 
 **Warning levels:**
@@ -620,11 +679,10 @@ import { ContextMonitor } from '@promptfuel/sdk';
 
 const monitor = new ContextMonitor('claude-sonnet-4-6');
 
-// Add messages with cache metadata from Claude's API response
 monitor.addMessage({
   role: 'system',
   content: 'You are a code review assistant...',
-  cacheCreationTokens: 500,   // tokens written to cache (first request)
+  cacheCreationTokens: 500,
   cacheReadTokens: 0,
 });
 
@@ -632,145 +690,42 @@ monitor.addMessage({
   role: 'user',
   content: 'Review this function...',
   cacheCreationTokens: 0,
-  cacheReadTokens: 500,       // cache hit on second request
+  cacheReadTokens: 500,
 });
 
 const cacheStats = monitor.getCacheStats();
 console.log(cacheStats.cacheHitRate);          // 50 (percent)
 console.log(cacheStats.estimatedCacheSavings); // $0.001275
-console.log(cacheStats.totalInputTokens);      // 42
 ```
-
-Cache pricing on Claude:
-- **Cache creation**: 1.25x base input price (25% surcharge on first use)
-- **Cache read**: 0.1x base input price (90% discount on subsequent reads)
-
-### Cache Analysis API
-
-Analyze prompt history for semantic caching opportunities using `analyzeCacheOpportunity()` from `@promptfuel/core`.
-
-**Input type:**
-
-```typescript
-interface CachePromptEntry {
-  prompt: string;
-  tokens: number;
-  cost: number;
-  model: string;
-  timestamp?: string;
-}
-```
-
-**Output type:**
-
-```typescript
-interface CacheAnalysis {
-  clusters: PromptCluster[];        // groups of similar prompts
-  totalPrompts: number;
-  cacheablePrompts: number;
-  estimatedCacheHitRate: number;    // percentage
-  estimatedMonthlySavings: number;  // dollars
-  estimatedMonthlyTokenSavings: number;
-  topPatterns: Array<{ pattern: string; count: number; savings: number }>;
-  setupGuides: CacheSetupGuide[];   // 3 guides (easy/medium/advanced)
-}
-```
-
-**Usage example:**
-
-```typescript
-import { analyzeCacheOpportunity } from '@promptfuel/core';
-
-const entries: CachePromptEntry[] = [
-  { prompt: 'Explain React hooks', tokens: 5, cost: 0.000013, model: 'gpt-4o' },
-  { prompt: 'Explain React hooks in detail', tokens: 7, cost: 0.000018, model: 'gpt-4o' },
-  { prompt: 'How do React hooks work?', tokens: 6, cost: 0.000015, model: 'gpt-4o' },
-  { prompt: 'Write a Python sort function', tokens: 7, cost: 0.000018, model: 'gpt-4o' },
-];
-
-const analysis = analyzeCacheOpportunity(entries);
-
-console.log(analysis.estimatedCacheHitRate);         // e.g. 75
-console.log(analysis.estimatedMonthlySavings);       // e.g. 12.50
-console.log(analysis.clusters.length);               // e.g. 2
-console.log(analysis.topPatterns[0].pattern);        // e.g. "Explain React hooks"
-console.log(analysis.setupGuides.map(g => g.name));  // ["Redis", "Momento", "Custom"]
-```
-
-The analyzer uses greedy single-pass clustering with Jaccard similarity (0.45 threshold) to group similar prompts. It calculates cost savings assuming a 90% reduction on cached token reads.
 
 ### Custom Optimization Rules
 
 Add your own domain-specific optimization rules.
 
 ```typescript
-import { registerRule, unregisterRule, clearRules, optimize } from '@promptfuel/sdk';
-import type { CustomRule } from '@promptfuel/sdk';
+import { registerRule, unregisterRule, optimize } from '@promptfuel/sdk';
 
-// Example: Flag overly polite language
-const politenessRule: CustomRule = {
+registerRule({
   name: 'no-politeness',
   detect: (text) => {
     const results = [];
     if (/\bplease\b/i.test(text)) {
       results.push({
-        original: 'please',
-        optimized: '',
-        tokensSaved: 0,
+        original: 'please', optimized: '', tokensSaved: 0,
         rule: 'no-politeness',
         description: 'Remove "please" — LLMs respond the same without it',
       });
     }
-    if (/\bthank you\b/i.test(text)) {
-      results.push({
-        original: 'thank you',
-        optimized: '',
-        tokensSaved: 0,
-        rule: 'no-politeness',
-        description: 'Remove "thank you" — saves tokens without affecting output',
-      });
-    }
     return results;
   },
-  apply: (text) => {
-    return text
-      .replace(/\bplease\s*/gi, '')
-      .replace(/\bthank you\.?\s*/gi, '')
-      .replace(/\s{2,}/g, ' ')
-      .trim();
-  },
-};
+  apply: (text) => text.replace(/\bplease\s*/gi, '').trim(),
+});
 
-// Register the rule
-registerRule(politenessRule);
+const result = optimize('Please write a sort function.', 'gpt-4o');
+// → "Write a sort function."
 
-// Now optimize() includes your custom rule
-const result = optimize('Please write a Python sort function. Thank you.', 'gpt-4o');
-console.log(result.optimizedPrompt);
-// "Write a Python sort function."
-console.log(result.suggestions.filter(s => s.rule === 'no-politeness'));
-// [{ description: 'Remove "please"...' }, { description: 'Remove "thank you"...' }]
-
-// Remove a specific rule
 unregisterRule('no-politeness');
-
-// Or clear all custom rules
-clearRules();
 ```
-
-**Rule structure:**
-
-```typescript
-interface CustomRule {
-  name: string;                                  // Unique identifier
-  detect: (text: string) => OptimizationResult[]; // Find issues (required)
-  apply?: (text: string) => string;               // Fix issues (optional)
-}
-```
-
-- `detect` — analyzes the text and returns suggestions (read-only)
-- `apply` — transforms the text (only called if provided)
-- Rules with the same `name` replace existing ones on re-register
 
 ### Express Middleware
 
@@ -783,42 +738,8 @@ import { promptFuelMiddleware } from '@promptfuel/sdk/middleware';
 const app = express();
 app.use(express.json());
 
-// Monitor all requests to /api/chat
-app.use('/api/chat', promptFuelMiddleware({
-  model: 'gpt-4o',
-  warnAt: 0.75,   // warn when context is 75%+ full
-}));
-
-app.post('/api/chat', (req, res) => {
-  // PromptFuel headers are automatically added to the response:
-  //   X-PromptFuel-Input-Tokens: 150
-  //   X-PromptFuel-Estimated-Output-Tokens: 500
-  //   X-PromptFuel-Estimated-Cost: $0.0054
-
-  // For conversation messages (req.body.messages):
-  //   X-PromptFuel-Context-Tokens: 2500
-  //   X-PromptFuel-Context-Percent: 25
-  //   X-PromptFuel-Context-Warning: green
-  //   X-PromptFuel-Context-Remaining: 125500
-  //   X-PromptFuel-Context-Alert: Context 80% full  (only if over warnAt)
-
-  res.json({ message: 'ok' });
-});
-```
-
-**Request body formats supported:**
-
-```typescript
-// Single prompt
-{ "prompt": "Your prompt text" }
-
-// Conversation messages
-{ "messages": [
-    { "role": "system", "content": "..." },
-    { "role": "user", "content": "..." },
-    { "role": "assistant", "content": "..." }
-  ]
-}
+app.use('/api/chat', promptFuelMiddleware({ model: 'gpt-4o', warnAt: 0.75 }));
+// Adds headers: X-PromptFuel-Input-Tokens, X-PromptFuel-Estimated-Cost, etc.
 ```
 
 ---
@@ -849,15 +770,27 @@ app.post('/api/chat', (req, res) => {
 | `claude-3-opus` | $15.00/1M | $75.00/1M | 200,000 |
 | `claude-3-haiku` | $0.25/1M | $1.25/1M | 200,000 |
 
-Use the `--model` flag (CLI) or `model` option (SDK) to select a model. Default is `gpt-4o`.
+### Google (Gemini)
 
-Unknown model variants (e.g. `gpt-4o-2024-11-20`) are automatically matched to their base model pricing.
+| Model | Input Cost | Output Cost | Context Window |
+| --- | --- | --- | --- |
+| `gemini-3.1-pro` | $2.00/1M | $12.00/1M | 1,000,000 |
+| `gemini-2.5-pro` | $1.25/1M | $10.00/1M | 1,000,000 |
+| `gemini-3-flash` | $0.50/1M | $3.00/1M | 1,000,000 |
+| `gemini-2.5-flash` | $0.30/1M | $2.50/1M | 1,000,000 |
+| `gemini-2.5-flash-lite` | $0.10/1M | $0.40/1M | 1,000,000 |
+| `gemini-2.0-flash` | $0.10/1M | $0.40/1M | 1,000,000 |
+| `gemini-2.0-flash-lite` | $0.075/1M | $0.30/1M | 1,000,000 |
+| `gemini-1.5-pro` | $1.25/1M | $5.00/1M | 2,000,000 |
+| `gemini-1.5-flash` | $0.075/1M | $0.30/1M | 1,000,000 |
+
+Use the `--model` flag (CLI) or `model` option (SDK) to select a model. Default is `gpt-4o`.
 
 ---
 
 ## How Optimization Works
 
-PromptFuel uses a rule-based optimization pipeline (no API calls needed — everything runs locally).
+PromptFuel uses a rule-based optimization pipeline (no API calls — everything runs locally).
 
 ### Optimization Pipeline
 
@@ -897,7 +830,6 @@ Optimized prompt + intent + budget result + suggestions + token savings
 | **Formatting cleanup** | Removes excess whitespace, blank lines, over-structured markdown | 5 blank lines → 2 |
 | **Negative instructions** | Rephrases "don't" as positive directives | "Don't be verbose" → "Be concise" |
 | **Weak hedging** | Removes tentative language | "Try to explain" → "Explain" |
-| **Missing format** | Flags prompts without output format guidance | Suggests adding "Respond in..." |
 
 ### Verbosity Score
 
@@ -927,9 +859,10 @@ promptfuel/
 ├── packages/
 │   ├── core/        # Shared engine (tokenizer, optimizer, intent, rewriter, cost, monitor, strategies)
 │   ├── sdk/         # npm package for developers
-│   ├── cli/         # Terminal commands and TUI dashboard
-│   ├── web/         # React web interface
-│   └── extension/   # Chrome extension
+│   ├── cli/         # Terminal commands, TUI dashboard, web server, insights reader
+│   ├── web/         # React web dashboard
+│   ├── mcp/         # MCP server for Claude Code (6 tools + auto-optimize prompt)
+│   └── extension/   # Chrome extension (Manifest V3, ChatGPT + Claude + Gemini)
 ├── package.json
 ├── pnpm-workspace.yaml
 └── tsconfig.base.json
@@ -941,7 +874,7 @@ promptfuel/
 pnpm install          # Install all dependencies
 pnpm build            # Build all packages
 pnpm dev              # Watch mode (all packages)
-pnpm test             # Run all tests
+pnpm test             # Run all tests (124 core tests)
 pnpm lint             # Lint all packages
 pnpm clean            # Remove all dist folders
 ```
@@ -949,22 +882,9 @@ pnpm clean            # Remove all dist folders
 ### Package-specific
 
 ```bash
-pnpm --filter @promptfuel/core test     # Run core tests only
-pnpm --filter @promptfuel/cli build     # Build CLI only
-pnpm --filter @promptfuel/web dev       # Start web dev server
+pnpm --filter @promptfuel/core test        # Run core tests
+pnpm --filter @promptfuel/cli build        # Build CLI
+pnpm --filter @promptfuel/web dev          # Start web dev server
+pnpm --filter @promptfuel/mcp build        # Build MCP server
 pnpm --filter @promptfuel/extension build  # Build Chrome extension
-```
-
-### Running Tests
-
-```bash
-$ pnpm --filter @promptfuel/core test
-
- ✓ src/__tests__/cost.test.ts       (12 tests)
- ✓ src/__tests__/optimizer.test.ts  (13 tests)
- ✓ src/__tests__/tokenizer.test.ts  (9 tests)
- ✓ src/__tests__/monitor.test.ts    (7 tests)
-
- Test Files  4 passed (4)
-      Tests  41 passed (41)
 ```
