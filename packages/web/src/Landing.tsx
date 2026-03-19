@@ -98,6 +98,8 @@ const FEATURES = [
   { icon: '🌐', title: 'Chrome Extension', desc: 'Floating widget on ChatGPT, Claude, and Gemini that shows live token count and cost estimate as you type — before you hit send.' },
   { icon: '⌨️', title: 'Interactive TUI', desc: 'Run promptfuel with no arguments to launch a full terminal UI — analyze, optimize, and browse history without leaving the shell.' },
   { icon: '📦', title: 'Batch Processing', desc: 'Analyze or optimize multiple prompts at once from a JSON file. Ideal for auditing prompt libraries or pre-processing datasets offline.' },
+  { icon: '📈', title: 'Verbosity Scoring', desc: 'Every prompt gets a 0–100 verbosity score before and after optimization. Know exactly how bloated your writing is and how much the rewriter cleaned it up.' },
+  { icon: '🔒', title: 'Fully Local & Private', desc: 'Zero API calls — everything runs locally on your machine. Rule-based and deterministic. No data is sent anywhere, no account required.' },
 ];
 
 const PIPELINE = [
