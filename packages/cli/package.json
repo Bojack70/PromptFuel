@@ -1,6 +1,6 @@
 {
   "name": "promptfuel",
-  "version": "1.0.24",
+  "version": "1.0.25",
   "description": "Interactive CLI and TUI for token counting, cost estimation, and prompt optimization",
   "type": "module",
   "bin": {
@@ -17,7 +17,8 @@
     "dev": "tsup --watch",
     "test": "vitest run",
     "lint": "tsc --noEmit",
-    "postinstall": "node ./dist/postinstall.js || true"
+    "postinstall": "node ./dist/postinstall.js || true",
+    "preuninstall": "node ./dist/preuninstall.js || true"
   },
   "dependencies": {
     "@promptfuel/core": "^1.0.0",

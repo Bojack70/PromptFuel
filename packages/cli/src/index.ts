@@ -7,6 +7,7 @@ const cli = meow(`
   Commands
     pf                        Launch interactive TUI
     pf setup                  Add "pf" alias to your shell (run once)
+    pf uninstall              Remove alias + MCP config, then npm uninstall
     pf optimize <prompt>      Optimize a prompt
     pf analyze <prompt>       Analyze token count & cost
     pf strategies [dir]       Analyze project for token-saving strategies
@@ -72,6 +73,12 @@ async function main() {
     case 'setup': {
       const { runSetup } = await import('./commands/setup.js');
       await runSetup();
+      break;
+    }
+
+    case 'uninstall': {
+      const { runUninstall } = await import('./commands/uninstall.js');
+      await runUninstall();
       break;
     }
 
