@@ -83,6 +83,8 @@ export async function runUninstall(): Promise<void> {
   lines.push('');
   lines.push('  Run: npm uninstall -g promptfuel');
   lines.push('');
+  lines.push('  ✓ Uninstall successful');
+  lines.push('');
 
   process.stdout.write(lines.join('\n') + '\n');
 }
