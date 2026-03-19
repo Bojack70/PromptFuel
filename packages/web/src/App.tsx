@@ -1472,7 +1472,7 @@ export function Dashboard({ initialTab }: { initialTab?: string } = {}) {
                     step: '1',
                     label: 'Install PromptFuel',
                     hint: '📟 Run in your terminal (iTerm, Terminal.app, or the terminal tab in VS Code)',
-                    code: 'npm install -g promptfuel',
+                    code: 'npm install -g promptfuel --no-fund',
                   },
                   {
                     step: '2',
