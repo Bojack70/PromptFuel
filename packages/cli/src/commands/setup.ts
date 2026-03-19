@@ -101,16 +101,11 @@ export async function runSetup(): Promise<void> {
 
   // ── Quick start ───────────────────────────────────────────────────────────
   lines.push('');
-  lines.push('  Quick start:');
+  lines.push('  Quick start (works in any terminal, including Claude Code):');
   lines.push('    pf optimize "your prompt here"   — optimize & cut tokens');
   lines.push('    pf analyze  "your prompt here"   — token count + cost');
   lines.push('    pf strategies                    — browse prompt strategies');
   lines.push('    pf dashboard                     — open web dashboard');
-  lines.push('');
-  lines.push('  Inside Claude Code (after restart):');
-  lines.push('    "Optimize this prompt: ..."');
-  lines.push('    "Count tokens and estimate cost for this text"');
-  lines.push('    "Analyze strategies for my project"');
   lines.push('');
 
   process.stdout.write(lines.join('\n'));
