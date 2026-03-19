@@ -31,7 +31,7 @@ It works as a **CLI tool**, a **Chrome extension**, a **web dashboard**, an **MC
 
 ```bash
 # Install globally — automatically adds "pf" alias + configures MCP for Claude Code
-npm install -g promptfuel
+npm install -g promptfuel --no-fund
 
 # Optimize a prompt (intent is detected automatically)
 pf optimize "I would like you to please explain how React hooks work in detail"

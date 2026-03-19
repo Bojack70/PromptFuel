@@ -39,7 +39,7 @@ A complete toolkit for intent-aware prompt optimization, token budget targeting,
 
 ```bash
 # Install globally — automatically adds "pf" alias + configures MCP for Claude Code
-npm install -g promptfuel
+npm install -g promptfuel --no-fund
 
 # Optimize a prompt (intent detected automatically)
 pf optimize "I would like you to please explain how React hooks work in detail"
@@ -65,7 +65,7 @@ PromptFuel requires **Node.js 18+**.
 
 ```bash
 # Install globally (recommended)
-npm install -g promptfuel
+npm install -g promptfuel --no-fund
 ```
 
 This automatically:
