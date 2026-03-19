@@ -97,7 +97,6 @@ const FEATURES = [
   { icon: '🌍', title: 'Web Dashboard', desc: 'Opens directly to the Insights tab — powered by real Claude Code usage data. Plus Analyze & Optimize, History, and Strategies tabs.' },
   { icon: '🌐', title: 'Chrome Extension', desc: 'Floating widget on ChatGPT, Claude, and Gemini that shows live token count and cost estimate as you type — before you hit send.' },
   { icon: '⌨️', title: 'Interactive TUI', desc: 'Run promptfuel with no arguments to launch a full terminal UI — analyze, optimize, and browse history without leaving the shell.' },
-  { icon: '📦', title: 'Batch Processing', desc: 'Analyze or optimize multiple prompts at once from a JSON file. Ideal for auditing prompt libraries or pre-processing datasets offline.' },
   { icon: '📈', title: 'Verbosity Scoring', desc: 'Every prompt gets a 0–100 verbosity score before and after optimization. Know exactly how bloated your writing is and how much the rewriter cleaned it up.' },
   { icon: '🔒', title: 'Fully Local & Private', desc: 'Zero API calls — everything runs locally on your machine. Rule-based and deterministic. No data is sent anywhere, no account required.' },
 ];
@@ -213,7 +212,7 @@ export function Landing() {
       <section style={{
         position: 'relative', minHeight: '100vh',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        overflow: 'hidden', padding: '1rem', paddingTop: '3.5rem',
+        overflow: 'hidden', padding: '1rem', paddingTop: '6rem',
       }}>
         {/* Animated glow blob */}
         <div style={{
@@ -244,8 +243,8 @@ export function Landing() {
             <br />Write better prompts.
           </h1>
 
-          <p style={{ fontSize: 'clamp(1rem, 2vw, 1.25rem)', color: C.mutedFg, maxWidth: '40rem', margin: '0 auto 2rem', lineHeight: 1.7 }}>
-            Trim your prompts before you send — cutting token count by 40–60% without changing what you're asking. Works with ChatGPT, Claude, and Gemini. Free, local, no account needed.
+          <p style={{ fontSize: 'clamp(0.875rem, 1.5vw, 1rem)', color: C.mutedFg, maxWidth: '36rem', margin: '0 auto 2rem', lineHeight: 1.7 }}>
+            Trim your prompts before you send — cut token count by 40–60% without changing what you're asking. Works with ChatGPT, Claude, and Gemini.
           </p>
 
           {/* Stat pills */}
@@ -287,11 +286,8 @@ export function Landing() {
             </a>
           </div>
 
-          {/* GitHub stars + trust chips */}
+          {/* Trust chips */}
           <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', gap: '1.25rem', marginBottom: '3rem' }}>
-            <a href="https://github.com/Bojack70/PromptFuel" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center' }}>
-              <img src="https://img.shields.io/github/stars/Bojack70/PromptFuel?style=social" alt="GitHub Stars" style={{ height: 20 }} />
-            </a>
             {['🔒 Fully local', '✓ Open source', '⚡ No account needed'].map(chip => (
               <span key={chip} style={{ fontSize: '0.8rem', color: C.mutedFg }}>{chip}</span>
             ))}
