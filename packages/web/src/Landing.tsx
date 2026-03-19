@@ -235,7 +235,7 @@ export function Landing() {
             fontSize: '0.875rem', color: C.mutedFg, marginBottom: '2rem',
           }}>
             <span style={{ color: C.primary }}><FlameIcon size={16} /></span>
-            Open-source prompt optimization toolkit
+            Free & open-source · No account needed · Zero API calls
           </div>
 
           <h1 style={{ fontSize: 'clamp(2.5rem, 6vw, 4.5rem)', fontWeight: 800, letterSpacing: '-0.025em', lineHeight: 1.1, marginBottom: '1.5rem' }}>
@@ -244,11 +244,29 @@ export function Landing() {
             <br />Write better prompts.
           </h1>
 
-          <p style={{ fontSize: 'clamp(1rem, 2vw, 1.25rem)', color: C.mutedFg, maxWidth: '40rem', margin: '0 auto 2.5rem', lineHeight: 1.7 }}>
-            Intent-aware prompt optimization, token budget targeting, and cost intelligence — across ChatGPT, Claude, Gemini, and 23 models. Zero API calls required.
+          <p style={{ fontSize: 'clamp(1rem, 2vw, 1.25rem)', color: C.mutedFg, maxWidth: '40rem', margin: '0 auto 2rem', lineHeight: 1.7 }}>
+            Trim your prompts before you send — cutting token count by 40–60% without changing what you're asking. Works with ChatGPT, Claude, and Gemini. Free, local, no account needed.
           </p>
 
-          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', gap: 16, marginBottom: '3rem' }}>
+          {/* Stat pills */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '1rem', marginBottom: '2.5rem' }}>
+            {([
+              { stat: '40–60%', label: 'avg token reduction' },
+              { stat: '23', label: 'models supported' },
+              { stat: '100%', label: 'local & private' },
+            ] as { stat: string; label: string }[]).map(({ stat, label }) => (
+              <div key={label} style={{
+                display: 'flex', flexDirection: 'column', alignItems: 'center',
+                background: C.card, border: `1px solid ${C.border}`,
+                borderRadius: C.radius, padding: '0.75rem 1.5rem', minWidth: '8rem',
+              }}>
+                <span style={{ fontSize: '1.5rem', fontWeight: 800, background: C.gradient, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', lineHeight: 1 }}>{stat}</span>
+                <span style={{ fontSize: '0.75rem', color: C.mutedFg, marginTop: 4 }}>{label}</span>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', gap: 16, marginBottom: '1.5rem' }}>
             <button onClick={() => scrollTo(quickstartRef)} className="pf-btn-primary" style={{
               display: 'inline-flex', alignItems: 'center', gap: 8,
               background: C.gradient, color: C.primaryFg,
@@ -267,6 +285,16 @@ export function Landing() {
             }}>
               <GitHubIcon size={16} /> View on GitHub →
             </a>
+          </div>
+
+          {/* GitHub stars + trust chips */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', gap: '1.25rem', marginBottom: '3rem' }}>
+            <a href="https://github.com/Bojack70/PromptFuel" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center' }}>
+              <img src="https://img.shields.io/github/stars/Bojack70/PromptFuel?style=social" alt="GitHub Stars" style={{ height: 20 }} />
+            </a>
+            {['🔒 Fully local', '✓ Open source', '⚡ No account needed'].map(chip => (
+              <span key={chip} style={{ fontSize: '0.8rem', color: C.mutedFg }}>{chip}</span>
+            ))}
           </div>
 
           {/* Terminal demo */}
@@ -299,7 +327,7 @@ export function Landing() {
       <section ref={featuresRef} style={{ padding: '6rem 1rem' }}>
         <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
           <h2 style={{ fontSize: 'clamp(1.75rem, 4vw, 2.25rem)', fontWeight: 700, marginBottom: '1rem' }}>
-            Everything you need to <GradientText>cut AI costs</GradientText>
+            Cut AI costs by <GradientText>40–60%</GradientText> — without breaking your prompts
           </h2>
           <p style={{ color: C.mutedFg, fontSize: '1.125rem', maxWidth: '36rem', margin: '0 auto' }}>
             A complete toolkit spanning CLI, browser extension, web dashboard, and SDK.
@@ -359,29 +387,16 @@ export function Landing() {
             </div>
           ))}
         </div>
-      </section>
-
-      {/* ══ CODE DEMO ═══════════════════════════════════════════════════════ */}
-      <section style={{ padding: '6rem 1rem' }}>
-        <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
-          <h2 style={{ fontSize: 'clamp(1.75rem, 4vw, 2.25rem)', fontWeight: 700, marginBottom: '1rem' }}>
-            Use it <GradientText>programmatically</GradientText>
-          </h2>
-          <p style={{ color: C.mutedFg, fontSize: '1.125rem', maxWidth: '36rem', margin: '0 auto' }}>
-            npm SDK for Node.js apps — analyze, optimize, and monitor tokens in your codebase.
+        <div style={{ maxWidth: '40rem', margin: '3rem auto 0', textAlign: 'center', padding: '1.25rem 1.5rem', background: C.surfaceElevated, border: `1px solid ${C.border}`, borderRadius: C.radius }}>
+          <p style={{ fontSize: '0.9rem', color: C.mutedFg, margin: 0, lineHeight: 1.7 }}>
+            <strong style={{ color: C.fg }}>Your prompt's meaning is always preserved.</strong>{' '}
+            Intent-aware gating ensures critical phrases like "step by step", code blocks, and scope constraints are never removed — at any compression level.
           </p>
-        </div>
-        <div style={{ maxWidth: '64rem', margin: '0 auto' }}>
-          <TerminalWindow title="sdk-example.ts">
-            <pre style={{ margin: 0, whiteSpace: 'pre-wrap', color: C.mutedFg, fontSize: '0.875rem', lineHeight: 1.7 }}>
-              {SDK_EXAMPLE}
-            </pre>
-          </TerminalWindow>
         </div>
       </section>
 
       {/* ══ QUICK START ═════════════════════════════════════════════════════ */}
-      <section ref={quickstartRef} style={{ padding: '6rem 1rem', background: C.muted }}>
+      <section ref={quickstartRef} style={{ padding: '6rem 1rem' }}>
         <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
           <h2 style={{ fontSize: 'clamp(1.75rem, 4vw, 2.25rem)', fontWeight: 700, marginBottom: '1rem' }}>
             <GradientText>Quick Start</GradientText>
@@ -436,6 +451,25 @@ export function Landing() {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* ══ CODE DEMO ═══════════════════════════════════════════════════════ */}
+      <section style={{ padding: '6rem 1rem', background: C.muted }}>
+        <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
+          <h2 style={{ fontSize: 'clamp(1.75rem, 4vw, 2.25rem)', fontWeight: 700, marginBottom: '1rem' }}>
+            Use it <GradientText>programmatically</GradientText>
+          </h2>
+          <p style={{ color: C.mutedFg, fontSize: '1.125rem', maxWidth: '36rem', margin: '0 auto' }}>
+            npm SDK for Node.js apps — analyze, optimize, and monitor tokens in your codebase.
+          </p>
+        </div>
+        <div style={{ maxWidth: '64rem', margin: '0 auto' }}>
+          <TerminalWindow title="sdk-example.ts">
+            <pre style={{ margin: 0, whiteSpace: 'pre-wrap', color: C.mutedFg, fontSize: '0.875rem', lineHeight: 1.7 }}>
+              {SDK_EXAMPLE}
+            </pre>
+          </TerminalWindow>
         </div>
       </section>
 
