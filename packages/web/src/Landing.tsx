@@ -109,7 +109,7 @@ const PIPELINE = [
 ];
 
 const QUICKSTART_USERS = [
-  { label: '1. Install (sets up pf alias automatically)', code: 'npm install -g promptfuel', note: 'Permission error? Either use: sudo npm install -g promptfuel  —  or install Node via nvm (recommended, no sudo needed).' },
+  { label: '1. Install (sets up pf alias automatically)', code: 'npm install -g promptfuel --no-fund', note: 'Permission error? Either use: sudo npm install -g promptfuel --no-fund  —  or install Node via nvm (recommended, no sudo needed).' },
   { label: 'Auto-optimize every message (say this in Claude Code)', code: 'enable auto optimize' },
   { label: 'MCP: Optimize with budget + aggressive (say in Claude Code)', code: 'optimize_prompt "Explain how React hooks work in detail" budget:200 aggressive:true' },
   { label: 'MCP: Optimize with intent override (say in Claude Code)', code: 'optimize_prompt "Can you please help me debug this error" intent:debug' },

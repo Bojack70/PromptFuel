@@ -64,17 +64,24 @@ function setupMcp(): { status: 'added' | 'exists' | 'error'; error?: string } {
 }
 
 export async function runSetup(): Promise<void> {
-  const lines: string[] = [''];
+  const lines: string[] = [];
+
+  // ── Header ────────────────────────────────────────────────────────────────
+  lines.push('');
+  lines.push('  ╔══════════════════════════════════════════════╗');
+  lines.push('  ║   PromptFuel installed successfully!         ║');
+  lines.push('  ╚══════════════════════════════════════════════╝');
+  lines.push('');
 
   // ── Alias setup ──────────────────────────────────────────────────────────
   const alias = setupAlias();
   if (alias.status === 'added') {
-    lines.push(`  ✓ Added alias pf="promptfuel" to ${alias.configFile}`);
-    lines.push(`    Reload your shell: source ${alias.configFile}`);
+    lines.push(`  ✓ Shell alias added: pf="promptfuel" → ${alias.configFile}`);
+    lines.push(`    Run: source ${alias.configFile}  (or open a new terminal)`);
   } else if (alias.status === 'exists') {
-    lines.push(`  ✓ Shell alias already set up (${alias.configFile})`);
+    lines.push(`  ✓ Shell alias already set (${alias.configFile})`);
   } else {
-    lines.push('  ⚠ Could not detect shell — add manually to ~/.zshrc:');
+    lines.push('  ⚠ Could not detect shell — add to ~/.zshrc manually:');
     lines.push('      alias pf="promptfuel"');
   }
 
@@ -83,17 +90,28 @@ export async function runSetup(): Promise<void> {
   // ── MCP setup ────────────────────────────────────────────────────────────
   const mcp = setupMcp();
   if (mcp.status === 'added') {
-    lines.push('  ✓ Added PromptFuel MCP server to ~/.claude/mcp.json');
-    lines.push('    Restart Claude Code to activate — then ask Claude:');
-    lines.push('    "Optimize this prompt: ..."');
-    lines.push('    "Analyze strategies for this project"');
+    lines.push('  ✓ Claude Code MCP server configured (~/.claude/mcp.json)');
+    lines.push('    Restart Claude Code once to activate it.');
   } else if (mcp.status === 'exists') {
-    lines.push('  ✓ MCP server already configured in ~/.claude/mcp.json');
+    lines.push('  ✓ Claude Code MCP server already configured');
   } else {
     lines.push(`  ⚠ Could not write ~/.claude/mcp.json: ${mcp.error}`);
     lines.push('    Add manually: https://github.com/Bojack70/PromptFuel#mcp');
   }
 
+  // ── Quick start ───────────────────────────────────────────────────────────
   lines.push('');
+  lines.push('  Quick start:');
+  lines.push('    pf optimize "your prompt here"   — optimize & cut tokens');
+  lines.push('    pf analyze  "your prompt here"   — token count + cost');
+  lines.push('    pf strategies                    — browse prompt strategies');
+  lines.push('    pf dashboard                     — open web dashboard');
+  lines.push('');
+  lines.push('  Inside Claude Code (after restart):');
+  lines.push('    "Optimize this prompt: ..."');
+  lines.push('    "Count tokens and estimate cost for this text"');
+  lines.push('    "Analyze strategies for my project"');
+  lines.push('');
+
   process.stdout.write(lines.join('\n'));
 }
