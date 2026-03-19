@@ -331,10 +331,10 @@ function updateWidget(text: string): void {
   const contextLabelEl = $('pf-context-label');
   const contextRemainingEl = $('pf-context-remaining');
 
-  if (tokenCountEl) tokenCountEl.textContent = `${tokens.inputTokens.toLocaleString()} tokens`;
+  if (tokenCountEl) tokenCountEl.textContent = `${tokens.inputTokens.toLocaleString('en-US')} tokens`;
   if (costEl) costEl.textContent = formatCost(cost.totalCost);
-  if (inputTokensEl) inputTokensEl.textContent = tokens.inputTokens.toLocaleString();
-  if (outputTokensEl) outputTokensEl.textContent = `~${tokens.estimatedOutputTokens.toLocaleString()}`;
+  if (inputTokensEl) inputTokensEl.textContent = tokens.inputTokens.toLocaleString('en-US');
+  if (outputTokensEl) outputTokensEl.textContent = `~${tokens.estimatedOutputTokens.toLocaleString('en-US')}`;
   if (inputCostEl) inputCostEl.textContent = formatCost(cost.inputCost);
   if (outputCostEl) outputCostEl.textContent = formatCost(cost.outputCost);
   if (totalCostEl) totalCostEl.textContent = formatCost(cost.totalCost);
@@ -345,7 +345,7 @@ function updateWidget(text: string): void {
     contextBarEl.style.backgroundColor = colors[context.warning];
   }
   if (contextLabelEl) contextLabelEl.textContent = `${context.percentUsed}% used`;
-  if (contextRemainingEl) contextRemainingEl.textContent = `${context.remainingTokens.toLocaleString()} remaining`;
+  if (contextRemainingEl) contextRemainingEl.textContent = `${context.remainingTokens.toLocaleString('en-US')} remaining`;
 }
 
 function getWidgetStyles(): string {
