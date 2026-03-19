@@ -109,7 +109,8 @@ const PIPELINE = [
 ];
 
 const QUICKSTART_USERS = [
-  { label: '1. Install (sets up pf alias automatically)', code: 'npm install -g promptfuel --no-fund', note: 'Permission error? Either use: sudo npm install -g promptfuel --no-fund  —  or install Node via nvm (recommended, no sudo needed).' },
+  { label: '1. Install — run this from your system terminal', code: 'npm install -g promptfuel --no-fund', note: 'Permission error? Either use: sudo npm install -g promptfuel --no-fund  —  or install Node via nvm (recommended, no sudo needed).' },
+  { header: 'Once installed — run these from any terminal or Claude Code:' },
   { label: 'Auto-optimize every message (say this once in Claude Code chat)', code: 'enable auto optimize' },
   { label: 'Optimize a prompt',          code: 'pf optimize "I would like you to please explain how React hooks work in detail"' },
   { label: 'Maximum compression',        code: 'pf optimize "You should basically just simply explain how this very complex system works" --aggressive' },
@@ -394,7 +395,12 @@ export function Landing() {
             For users
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '3rem' }}>
-            {QUICKSTART_USERS.map(step => (
+            {QUICKSTART_USERS.map((step, i) => (
+              'header' in step ? (
+                <p key={i} style={{ fontSize: '0.75rem', fontWeight: 700, color: C.primary, textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: '0.5rem', marginBottom: '-0.25rem', fontFamily: C.mono }}>
+                  {step.header}
+                </p>
+              ) : (
               <div key={step.label} style={{ borderRadius: '0.5rem', border: `1px solid ${C.border}`, background: C.surfaceCode, padding: '1rem' }}>
                 <p style={{ fontSize: '0.75rem', color: C.mutedFg, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem', fontFamily: C.mono }}>
                   {step.label}
@@ -408,6 +414,7 @@ export function Landing() {
                   </p>
                 )}
               </div>
+              )
             ))}
           </div>
 
