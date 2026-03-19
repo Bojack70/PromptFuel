@@ -19,9 +19,16 @@ server.tool(
   {
     prompt: z.string().describe('The prompt text to optimize'),
     model: z.string().optional().describe('Model ID to calculate costs for (e.g. claude-sonnet-4-6, gpt-4o). Defaults to claude-sonnet-4-6'),
+    budget: z.number().optional().describe('Target token count to compress to (e.g. 500)'),
+    intent: z.string().optional().describe('Override intent detection: code, creative, qa, summarize, translate, general'),
+    aggressive: z.boolean().optional().describe('Apply aggressive compression for ~35-55% reduction'),
   },
-  async ({ prompt, model = 'claude-sonnet-4-6' }) => {
-    const result = optimize(prompt, model);
+  async ({ prompt, model = 'claude-sonnet-4-6', budget, intent, aggressive }) => {
+    const result = optimize(prompt, model, {
+      ...(budget !== undefined ? { targetTokens: budget } : {}),
+      ...(intent !== undefined ? { intent: intent as any } : {}),
+      ...(aggressive ? { aggressive: true } : {}),
+    });
     const lines = [
       `**Optimized Prompt:**`,
       `${result.optimizedPrompt}`,
