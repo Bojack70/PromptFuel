@@ -109,25 +109,25 @@ const PIPELINE = [
 ];
 
 const QUICKSTART_USERS = [
-  { label: '1. Install (sets up pf alias automatically)', code: '$ npm install -g promptfuel' },
+  { label: '1. Install (sets up pf alias automatically)', code: 'npm install -g promptfuel' },
   { label: 'Auto-optimize every message (say this in Claude Code)', code: 'enable auto optimize' },
   { label: 'MCP: Optimize with budget + aggressive (say in Claude Code)', code: 'optimize_prompt "Explain how React hooks work in detail" budget:200 aggressive:true' },
   { label: 'MCP: Optimize with intent override (say in Claude Code)', code: 'optimize_prompt "Can you please help me debug this error" intent:debug' },
-  { label: 'Optimize a prompt',          code: '$ pf optimize "I would like you to please explain how React hooks work in detail"' },
-  { label: 'Maximum compression',        code: '$ pf optimize "You should basically just simply explain how this very complex system works" --aggressive' },
-  { label: 'With a token budget',        code: '$ pf optimize "Please help me debug this error step by step" --budget 10' },
-  { label: 'Analyze project for savings',code: '$ pf strategies' },
-  { label: 'Claude Code usage insights', code: '$ pf insights' },
-  { label: 'Full dashboard (Insights tab)', code: '$ pf dashboard' },
-  { label: 'Interactive TUI',            code: '$ pf' },
-  { label: 'See all commands',           code: '$ pf --help' },
-  { label: 'Uninstall (removes alias + MCP config automatically)', code: '$ pf uninstall' },
+  { label: 'Optimize a prompt',          code: 'pf optimize "I would like you to please explain how React hooks work in detail"' },
+  { label: 'Maximum compression',        code: 'pf optimize "You should basically just simply explain how this very complex system works" --aggressive' },
+  { label: 'With a token budget',        code: 'pf optimize "Please help me debug this error step by step" --budget 10' },
+  { label: 'Analyze project for savings',code: 'pf strategies' },
+  { label: 'Claude Code usage insights', code: 'pf insights' },
+  { label: 'Full dashboard (Insights tab)', code: 'pf dashboard' },
+  { label: 'Interactive TUI',            code: 'pf' },
+  { label: 'See all commands',           code: 'pf --help' },
+  { label: 'Uninstall (removes alias + MCP config automatically)', code: 'pf uninstall' },
 ];
 
 const QUICKSTART_DEVS = [
-  { label: '1. Clone the repo',          code: '$ git clone https://github.com/Bojack70/PromptFuel.git && cd PromptFuel' },
-  { label: '2. Install & build',         code: '$ pnpm install && pnpm build' },
-  { label: '3. Run any command',         code: '$ pf --help' },
+  { label: '1. Clone the repo',          code: 'git clone https://github.com/Bojack70/PromptFuel.git && cd PromptFuel' },
+  { label: '2. Install & build',         code: 'pnpm install && pnpm build' },
+  { label: '3. Run any command',         code: 'pf --help' },
 ];
 
 const SDK_EXAMPLE = `import { PromptFuel } from '@promptfuel/sdk';
@@ -272,7 +272,7 @@ export function Landing() {
           <div style={{ maxWidth: '40rem', margin: '0 auto' }}>
             <TerminalWindow title="terminal">
               <p style={{ color: C.mutedFg }}>
-                $ pf optimize "Can you please help me debug this error step by step"
+                pf optimize "Can you please help me debug this error step by step"
               </p>
               <p style={{ marginTop: 12, color: C.mutedFg }}>
                 <span style={{ color: C.primary, fontWeight: 600 }}>INTENT</span>{' '}
