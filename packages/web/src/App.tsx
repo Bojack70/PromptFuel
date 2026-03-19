@@ -163,7 +163,6 @@ export function Dashboard({ initialTab }: { initialTab?: string } = {}) {
   const [prompt, setPrompt] = useState('');
   const [model, setModel] = useState('gpt-4o');
   const [analysis, setAnalysis] = useState<AnalysisState | null>(null);
-  const [showOptimized, setShowOptimized] = useState(false);
   const [copied, setCopied] = useState(false);
   const [history, setHistory] = useState<HistoryEntry[]>(loadHistory);
   const [strategyInput, setStrategyInput] = useState('');
@@ -228,9 +227,8 @@ export function Dashboard({ initialTab }: { initialTab?: string } = {}) {
   const handleInput = (text: string) => {
     setPrompt(text);
     setCopied(false);
-    setShowOptimized(false);
     clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => analyze(text, model, targetTokens, aggressive), 200);
+    debounceRef.current = setTimeout(() => analyze(text, model, targetTokens, aggressive), 100);
   };
 
   const handleModelChange = (mdl: string) => {
@@ -439,7 +437,7 @@ export function Dashboard({ initialTab }: { initialTab?: string } = {}) {
       : 0;
     if (avgTokens > 0) {
       const verbosity = avgTokens > 500 ? 'above average verbosity' : 'relatively concise';
-      tips.push(`Your prompts average ${avgTokens.toLocaleString()} input tokens — ${verbosity}.`);
+      tips.push(`Your prompts average ${avgTokens.toLocaleString('en-US')} input tokens — ${verbosity}.`);
     }
     if (ruleBreakdown.length > 0) {
       const topRule = ruleBreakdown[0];
@@ -451,8 +449,8 @@ export function Dashboard({ initialTab }: { initialTab?: string } = {}) {
     const thisWeekTokens = history.filter(e => e.timestamp > oneWeekAgo).reduce((s, e) => s + e.tokensSaved, 0);
     const lastWeekTokens = history.filter(e => e.timestamp > twoWeeksAgo && e.timestamp <= oneWeekAgo).reduce((s, e) => s + e.tokensSaved, 0);
     if (thisWeekTokens > 0) {
-      const trend = lastWeekTokens === 0 ? 'a great start' : thisWeekTokens > lastWeekTokens ? `up from ${lastWeekTokens.toLocaleString()} last week` : `down from ${lastWeekTokens.toLocaleString()} last week`;
-      tips.push(`You've saved ${thisWeekTokens.toLocaleString()} tokens this week — ${trend}.`);
+      const trend = lastWeekTokens === 0 ? 'a great start' : thisWeekTokens > lastWeekTokens ? `up from ${lastWeekTokens.toLocaleString('en-US')} last week` : `down from ${lastWeekTokens.toLocaleString('en-US')} last week`;
+      tips.push(`You've saved ${thisWeekTokens.toLocaleString('en-US')} tokens this week — ${trend}.`);
     }
 
     // Claude Code efficiency tips (static best practices)
@@ -1042,9 +1040,9 @@ export function Dashboard({ initialTab }: { initialTab?: string } = {}) {
           {analysis && (
             <>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, marginBottom: 20 }}>
-                <StatCard label="Input Tokens" value={analysis.inputTokens.toLocaleString()} />
-                <StatCard label="Est. Output Tokens" value={analysis.outputTokens.toLocaleString()} />
-                <StatCard label="Total Tokens" value={(analysis.inputTokens + analysis.outputTokens).toLocaleString()} />
+                <StatCard label="Input Tokens" value={analysis.inputTokens.toLocaleString('en-US')} />
+                <StatCard label="Est. Output Tokens" value={analysis.outputTokens.toLocaleString('en-US')} />
+                <StatCard label="Total Tokens" value={(analysis.inputTokens + analysis.outputTokens).toLocaleString('en-US')} />
                 <StatCard label="Estimated Cost" value={formatCost(analysis.totalCost)} highlight />
               </div>
 
@@ -1114,11 +1112,11 @@ export function Dashboard({ initialTab }: { initialTab?: string } = {}) {
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#64748b' }}>
                   <span>{analysis.contextStatus.percentUsed}% used</span>
-                  <span>{analysis.contextStatus.remainingTokens.toLocaleString()} remaining of {analysis.contextStatus.contextWindow.toLocaleString()}</span>
+                  <span>{analysis.contextStatus.remainingTokens.toLocaleString('en-US')} remaining of {analysis.contextStatus.contextWindow.toLocaleString('en-US')}</span>
                 </div>
               </div>
 
-              {analysis.optimization && analysis.optimization.suggestions.length > 0 && (
+              {analysis.optimization && (analysis.optimization.suggestions.length > 0 || analysis.optimization.tokenReduction > 0) && (
                 <div style={{ ...sectionStyle, marginBottom: 20 }}>
                   <div style={{ ...sectionHeader, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span>
@@ -1153,10 +1151,16 @@ export function Dashboard({ initialTab }: { initialTab?: string } = {}) {
                     ))}
                   </div>
 
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <button onClick={() => setShowOptimized(!showOptimized)} style={btnStyle}>
-                      {showOptimized ? 'Hide' : 'Show'} Optimized Prompt
-                    </button>
+                  <pre style={{
+                    marginTop: 12, padding: 12, background: '#f0fdf4',
+                    borderRadius: 6, fontSize: 13, lineHeight: 1.5,
+                    whiteSpace: 'pre-wrap', wordBreak: 'break-word',
+                    border: '1px solid #bbf7d0', color: '#1e293b',
+                  }}>
+                    {analysis.optimization.optimizedPrompt}
+                  </pre>
+
+                  <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
                     <button onClick={handleApplyOptimized} style={{ ...btnStyle, background: '#059669', color: '#ffffff' }}>
                       Apply Optimization
                     </button>
@@ -1164,17 +1168,6 @@ export function Dashboard({ initialTab }: { initialTab?: string } = {}) {
                       {copied ? 'Copied!' : 'Copy Optimized'}
                     </button>
                   </div>
-
-                  {showOptimized && (
-                    <pre style={{
-                      marginTop: 12, padding: 12, background: '#f0fdf4',
-                      borderRadius: 6, fontSize: 13, lineHeight: 1.5,
-                      whiteSpace: 'pre-wrap', wordBreak: 'break-word',
-                      border: '1px solid #bbf7d0', color: '#1e293b',
-                    }}>
-                      {analysis.optimization.optimizedPrompt}
-                    </pre>
-                  )}
                 </div>
               )}
             </>
@@ -1234,7 +1227,7 @@ export function Dashboard({ initialTab }: { initialTab?: string } = {}) {
           {history.length > 0 && (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, marginBottom: 20 }}>
               <StatCard label="Total Optimizations" value={history.length.toString()} />
-              <StatCard label="Tokens Saved" value={totalHistorySavings.toLocaleString()} highlight />
+              <StatCard label="Tokens Saved" value={totalHistorySavings.toLocaleString('en-US')} highlight />
               <StatCard label="Cost Saved" value={formatCost(Math.abs(totalHistoryCostSavings))} />
             </div>
           )}
@@ -1368,7 +1361,7 @@ export function Dashboard({ initialTab }: { initialTab?: string } = {}) {
                 <>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, marginBottom: 20 }}>
                     <StatCard label="Recommendations" value={strategyResult.recommendations.length.toString()} />
-                    <StatCard label="Potential Token Savings" value={strategyResult.totalEstimatedTokenSavings.toLocaleString()} highlight />
+                    <StatCard label="Potential Token Savings" value={strategyResult.totalEstimatedTokenSavings.toLocaleString('en-US')} highlight />
                     <StatCard label="Potential Cost Savings" value={formatCost(strategyResult.totalEstimatedCostSavings)} />
                   </div>
 
@@ -1394,7 +1387,7 @@ export function Dashboard({ initialTab }: { initialTab?: string } = {}) {
                         {rec.description}
                       </p>
                       <div style={{ fontSize: 12, color: '#059669' }}>
-                        {rec.estimatedTokenSavings > 0 && <span>~{rec.estimatedTokenSavings.toLocaleString()} tokens saved</span>}
+                        {rec.estimatedTokenSavings > 0 && <span>~{rec.estimatedTokenSavings.toLocaleString('en-US')} tokens saved</span>}
                         {rec.estimatedTokenSavings > 0 && rec.estimatedCostSavings > 0 && <span> | </span>}
                         {rec.estimatedCostSavings > 0 && <span>~{formatCost(rec.estimatedCostSavings)} saved</span>}
                       </div>
@@ -1940,7 +1933,7 @@ export function Dashboard({ initialTab }: { initialTab?: string } = {}) {
                         {[
                           { label: 'Cacheable Prompts', value: `${claudeData.cacheAnalysis.cacheablePrompts} / ${claudeData.cacheAnalysis.totalPrompts}` },
                           { label: 'Cache Hit Rate', value: `${claudeData.cacheAnalysis.estimatedCacheHitRate.toFixed(1)}%` },
-                          { label: 'Token Savings', value: claudeData.cacheAnalysis.estimatedMonthlyTokenSavings.toLocaleString() },
+                          { label: 'Token Savings', value: claudeData.cacheAnalysis.estimatedMonthlyTokenSavings.toLocaleString('en-US') },
                         ].map(s => (
                           <div key={s.label} style={{ background: '#f8fafc', borderRadius: 8, padding: 12, border: '1px solid #e2e8f0' }}>
                             <div style={{ fontSize: 11, color: '#64748b', marginBottom: 4 }}>{s.label}</div>
@@ -2177,7 +2170,7 @@ export function Dashboard({ initialTab }: { initialTab?: string } = {}) {
                           <div key={date}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 5 }}>
                               <span style={{ color: '#374151', fontWeight: 500 }}>{date}</span>
-                              <span style={{ color: '#059669' }}>{tokens.toLocaleString()} saved</span>
+                              <span style={{ color: '#059669' }}>{tokens.toLocaleString('en-US')} saved</span>
                             </div>
                             <div style={barTrack}>
                               <div style={{ ...barFill, background: '#059669', width: `${Math.max(pct, 2)}%` }} />
@@ -2383,5 +2376,5 @@ const btnClean: React.CSSProperties = {
 function fmtNum(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
   if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
-  return n.toLocaleString();
+  return n.toLocaleString('en-US');
 }
