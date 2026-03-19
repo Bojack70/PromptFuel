@@ -1467,20 +1467,20 @@ export function Dashboard({ initialTab }: { initialTab?: string } = {}) {
                   {
                     step: '1',
                     label: 'Install PromptFuel',
-                    hint: '📟 Run in your terminal (iTerm, Terminal.app, or the terminal tab in VS Code)',
+                    hint: '📟 Your system terminal — iTerm, Terminal.app, VS Code terminal, or Claude Code\'s built-in terminal',
                     code: 'npm install -g promptfuel --no-fund',
                   },
                   {
                     step: '2',
-                    label: 'Open this dashboard',
-                    hint: '📟 Run in your terminal — works from any folder, opens browser automatically',
-                    code: 'pf dashboard',
+                    label: 'Get a quick CLI summary',
+                    hint: '📟 Your system terminal, from any folder — prints token usage & cost across all Claude Code projects',
+                    code: 'pf insights',
                   },
                   {
                     step: '3',
-                    label: 'Or get a quick summary first',
-                    hint: '📟 Run in your terminal — shows token usage & cost across all projects instantly',
-                    code: 'pf insights',
+                    label: 'Open the full dashboard',
+                    hint: '📟 Your system terminal, from any folder — opens this page locally with your real ~/.claude/ data loaded',
+                    code: 'pf dashboard',
                   },
                 ].map(item => (
                   <div key={item.step} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 8, padding: '12px 16px' }}>
