@@ -966,33 +966,6 @@ export function Dashboard({ initialTab }: { initialTab?: string } = {}) {
               <option key={m.value} value={m.value}>{m.label}</option>
             ))}
           </select>
-          <div style={{ width: 1, height: 20, background: '#e2e8f0' }} />
-          <label style={{ fontSize: 13, color: '#64748b' }}>Budget:</label>
-          <input
-            type="number"
-            min={1}
-            placeholder="tokens"
-            value={targetTokens ?? ''}
-            onChange={(e) => handleBudgetChange(e.target.value)}
-            style={{
-              background: '#ffffff', color: '#1e293b', border: '1px solid #e2e8f0',
-              borderRadius: 6, padding: '6px 10px', fontSize: 13, width: 90,
-            }}
-          />
-          <div style={{ width: 1, height: 20, background: '#e2e8f0' }} />
-          <button
-            onClick={handleAggressiveToggle}
-            title="Removes hedge adverbs (very/really), weak qualifiers (just/simply/kind of), and low-value openers (basically/in summary)"
-            style={{
-              display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer',
-              background: aggressive ? '#ef4444' : '#f1f5f9',
-              color: aggressive ? '#ffffff' : '#64748b',
-              border: aggressive ? '1px solid #ef4444' : '1px solid #e2e8f0',
-              borderRadius: 6, padding: '6px 10px', fontSize: 13, fontWeight: aggressive ? 600 : 400,
-            }}
-          >
-            ⚡ Aggressive
-          </button>
         </div>
       </div>
 
@@ -1022,6 +995,35 @@ export function Dashboard({ initialTab }: { initialTab?: string } = {}) {
       {/* === ANALYZE TAB === */}
       {tab === 'analyze' && (
         <>
+          {/* Budget + Aggressive — only relevant for this tab */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+            <label style={{ fontSize: 13, color: '#64748b' }}>Token Budget:</label>
+            <input
+              type="number"
+              min={1}
+              placeholder="target tokens"
+              value={targetTokens ?? ''}
+              onChange={(e) => handleBudgetChange(e.target.value)}
+              style={{
+                background: '#ffffff', color: '#1e293b', border: '1px solid #e2e8f0',
+                borderRadius: 6, padding: '6px 10px', fontSize: 13, width: 110,
+              }}
+            />
+            <button
+              onClick={handleAggressiveToggle}
+              title="Removes hedge adverbs (very/really), weak qualifiers (just/simply/kind of), and low-value openers (basically/in summary)"
+              style={{
+                display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer',
+                background: aggressive ? '#ef4444' : '#f1f5f9',
+                color: aggressive ? '#ffffff' : '#64748b',
+                border: aggressive ? '1px solid #ef4444' : '1px solid #e2e8f0',
+                borderRadius: 6, padding: '6px 10px', fontSize: 13, fontWeight: aggressive ? 600 : 400,
+              }}
+            >
+              ⚡ Aggressive
+            </button>
+          </div>
+
           <div style={{ marginBottom: 24 }}>
             <textarea
               value={prompt}
@@ -1039,6 +1041,61 @@ export function Dashboard({ initialTab }: { initialTab?: string } = {}) {
 
           {analysis && (
             <>
+              {analysis.optimization && (analysis.optimization.suggestions.length > 0 || analysis.optimization.tokenReduction > 0) && (
+                <div style={{ ...sectionStyle, marginBottom: 20 }}>
+                  <div style={{ ...sectionHeader, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span>
+                      Optimization Suggestions
+                      <span style={{ marginLeft: 8, fontSize: 12, color: '#059669' }}>
+                        Save {analysis.optimization.tokenReduction} tokens ({analysis.optimization.reductionPercent}%)
+                      </span>
+                    </span>
+                    <span style={{ fontSize: 12, color: '#64748b' }}>
+                      Verbosity: {analysis.optimization.verbosityScore}/100
+                    </span>
+                  </div>
+
+                  <div style={{ marginBottom: 12 }}>
+                    {analysis.optimization.suggestions.map((s, i) => (
+                      <div key={i} style={{
+                        padding: '8px 12px', marginBottom: 4,
+                        background: '#f8fafc', borderRadius: 6, fontSize: 13,
+                        borderLeft: `3px solid ${ruleColor(s.rule)}`,
+                        border: '1px solid #e2e8f0',
+                        borderLeftWidth: 3,
+                        borderLeftStyle: 'solid',
+                        borderLeftColor: ruleColor(s.rule),
+                      }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span style={{ color: '#1e293b' }}>{s.description}</span>
+                          <span style={{ color: '#94a3b8', fontSize: 11, whiteSpace: 'nowrap', marginLeft: 12 }}>
+                            {s.rule}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <pre style={{
+                    marginTop: 12, padding: 12, background: '#f0fdf4',
+                    borderRadius: 6, fontSize: 13, lineHeight: 1.5,
+                    whiteSpace: 'pre-wrap', wordBreak: 'break-word',
+                    border: '1px solid #bbf7d0', color: '#1e293b',
+                  }}>
+                    {analysis.optimization.optimizedPrompt}
+                  </pre>
+
+                  <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+                    <button onClick={handleApplyOptimized} style={{ ...btnStyle, background: '#059669', color: '#ffffff' }}>
+                      Apply Optimization
+                    </button>
+                    <button onClick={handleCopyOptimized} style={btnStyle}>
+                      {copied ? 'Copied!' : 'Copy Optimized'}
+                    </button>
+                  </div>
+                </div>
+              )}
+
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, marginBottom: 20 }}>
                 <StatCard label="Input Tokens" value={analysis.inputTokens.toLocaleString('en-US')} />
                 <StatCard label="Est. Output Tokens" value={analysis.outputTokens.toLocaleString('en-US')} />
@@ -1116,60 +1173,6 @@ export function Dashboard({ initialTab }: { initialTab?: string } = {}) {
                 </div>
               </div>
 
-              {analysis.optimization && (analysis.optimization.suggestions.length > 0 || analysis.optimization.tokenReduction > 0) && (
-                <div style={{ ...sectionStyle, marginBottom: 20 }}>
-                  <div style={{ ...sectionHeader, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span>
-                      Optimization Suggestions
-                      <span style={{ marginLeft: 8, fontSize: 12, color: '#059669' }}>
-                        Save {analysis.optimization.tokenReduction} tokens ({analysis.optimization.reductionPercent}%)
-                      </span>
-                    </span>
-                    <span style={{ fontSize: 12, color: '#64748b' }}>
-                      Verbosity: {analysis.optimization.verbosityScore}/100
-                    </span>
-                  </div>
-
-                  <div style={{ marginBottom: 12 }}>
-                    {analysis.optimization.suggestions.map((s, i) => (
-                      <div key={i} style={{
-                        padding: '8px 12px', marginBottom: 4,
-                        background: '#f8fafc', borderRadius: 6, fontSize: 13,
-                        borderLeft: `3px solid ${ruleColor(s.rule)}`,
-                        border: '1px solid #e2e8f0',
-                        borderLeftWidth: 3,
-                        borderLeftStyle: 'solid',
-                        borderLeftColor: ruleColor(s.rule),
-                      }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <span style={{ color: '#1e293b' }}>{s.description}</span>
-                          <span style={{ color: '#94a3b8', fontSize: 11, whiteSpace: 'nowrap', marginLeft: 12 }}>
-                            {s.rule}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <pre style={{
-                    marginTop: 12, padding: 12, background: '#f0fdf4',
-                    borderRadius: 6, fontSize: 13, lineHeight: 1.5,
-                    whiteSpace: 'pre-wrap', wordBreak: 'break-word',
-                    border: '1px solid #bbf7d0', color: '#1e293b',
-                  }}>
-                    {analysis.optimization.optimizedPrompt}
-                  </pre>
-
-                  <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
-                    <button onClick={handleApplyOptimized} style={{ ...btnStyle, background: '#059669', color: '#ffffff' }}>
-                      Apply Optimization
-                    </button>
-                    <button onClick={handleCopyOptimized} style={btnStyle}>
-                      {copied ? 'Copied!' : 'Copy Optimized'}
-                    </button>
-                  </div>
-                </div>
-              )}
             </>
           )}
 
