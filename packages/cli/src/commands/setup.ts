@@ -91,13 +91,14 @@ export async function runSetup(): Promise<void> {
   const mcp = setupMcp();
   if (mcp.status === 'added') {
     lines.push('  ✓ Claude Code MCP server configured (~/.claude/mcp.json)');
-    lines.push('    Restart Claude Code once to activate it.');
   } else if (mcp.status === 'exists') {
     lines.push('  ✓ Claude Code MCP server already configured');
   } else {
     lines.push(`  ⚠ Could not write ~/.claude/mcp.json: ${mcp.error}`);
     lines.push('    Add manually: https://github.com/Bojack70/PromptFuel#mcp');
   }
+
+  lines.push('    Restart Claude Code to activate MCP tools.');
 
   // ── Quick start ───────────────────────────────────────────────────────────
   lines.push('');
