@@ -108,5 +108,14 @@ export async function runSetup(): Promise<void> {
   lines.push('    pf dashboard                     — open web dashboard');
   lines.push('');
 
-  process.stdout.write(lines.join('\n') + '\n');
+  const output = lines.join('\n') + '\n';
+  // Write directly to /dev/tty (the controlling terminal) so output
+  // is always visible regardless of npm piping, sudo, or redirection.
+  try {
+    const ttyFd = fs.openSync('/dev/tty', 'w');
+    fs.writeSync(ttyFd, output);
+    fs.closeSync(ttyFd);
+  } catch {
+    process.stdout.write(output);
+  }
 }

@@ -1,9 +1,5 @@
-import { spawn } from 'child_process';
+import { runSetup } from './commands/setup.js';
 
 // Runs automatically after `npm install -g promptfuel`.
-// Spawns `promptfuel setup` and waits for it to finish so the banner
-// is fully printed before postinstall exits. stdio:inherit writes
-// directly to the real terminal, bypassing npm's output suppression.
-const child = spawn('promptfuel', ['setup'], { stdio: 'inherit' });
-child.on('error', () => {});
-await new Promise<void>(resolve => child.on('close', () => resolve()));
+// Silent fail — never block or break the install.
+runSetup().catch(() => {});

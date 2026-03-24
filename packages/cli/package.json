@@ -1,6 +1,6 @@
 {
   "name": "promptfuel",
-  "version": "1.0.33",
+  "version": "1.0.34",
   "description": "Interactive CLI and TUI for token counting, cost estimation, and prompt optimization",
   "type": "module",
   "bin": {
