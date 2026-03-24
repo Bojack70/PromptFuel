@@ -1,3 +1,6 @@
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
 import meow from 'meow';
 import { runAnalyze } from './commands/analyze.js';
 import { runOptimize } from './commands/optimize.js';
@@ -36,7 +39,21 @@ const [command, ...rest] = cli.input;
 const promptArg = rest.join(' ');
 const model = cli.flags.model;
 
+async function runFirstTimeSetup() {
+  const flagFile = path.join(os.homedir(), '.promptfuel', '.setup_done');
+  if (fs.existsSync(flagFile)) return;
+  const { runSetup } = await import('./commands/setup.js');
+  await runSetup();
+  fs.mkdirSync(path.dirname(flagFile), { recursive: true });
+  fs.writeFileSync(flagFile, new Date().toISOString(), 'utf8');
+}
+
 async function main() {
+  // Show onboarding banner on very first run
+  if (command !== 'setup' && command !== 'uninstall') {
+    await runFirstTimeSetup().catch(() => {});
+  }
+
   switch (command) {
     case 'analyze':
       await runAnalyze(promptArg || undefined, model);

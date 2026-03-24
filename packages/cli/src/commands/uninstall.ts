@@ -86,5 +86,5 @@ export async function runUninstall(): Promise<void> {
   lines.push('  ✓ Uninstall successful');
   lines.push('');
 
-  process.stderr.write(lines.join('\n') + '\n');
+  process.stdout.write(lines.join('\n') + '\n');
 }
