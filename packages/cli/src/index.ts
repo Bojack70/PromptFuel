@@ -2,9 +2,12 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import meow from 'meow';
+import { getDefaultModel } from './config.js';
 import { runAnalyze } from './commands/analyze.js';
 import { runOptimize } from './commands/optimize.js';
 import { runBatch } from './commands/batch.js';
+
+const defaultModel = getDefaultModel();
 
 const cli = meow(`
   Commands
@@ -17,15 +20,17 @@ const cli = meow(`
     pf insights               Claude Code token usage across all projects
     pf dashboard              Open web dashboard (Insights tab)
     pf batch <file.json>      Batch analyze prompts from JSON
+    pf config model <name>    Set default model (saved to ~/.promptfuel/config.json)
+    pf config models          List all available models
 
   Flags
-    -m  Model (default: claude-sonnet-4-6)   -c  Copy to clipboard
+    -m  Model (default: ${defaultModel})   -c  Copy to clipboard
     -b  Token budget               -a  Aggressive compression
     -o  Output only (for piping)   -p  Dashboard port (default: 3939)
 `, {
   importMeta: import.meta,
   flags: {
-    model: { type: 'string', shortFlag: 'm', default: 'claude-sonnet-4-6' },
+    model: { type: 'string', shortFlag: 'm', default: defaultModel },
     copy: { type: 'boolean', shortFlag: 'c', default: false },
     output: { type: 'boolean', shortFlag: 'o', default: false },
     port: { type: 'number', shortFlag: 'p', default: 3939 },
@@ -96,6 +101,12 @@ async function main() {
     case 'uninstall': {
       const { runUninstall } = await import('./commands/uninstall.js');
       await runUninstall();
+      break;
+    }
+
+    case 'config': {
+      const { runConfig } = await import('./commands/config.js');
+      await runConfig(rest);
       break;
     }
 
