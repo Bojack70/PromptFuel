@@ -3,7 +3,7 @@ import { join, relative } from 'node:path';
 import { createInterface } from 'node:readline';
 import { analyzeStrategies, formatCost } from '@promptfuel/core';
 import type { StrategyContext, StrategyRecommendation } from '@promptfuel/core';
-import { ttyWrite } from '../output.js';
+import { ttyWrite, writeReportFile } from '../output.js';
 
 function separator(char = '─', width = 60): string {
   return char.repeat(width);
@@ -69,7 +69,10 @@ export async function runStrategies(
     process.exit(1);
   }
 
-  ttyWrite('\n  Scanning project...\n');
+  // Only show progress in interactive terminals
+  if (process.stdout.isTTY) {
+    process.stdout.write('\n  Scanning project...\n');
+  }
 
   // Scan project files
   const projectFiles = scanDirectory(projectDir, 3);
@@ -98,26 +101,89 @@ export async function runStrategies(
 
   const analysis = analyzeStrategies(context);
 
-  // Display results — compact format to stay under Claude Code's collapse threshold
-  const lines: string[] = [''];
+  // Build full report (markdown for file, plain for TTY)
+  const fullLines: string[] = [
+    '# PromptFuel — Token-Saving Strategy Report',
+    '',
+    `**Project:** ${analysis.projectSummary}`,
+    '',
+  ];
 
   if (analysis.recommendations.length === 0) {
-    lines.push(`  PromptFuel Strategies  ·  ${analysis.projectSummary.split('|')[0].trim()}`);
-    lines.push('  ✓ No recommendations — project looks well-optimized!');
+    fullLines.push('✓ No recommendations — your project looks well-optimized!');
   } else {
-    const total = `~${analysis.totalEstimatedTokenSavings.toLocaleString('en-US')} tokens  ·  ~${formatCost(analysis.totalEstimatedCostSavings)} saveable`;
-    lines.push(`  PromptFuel Strategies  ·  ${analysis.recommendations.length} recommendation${analysis.recommendations.length !== 1 ? 's' : ''}  ·  ${total}`);
-    lines.push('');
+    fullLines.push(`## Recommendations (${analysis.recommendations.length} found)`);
+    fullLines.push('');
+
     for (let i = 0; i < analysis.recommendations.length; i++) {
       const rec = analysis.recommendations[i];
-      const savings = rec.estimatedTokenSavings > 0 ? `  ·  ~${rec.estimatedTokenSavings.toLocaleString('en-US')} tokens` : '';
-      lines.push(`  ${i + 1}. ${impactBadge(rec.impact)} ${rec.name}${savings}`);
-      lines.push(`     ${rec.description}`);
+      const savings = rec.estimatedTokenSavings > 0 ? ` · ~${rec.estimatedTokenSavings.toLocaleString('en-US')} tokens` : '';
+      const costSavings = rec.estimatedCostSavings > 0 ? ` · ~${formatCost(rec.estimatedCostSavings)}` : '';
+      fullLines.push(`### ${i + 1}. [${rec.impact.toUpperCase()}] ${rec.name}${savings}${costSavings}`);
+      fullLines.push('');
+      fullLines.push(rec.description);
+      fullLines.push('');
+      fullLines.push(`**Action:** ${rec.actionDescription}`);
+      fullLines.push('');
     }
+
+    fullLines.push('---');
+    fullLines.push(`**Total potential savings:** ~${analysis.totalEstimatedTokenSavings.toLocaleString('en-US')} tokens · ~${formatCost(analysis.totalEstimatedCostSavings)}`);
   }
 
-  lines.push('');
-  ttyWrite(lines.join('\n') + '\n');
+  // Dual-mode output: temp file in captured context, inline in TTY
+  const reportPath = writeReportFile('strategies', fullLines.join('\n'));
+
+  if (reportPath) {
+    // Claude Code context — output just the file path
+    process.stdout.write(reportPath + '\n');
+  } else {
+    // Regular terminal — full inline output
+    const lines: string[] = [
+      '',
+      '═'.repeat(60),
+      '  PromptFuel — Token-Saving Strategy Advisor',
+      '═'.repeat(60),
+      '',
+      `  ${analysis.projectSummary}`,
+      '',
+    ];
+
+    if (analysis.recommendations.length === 0) {
+      lines.push('  ✓ No recommendations — your project looks well-optimized!');
+      lines.push('');
+    } else {
+      lines.push('─'.repeat(60));
+      lines.push(`  RECOMMENDATIONS (${analysis.recommendations.length} found)`);
+      lines.push('─'.repeat(60));
+      lines.push('');
+
+      for (let i = 0; i < analysis.recommendations.length; i++) {
+        const rec = analysis.recommendations[i];
+        lines.push(`  ${i + 1}. ${impactBadge(rec.impact)} ${rec.name}`);
+        lines.push(`     ${rec.description}`);
+        lines.push('');
+        if (rec.estimatedTokenSavings > 0) {
+          lines.push(`     Estimated savings: ~${rec.estimatedTokenSavings.toLocaleString('en-US')} tokens`);
+        }
+        if (rec.estimatedCostSavings > 0) {
+          lines.push(`     Cost savings: ~${formatCost(rec.estimatedCostSavings)}`);
+        }
+        lines.push(`     Action: ${rec.actionDescription}`);
+        lines.push('');
+      }
+
+      lines.push('─'.repeat(60));
+      lines.push('  TOTAL POTENTIAL SAVINGS');
+      lines.push('─'.repeat(60));
+      lines.push(`  Tokens : ~${analysis.totalEstimatedTokenSavings.toLocaleString('en-US')}`);
+      lines.push(`  Cost   : ~${formatCost(analysis.totalEstimatedCostSavings)}`);
+      lines.push('');
+    }
+
+    lines.push('═'.repeat(60));
+    ttyWrite(lines.join('\n') + '\n');
+  }
 
   // Interactive execution for file-creating recommendations
   if (!process.stdin.isTTY) return;

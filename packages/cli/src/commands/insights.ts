@@ -2,7 +2,7 @@ import { readdirSync, readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { homedir } from 'node:os';
 import { calculateCost, formatCost } from '@promptfuel/core';
-import { ttyWrite } from '../output.js';
+import { ttyWrite, writeReportFile } from '../output.js';
 
 interface ProjectStats {
   name: string;
@@ -27,7 +27,7 @@ export async function runInsights(): Promise<void> {
   const claudeDir = join(homedir(), '.claude', 'projects');
 
   if (!existsSync(claudeDir)) {
-    ttyWrite('  No Claude Code usage data found at ~/.claude/projects/\n');
+    process.stdout.write('  No Claude Code usage data found at ~/.claude/projects/\n');
     return;
   }
 
@@ -105,44 +105,90 @@ export async function runInsights(): Promise<void> {
   const totalCacheRead = sorted.reduce((s, p) => s + p.cacheReadTokens, 0);
   const sortedModels = [...modelTotals.entries()].sort((a, b) => b[1].cost - a[1].cost);
 
-  const W = 52;
-  const div = '═'.repeat(W);
-  const thin = '─'.repeat(W);
-
-  const lines: string[] = [
+  // Build full markdown report
+  const mdLines: string[] = [
+    '# PromptFuel — Claude Code Insights',
     '',
-    `  PromptFuel — Claude Code Insights`,
-    `  ${div}`,
+    `**${projectFolders.length} projects** · **${totalSessions} sessions**`,
     '',
-    `  ${projectFolders.length} projects · ${totalSessions} sessions`,
-    `  Total tokens : ${totalTokens.toLocaleString('en-US')}`,
-    `  Est. cost    : ${formatCost(totalCost)}`,
-    `  Cache hits   : ${totalCacheRead.toLocaleString('en-US')} tokens`,
+    `| Metric | Value |`,
+    `|--------|-------|`,
+    `| Total tokens | ${totalTokens.toLocaleString('en-US')} |`,
+    `| Est. cost | ${formatCost(totalCost)} |`,
+    `| Cache hits | ${totalCacheRead.toLocaleString('en-US')} tokens |`,
     '',
-    `  TOP PROJECTS`,
-    `  ${thin}`,
+    '## Top Projects',
+    '',
+    '| Project | Tokens | Cost |',
+    '|---------|--------|------|',
   ];
 
   for (const p of sorted.slice(0, 5)) {
     const tokens = (p.inputTokens + p.outputTokens).toLocaleString('en-US');
-    const cost = formatCost(p.costUSD);
-    lines.push(`  ${p.name.slice(0, 22).padEnd(22)}  ${tokens.padStart(12)}  ${cost}`);
+    mdLines.push(`| ${p.name} | ${tokens} | ${formatCost(p.costUSD)} |`);
   }
 
   if (sortedModels.length > 0) {
-    lines.push('');
-    lines.push(`  MODELS`);
-    lines.push(`  ${thin}`);
+    mdLines.push('');
+    mdLines.push('## Models');
+    mdLines.push('');
+    mdLines.push('| Model | Tokens | Cost |');
+    mdLines.push('|-------|--------|------|');
     for (const [model, data] of sortedModels) {
       const tokens = (data.input + data.output).toLocaleString('en-US');
-      const cost = formatCost(data.cost);
-      lines.push(`  ${model.slice(0, 24).padEnd(24)}  ${tokens.padStart(12)}  ${cost}`);
+      mdLines.push(`| ${model} | ${tokens} | ${formatCost(data.cost)} |`);
     }
   }
 
-  lines.push('');
-  lines.push(`  → Full details (heaviest prompts, session health, action cards):`);
-  lines.push(`    Run: promptfuel dashboard`);
-  lines.push('');
-  ttyWrite(lines.join('\n') + '\n');
+  mdLines.push('');
+  mdLines.push('*Run `pf dashboard` for full details (heaviest prompts, session health, action cards)*');
+
+  // Dual-mode output
+  const reportPath = writeReportFile('insights', mdLines.join('\n'));
+
+  if (reportPath) {
+    // Claude Code context — output just the file path
+    process.stdout.write(reportPath + '\n');
+  } else {
+    // Regular terminal — full inline output
+    const W = 52;
+    const div = '═'.repeat(W);
+    const thin = '─'.repeat(W);
+
+    const lines: string[] = [
+      '',
+      `  PromptFuel — Claude Code Insights`,
+      `  ${div}`,
+      '',
+      `  ${projectFolders.length} projects · ${totalSessions} sessions`,
+      `  Total tokens : ${totalTokens.toLocaleString('en-US')}`,
+      `  Est. cost    : ${formatCost(totalCost)}`,
+      `  Cache hits   : ${totalCacheRead.toLocaleString('en-US')} tokens`,
+      '',
+      `  TOP PROJECTS`,
+      `  ${thin}`,
+    ];
+
+    for (const p of sorted.slice(0, 5)) {
+      const tokens = (p.inputTokens + p.outputTokens).toLocaleString('en-US');
+      const cost = formatCost(p.costUSD);
+      lines.push(`  ${p.name.slice(0, 22).padEnd(22)}  ${tokens.padStart(12)}  ${cost}`);
+    }
+
+    if (sortedModels.length > 0) {
+      lines.push('');
+      lines.push(`  MODELS`);
+      lines.push(`  ${thin}`);
+      for (const [model, data] of sortedModels) {
+        const tokens = (data.input + data.output).toLocaleString('en-US');
+        const cost = formatCost(data.cost);
+        lines.push(`  ${model.slice(0, 24).padEnd(24)}  ${tokens.padStart(12)}  ${cost}`);
+      }
+    }
+
+    lines.push('');
+    lines.push(`  → Full details: promptfuel dashboard`);
+    lines.push('');
+    ttyWrite(lines.join('\n') + '\n');
+  }
 }
