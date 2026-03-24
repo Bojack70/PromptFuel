@@ -19,13 +19,13 @@ const cli = meow(`
     pf batch <file.json>      Batch analyze prompts from JSON
 
   Flags
-    -m  Model (default: gpt-4o)   -c  Copy to clipboard
+    -m  Model (default: claude-sonnet-4-6)   -c  Copy to clipboard
     -b  Token budget               -a  Aggressive compression
     -o  Output only (for piping)   -p  Dashboard port (default: 3939)
 `, {
   importMeta: import.meta,
   flags: {
-    model: { type: 'string', shortFlag: 'm', default: 'gpt-4o' },
+    model: { type: 'string', shortFlag: 'm', default: 'claude-sonnet-4-6' },
     copy: { type: 'boolean', shortFlag: 'c', default: false },
     output: { type: 'boolean', shortFlag: 'o', default: false },
     port: { type: 'number', shortFlag: 'p', default: 3939 },
