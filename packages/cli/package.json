@@ -1,6 +1,6 @@
 {
   "name": "promptfuel",
-  "version": "1.0.42",
+  "version": "1.0.43",
   "description": "Interactive CLI and TUI for token counting, cost estimation, and prompt optimization",
   "type": "module",
   "bin": {
@@ -21,7 +21,7 @@
     "preuninstall": "node ./dist/preuninstall.js || true"
   },
   "dependencies": {
-    "@promptfuel/core": "^1.0.0",
+    "@promptfuel/core": "^1.0.4",
     "clipboardy": "^4.0.0",
     "ink": "^5.1.0",
     "ink-text-input": "^6.0.0",

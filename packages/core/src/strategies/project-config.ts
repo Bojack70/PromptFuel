@@ -33,8 +33,9 @@ export function analyzeProjectConfig(context: StrategyContext): StrategyRecommen
     });
   }
 
-  // Recommend .cursorrules
-  if (!hasCursorRules && hasPackageJson) {
+  // Recommend .cursorrules only if the project has no AI context file at all
+  // (CLAUDE.md already covers this — don't recommend Cursor tooling to Claude users)
+  if (!hasCursorRules && !hasClaude && hasPackageJson) {
     const content = generateCursorRules(context);
     results.push({
       id: 'create-cursorrules',
