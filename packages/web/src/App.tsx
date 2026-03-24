@@ -703,9 +703,15 @@ export function Dashboard({ initialTab }: { initialTab?: string } = {}) {
         '',
         '### Suggest /model opus IF:',
         '- 3-File Rule: Change impacts >3 unrelated modules or requires tracing logic across the system',
-        '- 2-Fail Rule: Implementation fails tests twice — stop and suggest Opus for a deep audit',
+        '- 2-Fail Rule: Implementation fails tests twice on Sonnet — stop and suggest Opus for a deep audit',
         '- High-Stakes: Any change to core database schema, security/auth logic, or central state management',
         '- Research/Strategy Rule: Task requires deriving an answer from conflicting or ambiguous evidence, OR the output directly drives a high-stakes product/business decision (positioning, pricing, pivots)',
+        '',
+        '### 2-Fail Rule — Strict Clarifications',
+        '- What counts as a failure: user reports fix didn\'t work, OR a new version published without user confirming previous one worked. "Different approach" does not reset the counter.',
+        '- What STOP means: output the suggestion, then write nothing — no code, no commands, no publishes. Wait for explicit confirmation.',
+        '- Each published fix version = one attempt. Bug persists after 2 published versions = rule triggered.',
+        '- No self-override: suggesting a switch then continuing anyway is a rule violation.',
         '',
         'All other tasks stay on the current model. opusplan handles Opus/Sonnet routing automatically.',
       );
@@ -736,6 +742,12 @@ export function Dashboard({ initialTab }: { initialTab?: string } = {}) {
         '- High-Stakes: Any change to core database schema, security/auth logic, or central state management',
         '- Research/Strategy Rule: Task requires deriving an answer from conflicting or ambiguous evidence, OR the output directly drives a high-stakes product/business decision (positioning, pricing, pivots)',
         '- After Opus resolves the problem, IMMEDIATELY suggest /model sonnet',
+        '',
+        '### 2-Fail Rule — Strict Clarifications',
+        '- What counts as a failure: user reports fix didn\'t work, OR a new version published without user confirming previous one worked. "Different approach" does not reset the counter.',
+        '- What STOP means: output the suggestion, then write nothing — no code, no commands, no publishes. Wait for explicit confirmation.',
+        '- Each published fix version = one attempt. Bug persists after 2 published versions = rule triggered.',
+        '- No self-override: suggesting a switch then continuing anyway is a rule violation.',
       );
     }
 
