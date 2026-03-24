@@ -2,6 +2,7 @@ import { readdirSync, readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { homedir } from 'node:os';
 import { calculateCost, formatCost } from '@promptfuel/core';
+import { ttyWrite } from '../output.js';
 
 interface ProjectStats {
   name: string;
@@ -26,7 +27,7 @@ export async function runInsights(): Promise<void> {
   const claudeDir = join(homedir(), '.claude', 'projects');
 
   if (!existsSync(claudeDir)) {
-    process.stdout.write('  No Claude Code usage data found at ~/.claude/projects/\n');
+    ttyWrite('  No Claude Code usage data found at ~/.claude/projects/\n');
     return;
   }
 
@@ -143,5 +144,5 @@ export async function runInsights(): Promise<void> {
   lines.push(`  → Full details (heaviest prompts, session health, action cards):`);
   lines.push(`    Run: promptfuel dashboard`);
   lines.push('');
-  process.stdout.write(lines.join('\n') + '\n');
+  ttyWrite(lines.join('\n') + '\n');
 }

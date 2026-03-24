@@ -3,6 +3,7 @@ import { join, relative } from 'node:path';
 import { createInterface } from 'node:readline';
 import { analyzeStrategies, formatCost } from '@promptfuel/core';
 import type { StrategyContext, StrategyRecommendation } from '@promptfuel/core';
+import { ttyWrite } from '../output.js';
 
 function separator(char = '─', width = 60): string {
   return char.repeat(width);
@@ -68,7 +69,7 @@ export async function runStrategies(
     process.exit(1);
   }
 
-  process.stdout.write('\n  Scanning project...\n');
+  ttyWrite('\n  Scanning project...\n');
 
   // Scan project files
   const projectFiles = scanDirectory(projectDir, 3);
@@ -97,51 +98,26 @@ export async function runStrategies(
 
   const analysis = analyzeStrategies(context);
 
-  // Display results
-  const lines: string[] = [
-    '',
-    separator('═', 60),
-    '  PromptFuel — Token-Saving Strategy Advisor',
-    separator('═', 60),
-    '',
-    `  ${analysis.projectSummary}`,
-    '',
-  ];
+  // Display results — compact format to stay under Claude Code's collapse threshold
+  const lines: string[] = [''];
 
   if (analysis.recommendations.length === 0) {
-    lines.push('  ✓ No recommendations — your project looks well-optimized!');
-    lines.push('');
+    lines.push(`  PromptFuel Strategies  ·  ${analysis.projectSummary.split('|')[0].trim()}`);
+    lines.push('  ✓ No recommendations — project looks well-optimized!');
   } else {
-    lines.push(separator('─', 60));
-    lines.push(`  RECOMMENDATIONS (${analysis.recommendations.length} found)`);
-    lines.push(separator('─', 60));
+    const total = `~${analysis.totalEstimatedTokenSavings.toLocaleString('en-US')} tokens  ·  ~${formatCost(analysis.totalEstimatedCostSavings)} saveable`;
+    lines.push(`  PromptFuel Strategies  ·  ${analysis.recommendations.length} recommendation${analysis.recommendations.length !== 1 ? 's' : ''}  ·  ${total}`);
     lines.push('');
-
     for (let i = 0; i < analysis.recommendations.length; i++) {
       const rec = analysis.recommendations[i];
-      lines.push(`  ${i + 1}. ${impactBadge(rec.impact)} ${rec.name}`);
+      const savings = rec.estimatedTokenSavings > 0 ? `  ·  ~${rec.estimatedTokenSavings.toLocaleString('en-US')} tokens` : '';
+      lines.push(`  ${i + 1}. ${impactBadge(rec.impact)} ${rec.name}${savings}`);
       lines.push(`     ${rec.description}`);
-      lines.push('');
-      if (rec.estimatedTokenSavings > 0) {
-        lines.push(`     Estimated savings: ~${rec.estimatedTokenSavings.toLocaleString('en-US')} tokens`);
-      }
-      if (rec.estimatedCostSavings > 0) {
-        lines.push(`     Cost savings: ~${formatCost(rec.estimatedCostSavings)}`);
-      }
-      lines.push(`     Action: ${rec.actionDescription}`);
-      lines.push('');
     }
-
-    lines.push(separator('─', 60));
-    lines.push(`  TOTAL POTENTIAL SAVINGS`);
-    lines.push(separator('─', 60));
-    lines.push(`  Tokens : ~${analysis.totalEstimatedTokenSavings.toLocaleString('en-US')}`);
-    lines.push(`  Cost   : ~${formatCost(analysis.totalEstimatedCostSavings)}`);
-    lines.push('');
   }
 
-  lines.push(separator('═', 60));
-  process.stdout.write(lines.join('\n') + '\n');
+  lines.push('');
+  ttyWrite(lines.join('\n') + '\n');
 
   // Interactive execution for file-creating recommendations
   if (!process.stdin.isTTY) return;
@@ -151,33 +127,33 @@ export async function runStrategies(
     const targetPath = join(projectDir, rec.targetFile!);
     if (existsSync(targetPath)) continue;
 
-    process.stdout.write('\n');
-    process.stdout.write(`  Preview: ${rec.targetFile}\n`);
-    process.stdout.write(separator('─', 60) + '\n');
+    ttyWrite('\n');
+    ttyWrite(`  Preview: ${rec.targetFile}\n`);
+    ttyWrite(separator('─', 60) + '\n');
 
     // Show first 20 lines of content
     const previewLines = rec.generatedContent!.split('\n').slice(0, 20);
     for (const line of previewLines) {
-      process.stdout.write(`  │ ${line}\n`);
+      ttyWrite(`  │ ${line}\n`);
     }
     if (rec.generatedContent!.split('\n').length > 20) {
-      process.stdout.write(`  │ ... (${rec.generatedContent!.split('\n').length - 20} more lines)\n`);
+      ttyWrite(`  │ ... (${rec.generatedContent!.split('\n').length - 20} more lines)\n`);
     }
-    process.stdout.write(separator('─', 60) + '\n');
+    ttyWrite(separator('─', 60) + '\n');
 
     const answer = await ask(`\n  Create ${rec.targetFile}? [Y/n] `);
 
     if (!answer || answer.toLowerCase() === 'y' || answer.toLowerCase() === 'yes') {
       try {
         writeFileSync(targetPath, rec.generatedContent!, 'utf-8');
-        process.stdout.write(`  ✓ Created ${rec.targetFile}\n`);
+        ttyWrite(`  ✓ Created ${rec.targetFile}\n`);
       } catch (err) {
         process.stderr.write(`  ✗ Failed to create ${rec.targetFile}: ${err}\n`);
       }
     } else {
-      process.stdout.write(`  Skipped ${rec.targetFile}\n`);
+      ttyWrite(`  Skipped ${rec.targetFile}\n`);
     }
   }
 
-  process.stdout.write('\n');
+  ttyWrite('\n');
 }
