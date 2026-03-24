@@ -1544,7 +1544,8 @@ export function Dashboard({ initialTab }: { initialTab?: string } = {}) {
                       { label: 'Output', val: claudeData.totals.outputTokens },
                       { label: 'Cache', val: claudeData.totals.cacheReadTokens + claudeData.totals.cacheCreateTokens },
                     ].map(item => {
-                      const pct = claudeData.totals.totalTokens > 0 ? (item.val / claudeData.totals.totalTokens) * 100 : 0;
+                      const grandTotal = claudeData.totals.inputTokens + claudeData.totals.outputTokens + claudeData.totals.cacheReadTokens + claudeData.totals.cacheCreateTokens;
+                      const pct = grandTotal > 0 ? (item.val / grandTotal) * 100 : 0;
                       return (
                         <div key={item.label}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 5 }}>
