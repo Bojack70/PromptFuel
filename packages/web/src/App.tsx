@@ -1905,12 +1905,43 @@ export function Dashboard({ initialTab }: { initialTab?: string } = {}) {
                           );
                         })}
 
-                      {/* /compact explainer */}
+                      {/* How to fix — grade-specific steps */}
+                      <div style={{ marginTop: 16, padding: '14px 16px', background: '#eff6ff', borderRadius: 8, border: '1px solid #bfdbfe' }}>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: '#1e40af', marginBottom: 10 }}>How to improve session health</div>
+                        <div style={{ fontSize: 12, color: '#1e3a5f', lineHeight: 1.8 }}>
+                          {actions.unhealthySessions.some(s => s.grade === 'F') && (
+                            <div style={{ marginBottom: 8 }}>
+                              <span style={{ fontWeight: 700, color: '#dc2626' }}>F sessions:</span> Start a new session immediately. Before closing, save any important context to <code style={{ background: '#dbeafe', padding: '1px 5px', borderRadius: 4 }}>CLAUDE.md</code> or <code style={{ background: '#dbeafe', padding: '1px 5px', borderRadius: 4 }}>.claude/MEMORY.md</code> so you don't lose progress.
+                            </div>
+                          )}
+                          {actions.unhealthySessions.some(s => s.grade === 'D') && (
+                            <div style={{ marginBottom: 8 }}>
+                              <span style={{ fontWeight: 700, color: '#ea580c' }}>D sessions:</span> Run <code style={{ background: '#dbeafe', padding: '1px 5px', borderRadius: 4 }}>/compact</code> right now, then start a fresh session for any new tasks. Keep the current session only for finishing what's in progress.
+                            </div>
+                          )}
+                          {actions.unhealthySessions.some(s => s.grade === 'C') && (
+                            <div style={{ marginBottom: 8 }}>
+                              <span style={{ fontWeight: 700, color: '#d97706' }}>C sessions:</span> Run <code style={{ background: '#dbeafe', padding: '1px 5px', borderRadius: 4 }}>/compact</code> to compress history. Claude keeps key decisions but drops the raw back-and-forth — stays smart without the cost.
+                            </div>
+                          )}
+                          <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid #bfdbfe' }}>
+                            <span style={{ fontWeight: 600, color: '#1e40af' }}>Prevention tips:</span>
+                            <ul style={{ margin: '4px 0 0 16px', padding: 0 }}>
+                              <li>Keep sessions under 50 messages — start fresh for unrelated tasks</li>
+                              <li>Save project context in <code style={{ background: '#dbeafe', padding: '1px 5px', borderRadius: 4 }}>CLAUDE.md</code> so you don't re-explain things every session</li>
+                              <li>Run <code style={{ background: '#dbeafe', padding: '1px 5px', borderRadius: 4 }}>/compact</code> proactively around the 40-message mark, don't wait for problems</li>
+                              <li>Delegate heavy work (log analysis, grep, boilerplate) to subagents to keep the main session lean</li>
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* /compact savings estimate */}
                       {actions.totalSessionSavings > 0 && (
-                        <div style={{ marginTop: 16, padding: '12px 14px', background: '#f0fdf4', borderRadius: 8, border: '1px solid #bbf7d0' }}>
-                          <div style={{ fontSize: 13, fontWeight: 600, color: '#166534', marginBottom: 4 }}>What is /compact?</div>
+                        <div style={{ marginTop: 12, padding: '12px 14px', background: '#f0fdf4', borderRadius: 8, border: '1px solid #bbf7d0' }}>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: '#166534', marginBottom: 4 }}>Estimated savings from /compact</div>
                           <div style={{ fontSize: 12, color: '#15803d', lineHeight: 1.6 }}>
-                            Type <code style={{ background: '#dcfce7', padding: '1px 5px', borderRadius: 4 }}>/compact</code> in Claude Code to compress your conversation history into a short summary. Claude forgets the raw back-and-forth but keeps the key decisions — so it stays smart without carrying all the weight. Estimated saving: ~${actions.totalSessionSavings.toFixed(0)}.
+                            If you had run <code style={{ background: '#dcfce7', padding: '1px 5px', borderRadius: 4 }}>/compact</code> at the 50-message mark in your longer sessions, you could have saved approximately <strong>${actions.totalSessionSavings.toFixed(0)}</strong>.
                           </div>
                         </div>
                       )}
