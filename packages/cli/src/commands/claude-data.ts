@@ -110,7 +110,8 @@ export function buildClaudeData(): ClaudeCodeData {
             });
 
             // Collect assistant messages — overwrite keeps the final (highest output_tokens) entry
-            if (entry.type === 'assistant' && entry.message?.usage && entry.message?.id) {
+            // Skip synthetic/internal messages — not real API calls
+            if (entry.type === 'assistant' && entry.message?.usage && entry.message?.id && entry.message.model !== '<synthetic>') {
               assistantMessages.set(entry.message.id, entry);
             }
           } catch { /* bad line */ }

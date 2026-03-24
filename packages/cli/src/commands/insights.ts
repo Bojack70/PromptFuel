@@ -63,6 +63,8 @@ export async function runInsights(): Promise<void> {
           try {
             const entry = JSON.parse(line);
             if (entry.type !== 'assistant' || !entry.message?.usage) continue;
+            // Skip synthetic/internal messages — not real API calls
+            if (entry.message.model === '<synthetic>') continue;
             const u = entry.message.usage;
             const msgId: string = entry.message.id ?? entry.uuid;
             if (!msgId) continue;
@@ -99,7 +101,7 @@ export async function runInsights(): Promise<void> {
     projects.push(stats);
   }
 
-  const sorted = projects.sort((a, b) => b.costUSD - a.costUSD);
+  const sorted = projects.filter(p => p.inputTokens + p.outputTokens > 0).sort((a, b) => b.costUSD - a.costUSD);
   const totalCost = sorted.reduce((s, p) => s + p.costUSD, 0);
   const totalTokens = sorted.reduce((s, p) => s + p.inputTokens + p.outputTokens, 0);
   const totalCacheRead = sorted.reduce((s, p) => s + p.cacheReadTokens, 0);
