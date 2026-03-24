@@ -23,3 +23,9 @@ Actively suggest a model switch based on these boundaries.
 - High-Stakes: Any change to core database schema, security/auth logic, or central state management
 - Research/Strategy Rule: Task requires deriving an answer from conflicting or ambiguous evidence (not just retrieving and summarizing), OR the output directly drives a high-stakes product/business decision (positioning, pricing, pivots)
 - After Opus resolves the problem, IMMEDIATELY suggest /model sonnet
+
+### 2-Fail Rule — Strict Clarifications
+- **What counts as a failure:** User reports the fix didn't work, OR a new version is published/deployed without user confirming the previous one worked. "Different approach" does not reset the counter.
+- **What STOP means:** Output the model switch suggestion, then write nothing else — no code, no commands, no publishes. Wait for the user to explicitly confirm the switch or explicitly say "keep going on Sonnet."
+- **Publishing counts as attempts:** Each published fix version = one attempt. If the bug persists after 2 published versions, the rule is triggered regardless of how different the approaches felt.
+- **No self-override:** Suggesting a switch and then immediately continuing anyway is a rule violation, not compliance.
