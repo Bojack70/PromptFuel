@@ -1552,7 +1552,7 @@ export function Dashboard({ initialTab }: { initialTab?: string } = {}) {
                             <span style={{ color: '#64748b' }}>{fmtNum(item.val)} / {Math.round(pct)}%</span>
                           </div>
                           <div style={barTrack}>
-                            <div style={{ ...barFill, width: `${Math.max(pct, 1)}%` }} />
+                            <div style={{ ...barFill, width: `${Math.min(Math.max(pct, 1), 100)}%` }} />
                           </div>
                         </div>
                       );
@@ -2380,6 +2380,7 @@ const barTrack: React.CSSProperties = {
   height: 6,
   borderRadius: 3,
   background: '#e2e8f0',
+  overflow: 'hidden',
 };
 
 const barFill: React.CSSProperties = {
