@@ -110,42 +110,31 @@ export async function runOptimize(
     return;
   }
 
-  const verbosityBar = '\u2588'.repeat(Math.round(result.verbosityScore / 10)) +
-    '\u2591'.repeat(10 - Math.round(result.verbosityScore / 10));
+  const aggressiveLabel = aggressive ? ' · aggressive' : '';
+  const budgetLabel = budget !== undefined ? ` · budget ${budget}t` : '';
 
-  const intentLabel = result.intent ? `${result.intent.type} (${Math.round(result.intent.confidence * 100)}% confidence)` : 'general';
-  const aggressiveLabel = aggressive ? '  ·  aggressive' : '';
-  const budgetLine = budget !== undefined
-    ? `  Budget : ${budget.toLocaleString('en-US')} tokens${result.budget ? ` | met: ${result.budget.met ? 'yes' : 'no'} | gap: ${result.budget.remainingGap}` : ''}`
-    : null;
+  // Compact single-line changes summary
+  const changesSummary = result.suggestions.length > 0
+    ? result.suggestions.map(s => s.description).join(' · ')
+    : 'No changes needed';
 
-  const changeLines = result.suggestions.map((s) => {
-    const saved = s.tokensSaved > 0 ? ` (-${s.tokensSaved}t)` : '';
-    return `  ✂ ${s.description}${saved}`;
-  });
+  let copied = false;
+  if (result.tokenReduction > 0) {
+    try { await clipboard.write(result.optimizedPrompt); copied = true; } catch { /* headless CI */ }
+  }
+
+  const savingsLine = result.tokenReduction > 0
+    ? `  ${result.originalTokens} → ${result.optimizedTokens} tokens  ·  ${result.reductionPercent}% saved  ·  ${formatCost(costSavings)}${copied ? '  ·  copied ✓' : ''}`
+    : `  ${result.originalTokens} tokens  ·  ${formatCost(optimizedCost.totalCost)}`;
 
   const lines: string[] = [
     '',
-    `  PromptFuel  ${model}  ·  ${intentLabel}${aggressiveLabel}${budgetLine ? `  ·  budget ${budget}t` : ''}`,
-    '',
-    `  BEFORE  "${truncate(promptText, 80)}"`,
-    `  AFTER   "${result.optimizedPrompt}"`,
-    '',
-    ...(changeLines.length > 0 ? changeLines : ['  ✓ Prompt looks clean, no changes needed']),
-    `  Saved ${result.tokenReduction} tokens (${result.reductionPercent}%)  ·  ${result.originalTokens} → ${result.optimizedTokens} tokens  ·  ${formatCost(costSavings)} saved`,
+    `  PromptFuel  ${model}${aggressiveLabel}${budgetLabel}`,
+    `  "${result.optimizedPrompt}"`,
+    `  ✂ ${changesSummary}`,
+    savingsLine,
     '',
   ];
-
-  // Auto-copy to clipboard (works in Claude Code and regular terminals)
-  if (result.tokenReduction > 0) {
-    try {
-      await clipboard.write(result.optimizedPrompt);
-      // insert before trailing blank line
-      lines.splice(lines.length - 1, 0, '  ✓ Optimized prompt copied to clipboard — just paste it!');
-    } catch {
-      // clipboard unavailable (e.g. headless CI) — silently skip
-    }
-  }
 
   process.stdout.write(lines.join('\n') + '\n');
 }
