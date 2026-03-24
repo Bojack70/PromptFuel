@@ -108,5 +108,5 @@ export async function runSetup(): Promise<void> {
   lines.push('    pf dashboard                     — open web dashboard');
   lines.push('');
 
-  process.stdout.write(lines.join('\n'));
+  process.stderr.write(lines.join('\n'));
 }
