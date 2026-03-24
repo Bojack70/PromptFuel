@@ -124,7 +124,7 @@ export async function runOptimize(
   }
 
   const savingsLine = result.tokenReduction > 0
-    ? `  ${result.originalTokens} → ${result.optimizedTokens} tokens  ·  ${result.reductionPercent}% saved  ·  ${formatCost(costSavings)}${copied ? '  ·  copied ✓' : ''}`
+    ? `  ${result.originalTokens} → ${result.optimizedTokens} tokens  ·  ${result.reductionPercent}% saved  ·  ${formatCost(costSavings)}${copied ? '  ·  copied — Ctrl+V to paste' : ''}`
     : `  ${result.originalTokens} tokens  ·  ${formatCost(optimizedCost.totalCost)}`;
 
   const lines: string[] = [
