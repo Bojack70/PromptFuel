@@ -120,6 +120,7 @@ const QUICKSTART_USERS = [
   { label: 'Claude Code usage insights', code: 'pf insights' },
   { label: 'Full dashboard (Insights tab)', code: 'pf dashboard' },
   { label: 'Interactive TUI',            code: 'pf' },
+  { label: 'Set default model (saved permanently)', code: 'pf config model claude-opus-4-6' },
   { label: 'See all commands',           code: 'pf --help' },
   { label: 'Uninstall (removes alias + MCP config automatically)', code: 'npm uninstall -g promptfuel' },
 ];

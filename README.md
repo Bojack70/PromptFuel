@@ -317,9 +317,12 @@ $ promptfuel optimize <prompt>      Optimize a prompt
 $ promptfuel strategies [dir]       Analyze project for token-saving strategies
 $ promptfuel insights               Show Claude Code usage across all projects
 $ promptfuel batch <file.json>      Batch analyze prompts
+$ promptfuel config model <name>    Set default model (saved to ~/.promptfuel/config.json)
+$ promptfuel config models          List all available models
+$ promptfuel config                 Show current config
 
 Options:
-  --model, -m       Model to use (default: gpt-4o)
+  --model, -m       Model to use (default: claude-sonnet-4-6, or your saved config)
   --budget, -b      Target token count for budget-aware compression (levels 1-4)
   --intent, -i      Override intent detection (debug|code-gen|refactor|explain|creative|general)
   --aggressive, -a  Maximum compression: removes hedge adverbs, weak qualifiers, low-value openers
@@ -643,7 +646,7 @@ app.use('/api/chat', promptFuelMiddleware({ model: 'gpt-4o', warnAt: 0.75 }));
 | `gemini-1.5-pro` | $1.25/1M | $5.00/1M | 2M |
 | `gemini-1.5-flash` | $0.075/1M | $0.30/1M | 1M |
 
-Default model is `gpt-4o`. Use `--model` (CLI) or `model` option (SDK) to switch.
+Default model is `claude-sonnet-4-6`. Use `--model` (CLI) or `model` option (SDK) to switch, or save a permanent default with `pf config model <name>`.
 
 ---
 
