@@ -110,7 +110,7 @@ const PIPELINE = [
 ];
 
 const QUICKSTART_USERS = [
-  { label: '1. Install — run this from your system terminal', code: 'npm install -g promptfuel --no-fund', note: 'Permission error? Either use: sudo npm install -g promptfuel --no-fund  —  or install Node via nvm (recommended, no sudo needed).' },
+  { label: '1. Install — run this from your system terminal', code: 'npm install -g promptfuel --no-fund', note: 'Permission error? Either use: sudo npm install -g promptfuel --no-fund  —  or install Node via nvm (recommended, no sudo needed).', tip: 'Using Claude Code? Restart it after install to activate the MCP tools.' },
   { header: 'Once installed — run these from any terminal or Claude Code:' },
   { label: 'Auto-optimize every message (say this once in Claude Code chat)', code: 'enable auto optimize' },
   { label: 'Optimize a prompt',          code: 'pf optimize "I would like you to please explain how React hooks work in detail"' },
@@ -424,6 +424,11 @@ export function Landing() {
                 {'note' in step && (
                   <p style={{ fontSize: '0.75rem', color: C.mutedFg, marginTop: '0.5rem', fontFamily: C.mono }}>
                     {step.note}
+                  </p>
+                )}
+                {'tip' in step && (
+                  <p style={{ fontSize: '0.75rem', color: C.primary, marginTop: '0.375rem', fontFamily: C.mono }}>
+                    ↺ {step.tip}
                   </p>
                 )}
               </div>

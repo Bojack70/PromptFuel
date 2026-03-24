@@ -128,11 +128,10 @@ export async function runOptimize(
     '',
     `  PromptFuel  ${model}  ·  ${intentLabel}${aggressiveLabel}${budgetLine ? `  ·  budget ${budget}t` : ''}`,
     '',
-    `  BEFORE  "${truncate(promptText, 100)}"`,
-    `  AFTER   "${truncate(result.optimizedPrompt, 100)}"`,
+    `  BEFORE  "${truncate(promptText, 80)}"`,
+    `  AFTER   "${result.optimizedPrompt}"`,
     '',
     ...(changeLines.length > 0 ? changeLines : ['  ✓ Prompt looks clean, no changes needed']),
-    '',
     `  Saved ${result.tokenReduction} tokens (${result.reductionPercent}%)  ·  ${result.originalTokens} → ${result.optimizedTokens} tokens  ·  ${formatCost(costSavings)} saved`,
     '',
   ];
@@ -141,8 +140,8 @@ export async function runOptimize(
   if (result.tokenReduction > 0) {
     try {
       await clipboard.write(result.optimizedPrompt);
-      lines.push('  ✓ Optimized prompt copied to clipboard — just paste it!');
-      lines.push('');
+      // insert before trailing blank line
+      lines.splice(lines.length - 1, 0, '  ✓ Optimized prompt copied to clipboard — just paste it!');
     } catch {
       // clipboard unavailable (e.g. headless CI) — silently skip
     }
