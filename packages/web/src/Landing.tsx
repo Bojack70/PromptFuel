@@ -110,7 +110,8 @@ const PIPELINE = [
 ];
 
 const QUICKSTART_USERS = [
-  { label: '1. Install — run this from your system terminal', code: 'npm install -g promptfuel --no-fund', note: 'Permission error? Either use: sudo npm install -g promptfuel --no-fund  —  or install Node via nvm (recommended, no sudo needed).', tip: 'Using Claude Code? Restart it after install to activate the MCP tools.' },
+  { label: '1. Install CLI — run this from your system terminal', code: 'npm install -g promptfuel --no-fund', note: 'Permission error? Either use: sudo npm install -g promptfuel --no-fund  —  or install Node via nvm (recommended, no sudo needed).', tip: 'Using Claude Code? Restart it after install to activate the MCP tools.' },
+  { label: '2. Install Chrome Extension — for ChatGPT, Claude & Gemini', link: 'https://chrome.google.com/webstore/detail/promptfuel/EXTENSION_ID_HERE', linkText: 'Add to Chrome' },
   { header: 'Once installed — run these from any terminal or Claude Code:' },
   { label: 'Auto-optimize every message (say this once in Claude Code chat)', code: 'enable auto optimize' },
   { label: 'Optimize a prompt',          code: 'pf optimize "I would like you to please explain how React hooks work in detail"' },
@@ -419,9 +420,15 @@ export function Landing() {
                 <p style={{ fontSize: '0.75rem', color: C.mutedFg, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem', fontFamily: C.mono }}>
                   {step.label}
                 </p>
+                {'link' in step ? (
+                  <a href={(step as any).link} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', fontSize: '0.875rem', color: '#fff', background: C.primary, padding: '0.5rem 1.25rem', borderRadius: '0.375rem', textDecoration: 'none', fontWeight: 600, fontFamily: C.mono }}>
+                    {(step as any).linkText}
+                  </a>
+                ) : (
                 <code style={{ fontSize: '0.875rem', color: C.fg, wordBreak: 'break-all', fontFamily: C.mono }}>
                   {step.code}
                 </code>
+                )}
                 {'note' in step && (
                   <p style={{ fontSize: '0.75rem', color: C.mutedFg, marginTop: '0.5rem', fontFamily: C.mono }}>
                     {step.note}
