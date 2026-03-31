@@ -111,7 +111,7 @@ const PIPELINE = [
 
 const QUICKSTART_USERS = [
   { label: '1. Install CLI — run this from your system terminal', code: 'npm install -g promptfuel --no-fund', note: 'Permission error? Either use: sudo npm install -g promptfuel --no-fund  —  or install Node via nvm (recommended, no sudo needed).', tip: 'Using Claude Code? Restart it after install to activate the MCP tools.' },
-  { label: '2. Install Chrome Extension — for ChatGPT, Claude & Gemini', link: 'https://chrome.google.com/webstore/detail/promptfuel/EXTENSION_ID_HERE', linkText: 'Add to Chrome' },
+  { label: '2. Install Chrome Extension — for ChatGPT, Claude & Gemini', link: 'https://chrome.google.com/webstore/detail/promptfuel/pcndpbggcfikfkhnpmiikejgchmehmik', linkText: 'Add to Chrome' },
   { header: 'Once installed — run these from any terminal or Claude Code:' },
   { label: 'Auto-optimize every message (say this once in Claude Code chat)', code: 'enable auto optimize' },
   { label: 'Optimize a prompt',          code: 'pf optimize "I would like you to please explain how React hooks work in detail"' },
