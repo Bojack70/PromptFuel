@@ -1,0 +1,15 @@
+{
+  "name": "@promptfuel/max",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsup",
+    "daily": "node dist/index.js --mode daily",
+    "weekly": "node dist/index.js --mode weekly"
+  },
+  "devDependencies": {
+    "tsup": "^8.5.1",
+    "typescript": "^5.7.3"
+  }
+}

@@ -34,7 +34,6 @@
     }
   ],
   "permissions": [
-    "activeTab",
     "storage"
   ],
   "content_security_policy": {

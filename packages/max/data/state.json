@@ -1,0 +1,11 @@
+{
+  "lastDailyRun": null,
+  "lastWeeklyRun": null,
+  "lastSnapshotDate": null,
+  "totalSnapshots": 0,
+  "accountStatus": {
+    "twitter": "warmup",
+    "devto": "warmup"
+  },
+  "warmupStartDate": "2026-03-24"
+}
