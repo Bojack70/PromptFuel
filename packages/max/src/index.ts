@@ -7,7 +7,7 @@ import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { loadConfig } from './config.js';
 import { collectAndSave, type DaySnapshot } from './analytics/collector.js';
-import { loadHistory, appendHistory, type ContentLogEntry } from './content/history.js';
+import { appendHistory, type ContentLogEntry } from './content/history.js';
 import { planToday, type DailyPlan } from './content/scheduler.js';
 import { generateContent } from './content/gemini.js';
 import { twitterPrompt, devtoPrompt, tagsForCategory, type PromptContext } from './content/templates.js';
@@ -257,6 +257,25 @@ async function dashboard() {
   console.log('[Max] Dashboard complete.');
 }
 
+async function postTweetManual() {
+  const config = loadConfig();
+  const text = process.env.TWEET_TEXT;
+  if (!text) throw new Error('TWEET_TEXT env var is required');
+  if (text.length > 280) throw new Error(`Tweet is ${text.length} chars, max is 280`);
+  console.log(`[Max] Posting tweet (${text.length} chars): ${text}`);
+  const result = await postTweet(text, config);
+  console.log(`[Max] Tweet posted: https://twitter.com/natevoss/status/${result.id}`);
+  appendHistory(config.dataDir, {
+    date: today(),
+    timestamp: new Date().toISOString(),
+    platform: 'twitter',
+    category: 'tip',
+    content: text,
+    postId: result.id,
+  });
+  console.log('[Max] Content log updated.');
+}
+
 async function main() {
   try {
     switch (mode) {
@@ -268,6 +287,9 @@ async function main() {
         break;
       case 'dashboard':
         await dashboard();
+        break;
+      case 'post-tweet':
+        await postTweetManual();
         break;
       default:
         console.error(`Unknown mode: ${mode}. Use --mode daily|weekly|dashboard`);
