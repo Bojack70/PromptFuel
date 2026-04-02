@@ -243,7 +243,11 @@ async function daily() {
 
 async function weekly() {
   const config = loadConfig();
-  await weeklyReflection(config);
+  try {
+    await weeklyReflection(config);
+  } catch (err) {
+    console.warn('[Max] Weekly reflection failed (non-fatal):', (err as Error).message);
+  }
 }
 
 async function dashboard() {
