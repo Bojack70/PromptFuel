@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Max Agent Dashboard — PromptFuel</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; padding: 24px; }
+  h1 { font-size: 24px; margin-bottom: 4px; }
+  .subtitle { color: #94a3b8; margin-bottom: 24px; font-size: 14px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 24px; }
+  .card { background: #1e293b; border-radius: 12px; padding: 20px; }
+  .card h3 { font-size: 13px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+  .card .value { font-size: 28px; font-weight: 700; }
+  .card .delta { font-size: 14px; margin-left: 8px; }
+  .delta.up { color: #22c55e; }
+  .delta.down { color: #ef4444; }
+  .delta.flat { color: #6b7280; }
+  .chart-card { background: #1e293b; border-radius: 12px; padding: 20px; margin-bottom: 24px; }
+  .chart-card h2 { font-size: 16px; margin-bottom: 16px; }
+  .chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+  canvas { max-height: 260px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { text-align: left; padding: 8px; color: #94a3b8; border-bottom: 2px solid #334155; }
+  td { padding: 8px; border-bottom: 1px solid #334155; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
+  .badge-twitter { background: #1d4ed8; color: #fff; }
+  .badge-devto { background: #166534; color: #fff; }
+  .badge-pass { background: #166534; color: #fff; }
+  .badge-fail { background: #991b1b; color: #fff; }
+  @media (max-width: 768px) { .chart-row { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<h1>Max Agent Dashboard</h1>
+<p class="subtitle">Generated 2026-04-02 · 0 snapshots · 0 posts · 0 experiments</p>
+
+<div class="grid">
+  <div class="card">
+    <h3>GitHub Stars</h3>
+    <div><span class="value">—</span></div>
+  </div>
+  <div class="card">
+    <h3>npm Downloads (week)</h3>
+    <div><span class="value">0</span></div>
+  </div>
+  <div class="card">
+    <h3>Content Posted</h3>
+    <div><span class="value">0</span><span class="delta flat">0 tweets · 0 articles</span></div>
+  </div>
+  <div class="card">
+    <h3>Avg Quality Score</h3>
+    <div><span class="value">—</span><span class="delta flat">/10</span></div>
+  </div>
+</div>
+
+<div class="chart-row">
+  <div class="chart-card">
+    <h2>Stars Over Time</h2>
+    <canvas id="starsChart"></canvas>
+  </div>
+  <div class="chart-card">
+    <h2>Daily npm Downloads</h2>
+    <canvas id="downloadsChart"></canvas>
+  </div>
+</div>
+
+<div class="chart-row">
+  <div class="chart-card">
+    <h2>Daily Views</h2>
+    <canvas id="viewsChart"></canvas>
+  </div>
+  <div class="chart-card">
+    <h2>Quality by Category</h2>
+    <canvas id="qualityChart"></canvas>
+  </div>
+</div>
+
+<div class="chart-card">
+  <h2>Recent Content</h2>
+  <table>
+    <tr><th>Date</th><th>Platform</th><th>Category</th><th>Content</th></tr>
+    
+  </table>
+</div>
+
+
+
+
+
+<script>
+const dates = [];
+const chartOpts = {
+  responsive: true,
+  plugins: { legend: { display: false } },
+  scales: {
+    x: { ticks: { color: '#94a3b8', maxTicksLimit: 10 }, grid: { color: '#334155' } },
+    y: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } }
+  }
+};
+
+new Chart(document.getElementById('starsChart'), {
+  type: 'line',
+  data: { labels: dates, datasets: [{ data: [], borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.1)', fill: true, tension: 0.3 }] },
+  options: chartOpts
+});
+
+new Chart(document.getElementById('downloadsChart'), {
+  type: 'bar',
+  data: { labels: dates, datasets: [{ data: [], backgroundColor: '#3b82f6' }] },
+  options: chartOpts
+});
+
+new Chart(document.getElementById('viewsChart'), {
+  type: 'line',
+  data: { labels: dates, datasets: [{ data: [], borderColor: '#22c55e', backgroundColor: 'rgba(34,197,94,0.1)', fill: true, tension: 0.3 }] },
+  options: chartOpts
+});
+
+
+new Chart(document.getElementById('qualityChart'), {
+  type: 'bar',
+  data: { labels: ['No data yet'], datasets: [{ data: [0], backgroundColor: '#334155' }] },
+  options: chartOpts
+});
+
+</script>
+
+</body>
+</html>
