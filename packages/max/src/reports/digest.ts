@@ -44,20 +44,26 @@ export function buildDailyDigest(input: DigestInput): { subject: string; html: s
   // Content activity
   const contentSection = todaysPosts.length > 0
     ? todaysPosts.map((p) => {
-        if (p.platform === 'twitter') {
-          return `<div style="margin:8px 0;padding:12px;background:#f0f9ff;border-radius:8px;border-left:3px solid #1d9bf0">
-            <strong>🐦 Tweet</strong> (${p.category})<br>
+        if (p.platform === 'bluesky') {
+          return `<div style="margin:8px 0;padding:12px;background:#f0f9ff;border-radius:8px;border-left:3px solid #0085ff">
+            <strong>Bluesky</strong> (${p.category})<br>
             <span style="font-size:14px">${p.content}</span>
           </div>`;
         }
+        if (p.platform === 'reddit') {
+          return `<div style="margin:8px 0;padding:12px;background:#fff7ed;border-radius:8px;border-left:3px solid #ff4500">
+            <strong>Reddit</strong> (${p.category})<br>
+            <a href="${p.postUrl}" style="font-size:14px;color:#2563eb">${p.title}</a>
+          </div>`;
+        }
         return `<div style="margin:8px 0;padding:12px;background:#f0fdf4;border-radius:8px;border-left:3px solid #22c55e">
-          <strong>📝 Dev.to</strong> (${p.category})<br>
+          <strong>Dev.to</strong> (${p.category})<br>
           <a href="${p.postUrl}" style="font-size:14px;color:#2563eb">${p.title}</a>
         </div>`;
       }).join('\n')
     : '<p style="color:#6b7280">No content posted today.</p>';
 
-  const subject = `[Max] ${s.date} — ${fmt(s.github.stars)}⭐ ${delta(s.deltas.stars).replace(/<[^>]+>/g, '')} | ${fmt(totalDayDownloads)} downloads`;
+  const subject = `[Max] ${s.date} — ${fmt(s.github.stars)} stars ${delta(s.deltas.stars).replace(/<[^>]+>/g, '')} | ${fmt(totalDayDownloads)} downloads`;
 
   const html = `
 <!DOCTYPE html>

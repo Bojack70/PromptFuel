@@ -40,7 +40,7 @@ export async function generateContent(
   return cleanOutput(raw);
 }
 
-/** Strip markdown fences, "Here's a tweet:" preamble, and surrounding whitespace. */
+/** Strip markdown fences, "Here's a post:" preamble, and surrounding whitespace. */
 function cleanOutput(text: string): string {
   let cleaned = text.trim();
 

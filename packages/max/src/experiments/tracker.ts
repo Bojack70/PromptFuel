@@ -11,7 +11,7 @@ import type { QualityScore } from '../content/quality.js';
 export interface ExperimentEntry {
   date: string;
   timestamp: string;
-  platform: 'twitter' | 'devto';
+  platform: 'bluesky' | 'mastodon' | 'devto' | 'reddit';
   category: ContentCategory;
   qualityScores: QualityScore;
   passed: boolean;

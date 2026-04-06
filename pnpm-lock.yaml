@@ -11,8 +11,8 @@ importers:
   packages/cli:
     dependencies:
       '@promptfuel/core':
-        specifier: ^1.0.0
-        version: 1.0.0
+        specifier: ^1.0.4
+        version: 1.0.4
       clipboardy:
         specifier: ^4.0.0
         version: 4.0.0
@@ -91,6 +91,15 @@ importers:
       vite:
         specifier: ^6.0.0
         version: 6.4.1(@types/node@22.19.15)
+
+  packages/max:
+    devDependencies:
+      tsup:
+        specifier: ^8.5.1
+        version: 8.5.1(postcss@8.5.6)(typescript@5.9.3)
+      typescript:
+        specifier: ^5.7.3
+        version: 5.9.3
 
   packages/mcp:
     dependencies:
@@ -848,11 +857,11 @@ packages:
   '@polka/url@1.0.0-next.29':
     resolution: {integrity: sha512-wwQAWhWSuHaag8c4q/KN/vCoeOJYshAIvMQwD4GpSb3OiZklFfvAgmj0VCBBImRpuF/aFgIRzllXlVX93Jevww==}
 
-  '@promptfuel/core@1.0.0':
-    resolution: {integrity: sha512-0resgpCa+EJs4V362ZOdAhraVkwz2S9zn+FJNFpgI29mKzbHs5LCAMxgmLedmZOjT1hWvCOuou3UXILMXTKOFw==}
-
   '@promptfuel/core@1.0.3':
     resolution: {integrity: sha512-0+z2szDO7VtrFLkgQN6waX6QbijJo0T631FQN1I85ZbvvxArw47vBA4qW4Kzb3nf1LlpKdSoYtCh/OP5xHqe9Q==}
+
+  '@promptfuel/core@1.0.4':
+    resolution: {integrity: sha512-LmNtVZxFeoAcWY2jskHzJuNVcjU7yWpfLxvffjpCS76kiqf+njFwElEae6dSyjv0maUN1scI4lTIylsWDpJfVA==}
 
   '@rolldown/pluginutils@1.0.0-beta.27':
     resolution: {integrity: sha512-+d0F4MKMCbeVUJwG96uQ4SgAznZNSq93I3V+9NHA4OpvqG8mRCpGdKmK8l/dl02h2CCDHwW2FqilnTyDcAnqjA==}
@@ -3179,11 +3188,11 @@ snapshots:
   '@polka/url@1.0.0-next.29':
     optional: true
 
-  '@promptfuel/core@1.0.0':
+  '@promptfuel/core@1.0.3':
     dependencies:
       js-tiktoken: 1.0.21
 
-  '@promptfuel/core@1.0.3':
+  '@promptfuel/core@1.0.4':
     dependencies:
       js-tiktoken: 1.0.21
 

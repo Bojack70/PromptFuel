@@ -4,9 +4,9 @@
  * Every piece of content is scored 1-10 on four dimensions:
  *   authenticity, value, accuracy, engagement
  *
- * Score ≥ 7 average → publish
- * Score < 7 → regenerate once with feedback
- * Still < 7 → skip (log as rejected)
+ * Score >= 7 average -> publish
+ * Score < 7 -> regenerate once with feedback
+ * Still < 7 -> skip (log as rejected)
  */
 
 import { generateContent } from './gemini.js';
@@ -25,20 +25,20 @@ export interface QualityResult {
   score: QualityScore;
 }
 
-const REVIEW_PROMPT_TWITTER = (tweet: string) => `You are a content quality reviewer for a developer-focused Twitter account (@natevoss, indie dev who built PromptFuel).
+const REVIEW_PROMPT_BLUESKY = (post: string) => `You are a content quality reviewer for a developer-focused Bluesky account (@natevoss, indie dev who built PromptFuel).
 
-Review this tweet and score it 1-10 on each dimension:
+Review this post and score it 1-10 on each dimension:
 
-TWEET:
+POST:
 """
-${tweet}
+${post}
 """
 
 SCORING CRITERIA:
 - authenticity (1-10): Sounds like a real indie developer, not corporate marketing or AI-generated slop. No forced enthusiasm. No generic platitudes.
 - value (1-10): A developer reading this would learn something, think differently, or find it genuinely useful — not just noise in their feed.
 - accuracy (1-10): All claims are verifiable or reasonable. No exaggeration, no made-up stats.
-- engagement (1-10): Someone would like, reply, or retweet. Provocative or insightful enough to stop the scroll.
+- engagement (1-10): Someone would like, reply, or repost. Provocative or insightful enough to stop the scroll.
 
 Respond in EXACTLY this JSON format, nothing else:
 {"authenticity":N,"value":N,"accuracy":N,"engagement":N,"feedback":"one sentence explaining the weakest dimension"}`;
@@ -95,11 +95,11 @@ function parseScoreResponse(raw: string): QualityScore | null {
   }
 }
 
-export async function reviewTweet(
-  tweet: string,
+export async function reviewBlueskyPost(
+  post: string,
   geminiApiKey: string,
 ): Promise<QualityResult> {
-  const prompt = REVIEW_PROMPT_TWITTER(tweet);
+  const prompt = REVIEW_PROMPT_BLUESKY(post);
   const raw = await generateContent(geminiApiKey, prompt, {
     temperature: 0.3,
     maxTokens: 200,

@@ -10,14 +10,14 @@ import type { CalendarDay } from './calendar.js';
 export type WarmupStage = 'warmup' | 'transition' | 'active';
 
 export interface DailyPlan {
-  twitter: { category: ContentCategory } | null;
+  bluesky: { category: ContentCategory } | null;
   devto: { category: ContentCategory } | null;
   stage: WarmupStage;
 }
 
 interface StateJson {
   warmupStartDate: string;
-  accountStatus: { twitter: string; devto: string };
+  accountStatus: { bluesky: string; devto: string };
   [key: string]: unknown;
 }
 
@@ -49,7 +49,7 @@ export function getStage(warmupStart: string = WARMUP_START): WarmupStage {
 
 function recentForPlatform(
   history: ContentLogEntry[],
-  platform: 'twitter' | 'devto',
+  platform: 'bluesky' | 'devto',
   count: number,
 ): ContentLogEntry[] {
   return history
@@ -75,7 +75,7 @@ function pickCategory(
 
 function alreadyPostedToday(
   history: ContentLogEntry[],
-  platform: 'twitter' | 'devto',
+  platform: 'bluesky' | 'devto',
 ): boolean {
   const today = new Date().toISOString().split('T')[0];
   return history.some((e) => e.platform === platform && e.date === today);
@@ -95,8 +95,8 @@ export function planToday(
   // If calendar provides today's plan, use it
   if (calendarDay) {
     return {
-      twitter: calendarDay.twitter && !alreadyPostedToday(history, 'twitter')
-        ? { category: calendarDay.twitter }
+      bluesky: calendarDay.bluesky && !alreadyPostedToday(history, 'bluesky')
+        ? { category: calendarDay.bluesky }
         : null,
       devto: calendarDay.devto && !alreadyPostedToday(history, 'devto')
         ? { category: calendarDay.devto }
@@ -108,10 +108,10 @@ export function planToday(
   // Fallback: ad-hoc rotation
   const utcDay = new Date().getUTCDay();
 
-  let twitter: DailyPlan['twitter'] = null;
-  if (!alreadyPostedToday(history, 'twitter')) {
-    const recent = recentForPlatform(history, 'twitter', 10);
-    twitter = { category: pickCategory(recent, stage) };
+  let bluesky: DailyPlan['bluesky'] = null;
+  if (!alreadyPostedToday(history, 'bluesky')) {
+    const recent = recentForPlatform(history, 'bluesky', 10);
+    bluesky = { category: pickCategory(recent, stage) };
   }
 
   let devto: DailyPlan['devto'] = null;
@@ -120,5 +120,5 @@ export function planToday(
     devto = { category: pickCategory(recent, stage) };
   }
 
-  return { twitter, devto, stage };
+  return { bluesky, devto, stage };
 }

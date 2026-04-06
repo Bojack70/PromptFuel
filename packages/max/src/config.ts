@@ -16,17 +16,22 @@ export interface MaxConfig {
   resendApiKey: string;
   reportEmail: string;
 
-  // Dub.co (link tracking)
-  dubApiKey: string;
-
   // Gemini (content generation)
   geminiApiKey: string;
 
-  // Twitter / X
-  twitterApiKey: string;
-  twitterApiSecret: string;
-  twitterAccessToken: string;
-  twitterAccessTokenSecret: string;
+  // Bluesky
+  blueskyHandle: string;
+  blueskyAppPassword: string;
+
+  // Reddit
+  redditClientId: string;
+  redditClientSecret: string;
+  redditUsername: string;
+  redditPassword: string;
+
+  // Mastodon
+  mastodonAccessToken: string;
+  mastodonInstanceUrl: string;
 
   // Dev.to
   devtoApiKey: string;
@@ -61,14 +66,18 @@ export function loadConfig(): MaxConfig {
     resendApiKey: requireEnv('RESEND_API_KEY'),
     reportEmail: requireEnv('REPORT_EMAIL'),
 
-    dubApiKey: optionalEnv('DUB_API_KEY', ''),
-
     geminiApiKey: requireEnv('GEMINI_API_KEY'),
 
-    twitterApiKey: requireEnv('TWITTER_API_KEY'),
-    twitterApiSecret: requireEnv('TWITTER_API_SECRET'),
-    twitterAccessToken: requireEnv('TWITTER_ACCESS_TOKEN'),
-    twitterAccessTokenSecret: requireEnv('TWITTER_ACCESS_TOKEN_SECRET'),
+    blueskyHandle: optionalEnv('BLUESKY_HANDLE', ''),
+    blueskyAppPassword: optionalEnv('BLUESKY_APP_PASSWORD', ''),
+
+    redditClientId: optionalEnv('REDDIT_CLIENT_ID', ''),
+    redditClientSecret: optionalEnv('REDDIT_CLIENT_SECRET', ''),
+    redditUsername: optionalEnv('REDDIT_USERNAME', ''),
+    redditPassword: optionalEnv('REDDIT_PASSWORD', ''),
+
+    mastodonAccessToken: optionalEnv('MASTODON_ACCESS_TOKEN', ''),
+    mastodonInstanceUrl: optionalEnv('MASTODON_INSTANCE_URL', 'https://fosstodon.org'),
 
     devtoApiKey: requireEnv('DEVTO_API_KEY'),
 

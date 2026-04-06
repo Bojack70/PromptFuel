@@ -10,7 +10,7 @@ import type { ContentCategory } from './templates.js';
 export interface ContentLogEntry {
   date: string;
   timestamp: string;
-  platform: 'twitter' | 'devto';
+  platform: 'bluesky' | 'mastodon' | 'devto' | 'reddit';
   category: ContentCategory;
   title?: string;
   content: string;
