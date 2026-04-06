@@ -1,6 +1,7 @@
 /**
  * Static HTML dashboard generator.
- * Reads snapshots, content log, and experiments to produce a self-contained index.html.
+ * Reads snapshots, content log, experiments, engagement, correlations,
+ * and strategy log to produce a self-contained index.html.
  */
 
 import { readFileSync, readdirSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
@@ -8,6 +9,9 @@ import { join } from 'node:path';
 import type { DaySnapshot } from '../analytics/collector.js';
 import type { ContentLogEntry } from '../content/history.js';
 import type { ExperimentEntry } from '../experiments/tracker.js';
+import { loadEngagement, type EngagementSnapshot, type BlueskyEngagement, type DevtoEngagement } from '../analytics/engagement.js';
+import { loadCorrelationReport, type CorrelationReport } from '../brain/correlation.js';
+import { loadStrategyLog, type StrategyDecision } from '../brain/strategy.js';
 
 function loadAllSnapshots(dataDir: string): DaySnapshot[] {
   const dir = join(dataDir, 'snapshots');
@@ -49,6 +53,109 @@ function fmt(n: number): string {
   return n.toLocaleString('en-US');
 }
 
+function buildEngagementSection(dataDir: string): string {
+  const snapshots = loadEngagement(dataDir);
+  if (snapshots.length === 0) return '';
+
+  // Aggregate latest engagement per post (dedupe by postId, keep latest)
+  const latestByPost = new Map<string, { platform: string; metrics: any }>();
+  for (const snapshot of snapshots) {
+    for (const post of snapshot.posts) {
+      latestByPost.set(post.postId, { platform: post.platform, metrics: post.metrics });
+    }
+  }
+
+  let blueskyLikes = 0, blueskyReposts = 0, blueskyCount = 0;
+  let devtoViews = 0, devtoReactions = 0, devtoCount = 0;
+
+  for (const { platform, metrics } of latestByPost.values()) {
+    if (platform === 'bluesky') {
+      const m = metrics as BlueskyEngagement;
+      blueskyLikes += m.likes;
+      blueskyReposts += m.reposts;
+      blueskyCount++;
+    } else {
+      const m = metrics as DevtoEngagement;
+      devtoViews += m.views;
+      devtoReactions += m.reactions;
+      devtoCount++;
+    }
+  }
+
+  return `
+  <div class="card">
+    <h3>Bluesky Engagement</h3>
+    <div><span class="value">${blueskyCount > 0 ? (blueskyLikes / blueskyCount).toFixed(1) : '—'}</span><span class="delta flat"> avg likes/post (${blueskyCount} posts)</span></div>
+  </div>
+  <div class="card">
+    <h3>Dev.to Engagement</h3>
+    <div><span class="value">${devtoCount > 0 ? fmt(Math.round(devtoViews / devtoCount)) : '—'}</span><span class="delta flat"> avg views/article (${devtoCount} articles)</span></div>
+  </div>`;
+}
+
+function buildCorrelationSection(dataDir: string): string {
+  const report = loadCorrelationReport(dataDir);
+  if (!report || report.correlations.length === 0) return '';
+
+  const rows = report.correlations
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 10)
+    .map((c, i) => {
+      const engText = c.platform === 'devto'
+        ? `${c.engagement.views ?? 0} views, ${c.engagement.reactions ?? 0} reactions`
+        : `${c.engagement.likes ?? 0} likes, ${c.engagement.reposts ?? 0} reposts`;
+      const highlight = i < 3 ? ' style="background:#1e3a2f"' : '';
+      return `<tr${highlight}>
+        <td>${c.date}</td>
+        <td><span class="badge badge-${c.platform}">${c.platform}</span></td>
+        <td>${c.category}</td>
+        <td>${engText}</td>
+        <td>${c.metricDeltas.starsDelta > 0 ? '+' : ''}${c.metricDeltas.starsDelta}</td>
+        <td style="font-weight:bold">${c.score}</td>
+      </tr>`;
+    })
+    .join('\n');
+
+  const insightsHtml = report.insights.length > 0
+    ? `<div style="margin-top:12px;padding:12px;background:#1e293b;border-left:3px solid #f59e0b;border-radius:4px;font-size:13px;line-height:1.6">${report.insights.map((i) => `<div>• ${i}</div>`).join('')}</div>`
+    : '';
+
+  return `
+<div class="chart-card" style="margin-top:24px">
+  <h2>Content Correlation (impact score)</h2>
+  <table>
+    <tr><th>Date</th><th>Platform</th><th>Category</th><th>Engagement</th><th>Stars +</th><th>Score</th></tr>
+    ${rows}
+  </table>
+  ${insightsHtml}
+</div>`;
+}
+
+function buildStrategySection(dataDir: string): string {
+  const log = loadStrategyLog(dataDir);
+  if (log.length === 0) return '';
+
+  const cards = log.slice(-6).reverse().map((d) => {
+    const verdictColor = d.outcome
+      ? d.outcome.verdict === 'positive' ? '#22c55e' : d.outcome.verdict === 'negative' ? '#ef4444' : '#94a3b8'
+      : '#f59e0b';
+    const verdictLabel = d.outcome ? d.outcome.verdict.toUpperCase() : 'ACTIVE';
+
+    return `<div style="background:#1e293b;border-radius:8px;padding:16px;border-left:3px solid ${verdictColor}">
+      <div style="font-size:12px;color:#94a3b8;margin-bottom:4px">Week of ${d.weekOf} · <span style="color:${verdictColor};font-weight:bold">${verdictLabel}</span></div>
+      <div style="font-size:14px;font-weight:600;margin-bottom:4px">${d.decision}</div>
+      <div style="font-size:13px;color:#94a3b8">${d.rationale}</div>
+      ${d.outcome ? `<div style="font-size:13px;margin-top:8px;color:${verdictColor}">${d.outcome.summary}</div>` : ''}
+    </div>`;
+  }).join('\n');
+
+  return `
+<div class="chart-card" style="margin-top:24px">
+  <h2>Strategy Decisions</h2>
+  <div style="display:grid;gap:12px">${cards}</div>
+</div>`;
+}
+
 export function generateDashboard(dataDir: string): void {
   const snapshots = loadAllSnapshots(dataDir);
   const contentLog = loadContentLog(dataDir);
@@ -60,7 +167,6 @@ export function generateDashboard(dataDir: string): void {
   // Prepare chart data
   const dates = snapshots.map((s) => s.date);
   const stars = snapshots.map((s) => s.github.stars);
-  const forks = snapshots.map((s) => s.github.forks);
   const downloads = snapshots.map((s) =>
     Object.values(s.npm.packages).reduce((sum, p) => sum + p.downloadsLastDay, 0),
   );
@@ -87,6 +193,11 @@ export function generateDashboard(dataDir: string): void {
     ? Object.values(latest.npm.packages).reduce((s, p) => s + p.downloadsLastWeek, 0)
     : 0;
 
+  // New sections
+  const engagementCards = buildEngagementSection(dataDir);
+  const correlationSection = buildCorrelationSection(dataDir);
+  const strategySection = buildStrategySection(dataDir);
+
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -99,7 +210,7 @@ export function generateDashboard(dataDir: string): void {
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; padding: 24px; }
   h1 { font-size: 24px; margin-bottom: 4px; }
   .subtitle { color: #94a3b8; margin-bottom: 24px; font-size: 14px; }
-  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 24px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 24px; }
   .card { background: #1e293b; border-radius: 12px; padding: 20px; }
   .card h3 { font-size: 13px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
   .card .value { font-size: 28px; font-weight: 700; }
@@ -115,8 +226,9 @@ export function generateDashboard(dataDir: string): void {
   th { text-align: left; padding: 8px; color: #94a3b8; border-bottom: 2px solid #334155; }
   td { padding: 8px; border-bottom: 1px solid #334155; }
   .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
-  .badge-twitter { background: #1d4ed8; color: #fff; }
+  .badge-bluesky { background: #0085ff; color: #fff; }
   .badge-devto { background: #166534; color: #fff; }
+  .badge-reddit { background: #ff4500; color: #fff; }
   .badge-pass { background: #166534; color: #fff; }
   .badge-fail { background: #991b1b; color: #fff; }
   @media (max-width: 768px) { .chart-row { grid-template-columns: 1fr; } }
@@ -138,12 +250,13 @@ export function generateDashboard(dataDir: string): void {
   </div>
   <div class="card">
     <h3>Content Posted</h3>
-    <div><span class="value">${contentLog.length}</span><span class="delta flat">${contentLog.filter((e) => e.platform === 'twitter').length} tweets · ${contentLog.filter((e) => e.platform === 'devto').length} articles</span></div>
+    <div><span class="value">${contentLog.length}</span><span class="delta flat">${contentLog.filter((e) => e.platform === 'bluesky').length} posts · ${contentLog.filter((e) => e.platform === 'devto').length} articles · ${contentLog.filter((e) => e.platform === 'reddit').length} reddit</span></div>
   </div>
   <div class="card">
     <h3>Avg Quality Score</h3>
     <div><span class="value">${experiments.length > 0 ? (experiments.reduce((s, e) => s + e.qualityScores.average, 0) / experiments.length).toFixed(1) : '—'}</span><span class="delta flat">/10</span></div>
   </div>
+  ${engagementCards}
 </div>
 
 <div class="chart-row">
@@ -209,6 +322,9 @@ ${categoryAvgs.length > 0 ? `
     </tr>`).join('\n')}
   </table>
 </div>` : ''}
+
+${correlationSection}
+${strategySection}
 
 <script>
 const dates = ${JSON.stringify(dates)};

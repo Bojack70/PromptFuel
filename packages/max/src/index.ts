@@ -1,25 +1,29 @@
 /**
  * Max — Autonomous AI Growth Agent for PromptFuel
  * Entry point: --mode daily | weekly | dashboard
+ *
+ * Zero-cost publishing: Bluesky + Dev.to + Reddit (weekly)
  */
 
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { loadConfig } from './config.js';
 import { collectAndSave, type DaySnapshot } from './analytics/collector.js';
-import { appendHistory, type ContentLogEntry } from './content/history.js';
+import { appendHistory, loadHistory, type ContentLogEntry } from './content/history.js';
 import { planToday, type DailyPlan } from './content/scheduler.js';
 import { generateContent } from './content/gemini.js';
-import { twitterPrompt, devtoPrompt, tagsForCategory, type PromptContext } from './content/templates.js';
-import { generateTweet, postTweet } from './publish/twitter.js';
+import { blueskyPrompt, devtoPrompt, tagsForCategory, type PromptContext } from './content/templates.js';
+import { postToBluesky } from './publish/bluesky.js';
 import { postArticle, parseArticle } from './publish/devto.js';
-import { reviewTweet, reviewArticle } from './content/quality.js';
+import { postToReddit, pickSubreddit } from './publish/reddit.js';
+import { reviewBlueskyPost, reviewArticle } from './content/quality.js';
 import { loadCalendar, isCalendarCurrent, getTodayFromCalendar, generateWeeklyCalendar } from './content/calendar.js';
 import { sendEmail } from './reports/email.js';
 import { buildDailyDigest } from './reports/digest.js';
 import { recordExperiment } from './experiments/tracker.js';
 import { weeklyReflection } from './brain/weekly.js';
 import { generateDashboard } from './dashboard/generator.js';
+import { collectEngagement } from './analytics/engagement.js';
 
 const args = process.argv.slice(2);
 const modeFlag = args.indexOf('--mode');
@@ -49,7 +53,7 @@ function buildPromptContext(snapshot: DaySnapshot, history: ContentLogEntry[]): 
 
   // Last 5 post summaries for anti-repetition
   const recentPosts = history.slice(-5).map((e) =>
-    e.platform === 'twitter' ? e.content : (e.title ?? e.content.slice(0, 80)),
+    e.platform === 'bluesky' ? e.content : (e.title ?? e.content.slice(0, 80)),
   );
 
   return {
@@ -60,6 +64,33 @@ function buildPromptContext(snapshot: DaySnapshot, history: ContentLogEntry[]): 
     deltaStars: snapshot.deltas.stars,
     recentPosts,
   };
+}
+
+/**
+ * Generate a Bluesky post via Gemini and ensure it fits within 300 graphemes.
+ */
+async function generateBlueskyPost(prompt: string, geminiApiKey: string): Promise<string> {
+  let text = await generateContent(geminiApiKey, prompt, {
+    temperature: 0.9,
+    maxTokens: 150,
+  });
+
+  for (let attempt = 1; attempt <= 3 && text.length > 300; attempt++) {
+    console.warn(`[Max] Post attempt ${attempt} was ${text.length} chars, retrying...`);
+    text = await generateContent(
+      geminiApiKey,
+      `${prompt}\n\nIMPORTANT: Your previous attempt was ${text.length} characters. The ABSOLUTE MAXIMUM is 300 characters. Be much more concise.`,
+      { temperature: 0.7, maxTokens: 100 },
+    );
+  }
+
+  if (text.length > 300) {
+    const truncated = text.slice(0, 297);
+    text = truncated.slice(0, truncated.lastIndexOf(' ')) + '...';
+    console.warn(`[Max] Post force-truncated to ${text.length} chars`);
+  }
+
+  return text;
 }
 
 async function daily() {
@@ -80,6 +111,15 @@ async function daily() {
     console.log(`[Max]   ${pkg}: ${data.downloadsLastDay}/day, ${data.downloadsLastWeek}/week, ${data.downloadsLastMonth}/month`);
   }
 
+  // ── Phase 0.5: Engagement collection ──
+  try {
+    console.log('[Max] Collecting engagement metrics...');
+    const engagementSnapshot = await collectEngagement(config);
+    console.log(`[Max] Engagement collected for ${engagementSnapshot.posts.length} posts`);
+  } catch (err) {
+    console.warn('[Max] Engagement collection failed (non-fatal):', (err as Error).message);
+  }
+
   // ── Phase 1: Content pipeline ──
   console.log('\n[Max] Starting content pipeline...');
   const state = loadState(config.dataDir);
@@ -94,34 +134,34 @@ async function daily() {
   }
   const calendarDay = calendar ? getTodayFromCalendar(calendar) : null;
   if (calendarDay) {
-    console.log(`[Max] Calendar: Twitter=${calendarDay.twitter ?? 'skip'} Dev.to=${calendarDay.devto ?? 'skip'}`);
+    console.log(`[Max] Calendar: Bluesky=${calendarDay.bluesky ?? 'skip'} Dev.to=${calendarDay.devto ?? 'skip'}`);
   }
 
   const plan = planToday(state as any, history, calendarDay);
 
-  console.log(`[Max] Stage: ${plan.stage} | Twitter: ${plan.twitter?.category ?? 'skip'} | Dev.to: ${plan.devto?.category ?? 'skip'}`);
+  console.log(`[Max] Stage: ${plan.stage} | Bluesky: ${plan.bluesky?.category ?? 'skip'} | Dev.to: ${plan.devto?.category ?? 'skip'}`);
 
   const ctx = buildPromptContext(snapshot, history);
 
-  // ── Twitter ──
-  if (plan.twitter) {
+  // ── Bluesky ──
+  if (plan.bluesky) {
     try {
-      console.log(`[Max] Generating ${plan.twitter.category} tweet...`);
-      const prompt = twitterPrompt(plan.twitter.category, ctx);
-      let tweetText = await generateTweet(prompt, config.geminiApiKey);
+      console.log(`[Max] Generating ${plan.bluesky.category} Bluesky post...`);
+      const prompt = blueskyPrompt(plan.bluesky.category, ctx);
+      let postText = await generateBlueskyPost(prompt, config.geminiApiKey);
       let wasRetried = false;
 
-      // Quality gate: score → regenerate once if < 7 → skip if still < 7
-      let quality = await reviewTweet(tweetText, config.geminiApiKey);
-      console.log(`[Max] Tweet quality: ${quality.score.average}/10 (A:${quality.score.authenticity} V:${quality.score.value} Ac:${quality.score.accuracy} E:${quality.score.engagement})`);
+      // Quality gate: score -> regenerate once if < 7 -> skip if still < 7
+      let quality = await reviewBlueskyPost(postText, config.geminiApiKey);
+      console.log(`[Max] Post quality: ${quality.score.average}/10 (A:${quality.score.authenticity} V:${quality.score.value} Ac:${quality.score.accuracy} E:${quality.score.engagement})`);
 
       if (!quality.passed) {
         console.log(`[Max] Below threshold — regenerating with feedback: ${quality.score.feedback}`);
-        tweetText = await generateTweet(
-          `${prompt}\n\nIMPORTANT FEEDBACK FROM REVIEWER: ${quality.score.feedback}. Address this in your tweet.`,
+        postText = await generateBlueskyPost(
+          `${prompt}\n\nIMPORTANT FEEDBACK FROM REVIEWER: ${quality.score.feedback}. Address this in your post.`,
           config.geminiApiKey,
         );
-        quality = await reviewTweet(tweetText, config.geminiApiKey);
+        quality = await reviewBlueskyPost(postText, config.geminiApiKey);
         wasRetried = true;
         console.log(`[Max] Retry quality: ${quality.score.average}/10`);
       }
@@ -130,29 +170,29 @@ async function daily() {
       recordExperiment(config.dataDir, {
         date: today(),
         timestamp: new Date().toISOString(),
-        platform: 'twitter',
-        category: plan.twitter.category,
+        platform: 'bluesky',
+        category: plan.bluesky.category,
         qualityScores: quality.score,
         passed: quality.passed,
         retried: wasRetried,
       });
 
       if (quality.passed) {
-        const result = await postTweet(tweetText, config);
+        const result = await postToBluesky(postText, config.blueskyHandle, config.blueskyAppPassword);
         appendHistory(config.dataDir, {
           date: today(),
           timestamp: new Date().toISOString(),
-          platform: 'twitter',
-          category: plan.twitter.category,
+          platform: 'bluesky',
+          category: plan.bluesky.category,
           content: result.text,
-          postId: result.id,
+          postId: result.uri,
         });
-        console.log(`[Max] Tweet posted (${result.text.length} chars): ${result.id}`);
+        console.log(`[Max] Bluesky post published (${result.text.length} chars): ${result.uri}`);
       } else {
-        console.warn(`[Max] Tweet rejected after retry (${quality.score.average}/10) — skipping`);
+        console.warn(`[Max] Post rejected after retry (${quality.score.average}/10) — skipping`);
       }
     } catch (err) {
-      console.error('[Max] Twitter post failed:', err);
+      console.error('[Max] Bluesky post failed:', err);
     }
   }
 
@@ -235,7 +275,7 @@ async function daily() {
 
   // ── Update state ──
   state.lastContentRun = new Date().toISOString();
-  state.accountStatus = { twitter: plan.stage, devto: plan.stage };
+  state.accountStatus = { bluesky: plan.stage, devto: plan.stage };
   saveState(config.dataDir, state);
 
   console.log('[Max] Daily run complete.');
@@ -257,21 +297,21 @@ async function dashboard() {
   console.log('[Max] Dashboard complete.');
 }
 
-async function postTweetManual() {
+async function postBlueskyManual() {
   const config = loadConfig();
-  const text = process.env.TWEET_TEXT;
-  if (!text) throw new Error('TWEET_TEXT env var is required');
-  if (text.length > 280) throw new Error(`Tweet is ${text.length} chars, max is 280`);
-  console.log(`[Max] Posting tweet (${text.length} chars): ${text}`);
-  const result = await postTweet(text, config);
-  console.log(`[Max] Tweet posted: https://twitter.com/natevoss/status/${result.id}`);
+  const text = process.env.POST_TEXT;
+  if (!text) throw new Error('POST_TEXT env var is required');
+  if (text.length > 300) throw new Error(`Post is ${text.length} chars, max is 300`);
+  console.log(`[Max] Posting to Bluesky (${text.length} chars): ${text}`);
+  const result = await postToBluesky(text, config.blueskyHandle, config.blueskyAppPassword);
+  console.log(`[Max] Bluesky post published: ${result.uri}`);
   appendHistory(config.dataDir, {
     date: today(),
     timestamp: new Date().toISOString(),
-    platform: 'twitter',
+    platform: 'bluesky',
     category: 'tip',
     content: text,
-    postId: result.id,
+    postId: result.uri,
   });
   console.log('[Max] Content log updated.');
 }
@@ -288,11 +328,11 @@ async function main() {
       case 'dashboard':
         await dashboard();
         break;
-      case 'post-tweet':
-        await postTweetManual();
+      case 'post':
+        await postBlueskyManual();
         break;
       default:
-        console.error(`Unknown mode: ${mode}. Use --mode daily|weekly|dashboard`);
+        console.error(`Unknown mode: ${mode}. Use --mode daily|weekly|dashboard|post`);
         process.exit(1);
     }
   } catch (err) {
