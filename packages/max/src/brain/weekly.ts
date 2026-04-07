@@ -320,6 +320,8 @@ function buildWeeklyDigest(
   stage: string,
   goalEval: GoalEvaluation,
   strategyMemory: StrategyMemory,
+  hnDraft = '',
+  linkedinDraft = '',
 ): { subject: string; html: string } {
   const npmDelta = summary.npmDownloadsWeek - summary.prevNpmDownloadsWeek;
 
@@ -356,6 +358,18 @@ function buildWeeklyDigest(
 <span style="color:#6b7280">${lastDecision.rationale}</span>
 ${lastDecision.outcome ? `<br><span style="color:${lastDecision.outcome.verdict === 'positive' ? '#22c55e' : lastDecision.outcome.verdict === 'negative' ? '#ef4444' : '#6b7280'}">Outcome: ${lastDecision.outcome.summary}</span>` : ''}
 </div>` : '';
+
+  // Drafts section
+  const draftsHtml = (hnDraft || linkedinDraft) ? `
+<h2 style="font-size:16px;border-bottom:2px solid #e5e7eb;padding-bottom:8px;margin-top:24px">Drafts for Manual Posting</h2>
+${hnDraft ? `
+<h3 style="font-size:14px;margin-bottom:6px">Hacker News</h3>
+<div style="padding:12px;background:#f9fafb;border-radius:8px;border-left:3px solid #ff6600;font-size:13px;line-height:1.6;white-space:pre-wrap;font-family:monospace">${hnDraft.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
+` : ''}
+${linkedinDraft ? `
+<h3 style="font-size:14px;margin-bottom:6px;margin-top:16px">LinkedIn</h3>
+<div style="padding:12px;background:#f9fafb;border-radius:8px;border-left:3px solid #0a66c2;font-size:13px;line-height:1.6;white-space:pre-wrap;font-family:monospace">${linkedinDraft.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
+` : ''}` : '';
 
   // Correlation section
   const correlationHtml = evaluation.correlations?.topPerformers.length ? `
@@ -417,6 +431,7 @@ ${engagementHtml}
 </table>
 ${correlationHtml}
 ${strategyHtml}
+${draftsHtml}
 
 <h2 style="font-size:16px;border-bottom:2px solid #e5e7eb;padding-bottom:8px;margin-top:24px">Reflection</h2>
 <div style="padding:12px;background:#f0f9ff;border-radius:8px;border-left:3px solid #3b82f6;font-size:14px;line-height:1.6">
@@ -520,31 +535,11 @@ export async function weeklyReflection(config: MaxConfig): Promise<void> {
     console.warn('[Max] Strategy decision extraction failed (non-fatal):', (err as Error).message);
   }
 
-  // 10. Build and send weekly email
-  const { subject, html } = buildWeeklyDigest(prevMonday, summary, evaluation, reflection, stage, goalEval, strategyMemory);
-  const emailResult = await sendEmail(config.resendApiKey, {
-    to: config.reportEmail,
-    subject,
-    html,
-  });
-  console.log(`[Max] Weekly digest sent: ${emailResult.id}`);
-
-  // 11. Generate next week's calendar — WITH enriched context
-  console.log('[Max] Generating next week calendar with enriched context...');
-  const calendarCtx: CalendarContext = {
-    topCategory: evaluation.topCategory,
-    weakCategory: evaluation.weakCategory,
-    growthStatus: goalEval.status,
-    reflection,
-    strategyDecision,
-    correlationInsights: evaluation.correlations?.insights,
-    engagementRankings: evaluation.correlations?.categoryRankings,
-  };
-  await generateWeeklyCalendar(config.geminiApiKey, stage, config.dataDir, calendarCtx);
-
-  // 12. Generate Reddit/HN/LinkedIn drafts
+  // 10. Generate Reddit/HN/LinkedIn drafts (before email so drafts appear in digest)
   console.log('[Max] Generating platform drafts...');
   const latest = snapshots[snapshots.length - 1];
+  let hnDraft = '';
+  let linkedinDraft = '';
   if (latest) {
     const totalWeek = Object.values(latest.npm.packages).reduce((s, p) => s + p.downloadsLastWeek, 0);
     const totalMonth = Object.values(latest.npm.packages).reduce((s, p) => s + p.downloadsLastMonth, 0);
@@ -560,7 +555,34 @@ export async function weeklyReflection(config: MaxConfig): Promise<void> {
       ),
     };
     await generateDrafts(config, ctx);
+    const today = new Date().toISOString().split('T')[0];
+    const hnPath = join(config.dataDir, 'drafts', `${today}-hn.md`);
+    const linkedinPath = join(config.dataDir, 'drafts', `${today}-linkedin.md`);
+    if (existsSync(hnPath)) hnDraft = readFileSync(hnPath, 'utf-8');
+    if (existsSync(linkedinPath)) linkedinDraft = readFileSync(linkedinPath, 'utf-8');
   }
+
+  // 11. Build and send weekly email
+  const { subject, html } = buildWeeklyDigest(prevMonday, summary, evaluation, reflection, stage, goalEval, strategyMemory, hnDraft, linkedinDraft);
+  const emailResult = await sendEmail(config.resendApiKey, {
+    to: config.reportEmail,
+    subject,
+    html,
+  });
+  console.log(`[Max] Weekly digest sent: ${emailResult.id}`);
+
+  // 12. Generate next week's calendar — WITH enriched context
+  console.log('[Max] Generating next week calendar with enriched context...');
+  const calendarCtx: CalendarContext = {
+    topCategory: evaluation.topCategory,
+    weakCategory: evaluation.weakCategory,
+    growthStatus: goalEval.status,
+    reflection,
+    strategyDecision,
+    correlationInsights: evaluation.correlations?.insights,
+    engagementRankings: evaluation.correlations?.categoryRankings,
+  };
+  await generateWeeklyCalendar(config.geminiApiKey, stage, config.dataDir, calendarCtx);
 
   // 13. Save correlation report
   if (evaluation.correlations) {
