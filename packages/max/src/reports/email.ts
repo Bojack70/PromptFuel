@@ -21,7 +21,7 @@ export async function sendEmail(
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: 'Max Agent <max@promptfuel.dev>',
+      from: 'Max Agent <onboarding@resend.dev>',
       to: [options.to],
       subject: options.subject,
       html: options.html,
