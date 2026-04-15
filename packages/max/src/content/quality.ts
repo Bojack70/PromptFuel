@@ -9,7 +9,7 @@
  * Still < 7 -> skip (log as rejected)
  */
 
-import { generateContent } from './gemini.js';
+import { generateContent } from './claude.js';
 
 export interface QualityScore {
   authenticity: number;
@@ -97,12 +97,13 @@ function parseScoreResponse(raw: string): QualityScore | null {
 
 export async function reviewBlueskyPost(
   post: string,
-  geminiApiKey: string,
+  claudeApiKey: string,
 ): Promise<QualityResult> {
   const prompt = REVIEW_PROMPT_BLUESKY(post);
-  const raw = await generateContent(geminiApiKey, prompt, {
+  const raw = await generateContent(claudeApiKey, prompt, {
     temperature: 0.3,
     maxTokens: 200,
+    model: 'claude-haiku-4-5',
   });
 
   const score = parseScoreResponse(raw);
@@ -121,12 +122,13 @@ export async function reviewBlueskyPost(
 export async function reviewArticle(
   title: string,
   body: string,
-  geminiApiKey: string,
+  claudeApiKey: string,
 ): Promise<QualityResult> {
   const prompt = REVIEW_PROMPT_DEVTO(title, body);
-  const raw = await generateContent(geminiApiKey, prompt, {
+  const raw = await generateContent(claudeApiKey, prompt, {
     temperature: 0.3,
     maxTokens: 200,
+    model: 'claude-haiku-4-5',
   });
 
   const score = parseScoreResponse(raw);

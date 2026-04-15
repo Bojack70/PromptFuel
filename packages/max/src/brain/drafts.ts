@@ -8,7 +8,7 @@ import { writeFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import type { MaxConfig } from '../config.js';
 import type { PromptContext } from '../content/templates.js';
-import { generateContent } from '../content/gemini.js';
+import { generateContent } from '../content/claude.js';
 import { postToReddit, pickSubreddit } from '../publish/reddit.js';
 import { appendHistory } from '../content/history.js';
 
@@ -115,7 +115,7 @@ export async function generateDrafts(config: MaxConfig, ctx: PromptContext): Pro
 
   // Reddit draft — auto-post (1/week)
   try {
-    const redditContent = await generateContent(config.geminiApiKey, REDDIT_PROMPT(ctx, subreddit), {
+    const redditContent = await generateContent(config.claudeApiKey, REDDIT_PROMPT(ctx, subreddit), {
       temperature: 0.8,
       maxTokens: 1024,
     });
@@ -152,7 +152,7 @@ export async function generateDrafts(config: MaxConfig, ctx: PromptContext): Pro
 
   // HN draft (manual posting only)
   try {
-    const hnContent = await generateContent(config.geminiApiKey, HN_PROMPT(ctx), {
+    const hnContent = await generateContent(config.claudeApiKey, HN_PROMPT(ctx), {
       temperature: 0.7,
       maxTokens: 768,
     });
@@ -165,7 +165,7 @@ export async function generateDrafts(config: MaxConfig, ctx: PromptContext): Pro
 
   // LinkedIn draft (manual posting only)
   try {
-    const linkedinContent = await generateContent(config.geminiApiKey, LINKEDIN_PROMPT(ctx), {
+    const linkedinContent = await generateContent(config.claudeApiKey, LINKEDIN_PROMPT(ctx), {
       temperature: 0.8,
       maxTokens: 768,
     });

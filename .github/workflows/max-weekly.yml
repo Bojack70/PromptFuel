@@ -2,7 +2,7 @@ name: Max Weekly Brain
 
 on:
   schedule:
-    - cron: '0 3 * * 1'  # Monday 03:00 UTC (staggered from daily 06:00 to avoid Gemini quota clash)
+    - cron: '0 3 * * 1'  # Monday 03:00 UTC — runs before daily (06:00) so pre-generated content is ready
   workflow_dispatch:       # Manual trigger
 
 permissions:
@@ -34,7 +34,7 @@ jobs:
           GITHUB_REPO: PromptFuel
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           REPORT_EMAIL: ${{ secrets.REPORT_EMAIL }}
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           BLUESKY_HANDLE: ${{ secrets.BLUESKY_HANDLE }}
           BLUESKY_APP_PASSWORD: ${{ secrets.BLUESKY_APP_PASSWORD }}
           REDDIT_CLIENT_ID: ${{ secrets.REDDIT_CLIENT_ID }}
@@ -53,7 +53,7 @@ jobs:
           GITHUB_REPO: PromptFuel
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           REPORT_EMAIL: ${{ secrets.REPORT_EMAIL }}
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           BLUESKY_HANDLE: ${{ secrets.BLUESKY_HANDLE }}
           BLUESKY_APP_PASSWORD: ${{ secrets.BLUESKY_APP_PASSWORD }}
           REDDIT_CLIENT_ID: ${{ secrets.REDDIT_CLIENT_ID }}

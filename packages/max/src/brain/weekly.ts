@@ -1,8 +1,8 @@
 /**
  * Weekly Brain — aggregates the week's data, evaluates hypotheses,
  * correlates content with metrics, evaluates strategy outcomes,
- * generates a reflection via Gemini, extracts a structured strategy decision,
- * and feeds everything back into next week's calendar generation.
+ * generates a Claude reflection, extracts a structured strategy decision,
+ * pre-generates the week's content, and feeds everything back into next week's calendar.
  */
 
 import { readFileSync, readdirSync, existsSync, writeFileSync } from 'node:fs';
@@ -13,8 +13,9 @@ import { loadHistory } from '../content/history.js';
 import { loadExperiments } from '../experiments/tracker.js';
 import { evaluateWeek, type WeeklyEvaluation } from '../experiments/evaluator.js';
 import { generateWeeklyCalendar, type CalendarContext } from '../content/calendar.js';
+import { pregenerateWeek } from '../content/pregenerate.js';
 import { getStage } from '../content/scheduler.js';
-import { generateContent } from '../content/gemini.js';
+import { generateContent } from '../content/claude.js';
 import { sendEmail } from '../reports/email.js';
 import { generateDrafts } from './drafts.js';
 import { collectEngagement } from '../analytics/engagement.js';
@@ -257,7 +258,7 @@ function buildMetricsSnapshot(summary: WeekSummary): MetricsSnapshot {
 // ── Reflection ──
 
 async function generateReflection(
-  geminiApiKey: string,
+  claudeApiKey: string,
   summary: WeekSummary,
   evaluation: WeeklyEvaluation,
   goalEval: GoalEvaluation,
@@ -307,7 +308,7 @@ ${engagementBlock}${correlationBlock}${strategyBlock}${patternsBlock}
 
 Write a 3-5 sentence reflection covering: what went well, what to improve, and one specific strategy recommendation for next week. ${goalEval.status === 'stalled' ? 'Growth is stalled — be direct about what needs to change. Recommend a concrete pivot. DO NOT repeat a strategy that previously had a negative outcome.' : ''} Be concise and data-driven. No fluff. End with a clear, actionable recommendation.`;
 
-  return generateContent(geminiApiKey, prompt, { temperature: 0.7, maxTokens: 500 });
+  return generateContent(claudeApiKey, prompt, { temperature: 0.7, maxTokens: 500, model: 'claude-sonnet-4-6' });
 }
 
 // ── Weekly Digest Email ──
@@ -518,16 +519,16 @@ export async function weeklyReflection(config: MaxConfig): Promise<void> {
     console.log(`[Max] Strategy memory: ${strategyMemory.recentDecisions.length} recent decisions, ${strategyMemory.patterns.length} patterns`);
   }
 
-  // 8. Generate Gemini reflection (with strategy + correlations)
+  // 8. Generate Claude reflection (with strategy + correlations)
   console.log('[Max] Generating reflection...');
-  const reflection = await generateReflection(config.geminiApiKey, summary, evaluation, goalEval, strategyMemory);
+  const reflection = await generateReflection(config.claudeApiKey, summary, evaluation, goalEval, strategyMemory);
   console.log(`[Max] Reflection: ${reflection.slice(0, 100)}...`);
 
   // 9. Extract structured strategy decision
   let strategyDecision: CalendarContext['strategyDecision'] | undefined;
   try {
     console.log('[Max] Extracting strategy decision...');
-    const decision = await extractDecision(config.geminiApiKey, reflection, goalEval.status, strategyMemory);
+    const decision = await extractDecision(config.claudeApiKey, reflection, goalEval.status, strategyMemory);
     const recorded = recordDecision(config.dataDir, decision);
     console.log(`[Max] Strategy decision: ${recorded.id} — "${recorded.decision}"`);
     strategyDecision = { decision: recorded.decision, parameters: recorded.parameters };
@@ -582,7 +583,30 @@ export async function weeklyReflection(config: MaxConfig): Promise<void> {
     correlationInsights: evaluation.correlations?.insights,
     engagementRankings: evaluation.correlations?.categoryRankings,
   };
-  await generateWeeklyCalendar(config.geminiApiKey, stage, config.dataDir, calendarCtx);
+  const calendar = await generateWeeklyCalendar(config.claudeApiKey, stage, config.dataDir, calendarCtx);
+
+  // 12b. Pre-generate this week's content (so daily runs just publish, no API calls needed)
+  try {
+    const latest = snapshots[snapshots.length - 1];
+    if (latest) {
+      const totalWeek = Object.values(latest.npm.packages).reduce((s, p) => s + p.downloadsLastWeek, 0);
+      const totalMonth = Object.values(latest.npm.packages).reduce((s, p) => s + p.downloadsLastMonth, 0);
+      const history = loadHistory(config.dataDir);
+      const promptCtx = {
+        stars: latest.github.stars,
+        forks: latest.github.forks,
+        npmDownloadsWeek: totalWeek,
+        npmDownloadsMonth: totalMonth,
+        deltaStars: summary.stars.delta,
+        recentPosts: history.slice(-5).map((e) =>
+          e.platform === 'bluesky' ? e.content : (e.title ?? e.content.slice(0, 80)),
+        ),
+      };
+      await pregenerateWeek(config.claudeApiKey, calendar, promptCtx, config.dataDir);
+    }
+  } catch (err) {
+    console.warn('[Max] Content pre-generation failed (non-fatal):', (err as Error).message);
+  }
 
   // 13. Save correlation report
   if (evaluation.correlations) {

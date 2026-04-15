@@ -7,7 +7,7 @@
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import type { ContentCategory } from '../content/templates.js';
-import { generateContent } from '../content/gemini.js';
+import { generateContent } from '../content/claude.js';
 
 // ── Types ──
 
@@ -202,10 +202,10 @@ export function buildStrategyMemory(dataDir: string): StrategyMemory {
   return { recentDecisions, patterns };
 }
 
-// ── Extract Decision from Gemini Reflection ──
+// ── Extract Decision from Reflection ──
 
 export async function extractDecision(
-  geminiApiKey: string,
+  claudeApiKey: string,
   reflection: string,
   goalStatus: string,
   strategyMemory: StrategyMemory,
@@ -251,7 +251,7 @@ Rules:
 - If growth is stalled, be bold. If accelerating, stay the course with minor tweaks.
 - DO NOT repeat a strategy that had a "negative" outcome unless you have a specific reason.`;
 
-  const raw = await generateContent(geminiApiKey, prompt, { temperature: 0.5, maxTokens: 500 });
+  const raw = await generateContent(claudeApiKey, prompt, { temperature: 0.5, maxTokens: 500, model: 'claude-sonnet-4-6' });
 
   try {
     let cleaned = raw.trim();

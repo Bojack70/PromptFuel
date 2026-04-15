@@ -11,8 +11,9 @@ import { loadConfig } from './config.js';
 import { collectAndSave, type DaySnapshot } from './analytics/collector.js';
 import { appendHistory, loadHistory, type ContentLogEntry } from './content/history.js';
 import { planToday, type DailyPlan } from './content/scheduler.js';
-import { generateContent } from './content/gemini.js';
+import { generateContent } from './content/claude.js';
 import { blueskyPrompt, devtoPrompt, tagsForCategory, type PromptContext } from './content/templates.js';
+import { loadPregenerated, getTodayPregenerated, isPregeneratedCurrent } from './content/pregenerate.js';
 import { postToBluesky } from './publish/bluesky.js';
 import { postArticle, parseArticle } from './publish/devto.js';
 import { postToReddit, pickSubreddit } from './publish/reddit.js';
@@ -67,20 +68,21 @@ function buildPromptContext(snapshot: DaySnapshot, history: ContentLogEntry[]): 
 }
 
 /**
- * Generate a Bluesky post via Gemini and ensure it fits within 300 graphemes.
+ * Generate a Bluesky post via Claude and ensure it fits within 300 graphemes.
  */
-async function generateBlueskyPost(prompt: string, geminiApiKey: string): Promise<string> {
-  let text = await generateContent(geminiApiKey, prompt, {
+async function generateBlueskyPost(prompt: string, claudeApiKey: string): Promise<string> {
+  let text = await generateContent(claudeApiKey, prompt, {
     temperature: 0.9,
     maxTokens: 150,
+    model: 'claude-haiku-4-5',
   });
 
   for (let attempt = 1; attempt <= 3 && text.length > 300; attempt++) {
     console.warn(`[Max] Post attempt ${attempt} was ${text.length} chars, retrying...`);
     text = await generateContent(
-      geminiApiKey,
+      claudeApiKey,
       `${prompt}\n\nIMPORTANT: Your previous attempt was ${text.length} characters. The ABSOLUTE MAXIMUM is 300 characters. Be much more concise.`,
-      { temperature: 0.7, maxTokens: 100 },
+      { temperature: 0.7, maxTokens: 100, model: 'claude-haiku-4-5' },
     );
   }
 
@@ -125,12 +127,17 @@ async function daily() {
   const state = loadState(config.dataDir);
   const history = loadHistory(config.dataDir);
 
-  // Generate or load weekly content calendar
+  // Load weekly content calendar (generated during weekly brain run)
   let calendar = loadCalendar(config.dataDir);
   if (!isCalendarCurrent(calendar)) {
-    const { getStage } = await import('./content/scheduler.js');
-    const stage = getStage((state as any).warmupStartDate);
-    calendar = await generateWeeklyCalendar(config.geminiApiKey, stage, config.dataDir);
+    // Calendar missing or stale — generate on-demand as fallback
+    try {
+      const { getStage } = await import('./content/scheduler.js');
+      const stage = getStage((state as any).warmupStartDate);
+      calendar = await generateWeeklyCalendar(config.claudeApiKey, stage, config.dataDir);
+    } catch (err) {
+      console.warn('[Max] Calendar generation failed (non-fatal):', (err as Error).message);
+    }
   }
   const calendarDay = calendar ? getTodayFromCalendar(calendar) : null;
   if (calendarDay) {
@@ -143,54 +150,85 @@ async function daily() {
 
   const ctx = buildPromptContext(snapshot, history);
 
+  // Check for pre-generated content (from weekly brain)
+  const pregenerated = loadPregenerated(config.dataDir);
+  const todayPregen = isPregeneratedCurrent(pregenerated) ? getTodayPregenerated(pregenerated!) : null;
+  if (todayPregen) {
+    console.log('[Max] Using pre-generated content for today');
+  }
+
   // ── Bluesky ──
   if (plan.bluesky) {
     try {
-      console.log(`[Max] Generating ${plan.bluesky.category} Bluesky post...`);
-      const prompt = blueskyPrompt(plan.bluesky.category, ctx);
-      let postText = await generateBlueskyPost(prompt, config.geminiApiKey);
-      let wasRetried = false;
-
-      // Quality gate: score -> regenerate once if < 7 -> skip if still < 7
-      let quality = await reviewBlueskyPost(postText, config.geminiApiKey);
-      console.log(`[Max] Post quality: ${quality.score.average}/10 (A:${quality.score.authenticity} V:${quality.score.value} Ac:${quality.score.accuracy} E:${quality.score.engagement})`);
-
-      if (!quality.passed) {
-        console.log(`[Max] Below threshold — regenerating with feedback: ${quality.score.feedback}`);
-        postText = await generateBlueskyPost(
-          `${prompt}\n\nIMPORTANT FEEDBACK FROM REVIEWER: ${quality.score.feedback}. Address this in your post.`,
-          config.geminiApiKey,
-        );
-        quality = await reviewBlueskyPost(postText, config.geminiApiKey);
-        wasRetried = true;
-        console.log(`[Max] Retry quality: ${quality.score.average}/10`);
-      }
-
-      // Record experiment
-      recordExperiment(config.dataDir, {
-        date: today(),
-        timestamp: new Date().toISOString(),
-        platform: 'bluesky',
-        category: plan.bluesky.category,
-        qualityScores: quality.score,
-        passed: quality.passed,
-        retried: wasRetried,
-      });
-
-      if (quality.passed) {
-        const result = await postToBluesky(postText, config.blueskyHandle, config.blueskyAppPassword);
+      // Use pre-generated content if available and passed quality gate
+      if (todayPregen?.bluesky?.qualityPassed) {
+        const pregenPost = todayPregen.bluesky;
+        console.log(`[Max] Using pre-generated Bluesky post (quality: ${pregenPost.qualityScore}/10)`);
+        const result = await postToBluesky(pregenPost.text, config.blueskyHandle, config.blueskyAppPassword);
         appendHistory(config.dataDir, {
           date: today(),
           timestamp: new Date().toISOString(),
           platform: 'bluesky',
-          category: plan.bluesky.category,
+          category: pregenPost.category,
           content: result.text,
           postId: result.uri,
         });
         console.log(`[Max] Bluesky post published (${result.text.length} chars): ${result.uri}`);
+        recordExperiment(config.dataDir, {
+          date: today(),
+          timestamp: new Date().toISOString(),
+          platform: 'bluesky',
+          category: pregenPost.category,
+          qualityScores: { authenticity: 7, value: 7, accuracy: 7, engagement: 7, average: pregenPost.qualityScore, feedback: 'pre-generated' },
+          passed: true,
+          retried: false,
+        });
       } else {
-        console.warn(`[Max] Post rejected after retry (${quality.score.average}/10) — skipping`);
-      }
+        // On-demand generation fallback
+        console.log(`[Max] Generating ${plan.bluesky.category} Bluesky post on-demand...`);
+        const prompt = blueskyPrompt(plan.bluesky.category, ctx);
+        let postText = await generateBlueskyPost(prompt, config.claudeApiKey);
+        let wasRetried = false;
+
+        let quality = await reviewBlueskyPost(postText, config.claudeApiKey);
+        console.log(`[Max] Post quality: ${quality.score.average}/10 (A:${quality.score.authenticity} V:${quality.score.value} Ac:${quality.score.accuracy} E:${quality.score.engagement})`);
+
+        if (!quality.passed) {
+          console.log(`[Max] Below threshold — regenerating with feedback: ${quality.score.feedback}`);
+          postText = await generateBlueskyPost(
+            `${prompt}\n\nIMPORTANT FEEDBACK FROM REVIEWER: ${quality.score.feedback}. Address this in your post.`,
+            config.claudeApiKey,
+          );
+          quality = await reviewBlueskyPost(postText, config.claudeApiKey);
+          wasRetried = true;
+          console.log(`[Max] Retry quality: ${quality.score.average}/10`);
+        }
+
+        recordExperiment(config.dataDir, {
+          date: today(),
+          timestamp: new Date().toISOString(),
+          platform: 'bluesky',
+          category: plan.bluesky.category,
+          qualityScores: quality.score,
+          passed: quality.passed,
+          retried: wasRetried,
+        });
+
+        if (quality.passed) {
+          const result = await postToBluesky(postText, config.blueskyHandle, config.blueskyAppPassword);
+          appendHistory(config.dataDir, {
+            date: today(),
+            timestamp: new Date().toISOString(),
+            platform: 'bluesky',
+            category: plan.bluesky.category,
+            content: result.text,
+            postId: result.uri,
+          });
+          console.log(`[Max] Bluesky post published (${result.text.length} chars): ${result.uri}`);
+        } else {
+          console.warn(`[Max] Post rejected after retry (${quality.score.average}/10) — skipping`);
+        }
+      } // end on-demand fallback
     } catch (err) {
       console.error('[Max] Bluesky post failed:', err);
     }
@@ -199,60 +237,87 @@ async function daily() {
   // ── Dev.to ──
   if (plan.devto) {
     try {
-      console.log(`[Max] Generating ${plan.devto.category} article...`);
-      const prompt = devtoPrompt(plan.devto.category, ctx);
-      let markdown = await generateContent(config.geminiApiKey, prompt, {
-        temperature: 0.8,
-        maxTokens: 4096,
-      });
-
-      let { title, body } = parseArticle(markdown);
-      const tags = tagsForCategory(plan.devto.category);
-      let wasRetried = false;
-
-      // Quality gate
-      let quality = await reviewArticle(title, body, config.geminiApiKey);
-      console.log(`[Max] Article quality: ${quality.score.average}/10 (A:${quality.score.authenticity} V:${quality.score.value} Ac:${quality.score.accuracy} E:${quality.score.engagement})`);
-
-      if (!quality.passed) {
-        console.log(`[Max] Below threshold — regenerating with feedback: ${quality.score.feedback}`);
-        markdown = await generateContent(config.geminiApiKey,
-          `${prompt}\n\nIMPORTANT FEEDBACK FROM REVIEWER: ${quality.score.feedback}. Address this issue while keeping the article high quality.`,
-          { temperature: 0.8, maxTokens: 4096 },
-        );
-        ({ title, body } = parseArticle(markdown));
-        quality = await reviewArticle(title, body, config.geminiApiKey);
-        wasRetried = true;
-        console.log(`[Max] Retry quality: ${quality.score.average}/10`);
-      }
-
-      // Record experiment
-      recordExperiment(config.dataDir, {
-        date: today(),
-        timestamp: new Date().toISOString(),
-        platform: 'devto',
-        category: plan.devto.category,
-        qualityScores: quality.score,
-        passed: quality.passed,
-        retried: wasRetried,
-      });
-
-      if (quality.passed) {
-        const result = await postArticle(title, body, tags, config);
+      // Use pre-generated article if available and passed quality gate
+      if (todayPregen?.devto?.qualityPassed) {
+        const pregenArticle = todayPregen.devto;
+        console.log(`[Max] Using pre-generated Dev.to article (quality: ${pregenArticle.qualityScore}/10): "${pregenArticle.title}"`);
+        const result = await postArticle(pregenArticle.title, pregenArticle.body, pregenArticle.tags, config);
         appendHistory(config.dataDir, {
           date: today(),
           timestamp: new Date().toISOString(),
           platform: 'devto',
-          category: plan.devto.category,
-          title,
-          content: body.slice(0, 200),
+          category: pregenArticle.category,
+          title: pregenArticle.title,
+          content: pregenArticle.body.slice(0, 200),
           postId: String(result.id),
           postUrl: result.url,
         });
         console.log(`[Max] Article posted: ${result.url}`);
+        recordExperiment(config.dataDir, {
+          date: today(),
+          timestamp: new Date().toISOString(),
+          platform: 'devto',
+          category: pregenArticle.category,
+          qualityScores: { authenticity: 7, value: 7, accuracy: 7, engagement: 7, average: pregenArticle.qualityScore, feedback: 'pre-generated' },
+          passed: true,
+          retried: false,
+        });
       } else {
-        console.warn(`[Max] Article rejected after retry (${quality.score.average}/10) — skipping`);
-      }
+        // On-demand generation fallback
+        console.log(`[Max] Generating ${plan.devto.category} article on-demand...`);
+        const prompt = devtoPrompt(plan.devto.category, ctx);
+        let markdown = await generateContent(config.claudeApiKey, prompt, {
+          temperature: 0.8,
+          maxTokens: 4096,
+          model: 'claude-haiku-4-5',
+        });
+
+        let { title, body } = parseArticle(markdown);
+        const tags = tagsForCategory(plan.devto.category);
+        let wasRetried = false;
+
+        let quality = await reviewArticle(title, body, config.claudeApiKey);
+        console.log(`[Max] Article quality: ${quality.score.average}/10 (A:${quality.score.authenticity} V:${quality.score.value} Ac:${quality.score.accuracy} E:${quality.score.engagement})`);
+
+        if (!quality.passed) {
+          console.log(`[Max] Below threshold — regenerating with feedback: ${quality.score.feedback}`);
+          markdown = await generateContent(config.claudeApiKey,
+            `${prompt}\n\nIMPORTANT FEEDBACK FROM REVIEWER: ${quality.score.feedback}. Address this issue while keeping the article high quality.`,
+            { temperature: 0.8, maxTokens: 4096, model: 'claude-haiku-4-5' },
+          );
+          ({ title, body } = parseArticle(markdown));
+          quality = await reviewArticle(title, body, config.claudeApiKey);
+          wasRetried = true;
+          console.log(`[Max] Retry quality: ${quality.score.average}/10`);
+        }
+
+        recordExperiment(config.dataDir, {
+          date: today(),
+          timestamp: new Date().toISOString(),
+          platform: 'devto',
+          category: plan.devto.category,
+          qualityScores: quality.score,
+          passed: quality.passed,
+          retried: wasRetried,
+        });
+
+        if (quality.passed) {
+          const result = await postArticle(title, body, tags, config);
+          appendHistory(config.dataDir, {
+            date: today(),
+            timestamp: new Date().toISOString(),
+            platform: 'devto',
+            category: plan.devto.category,
+            title,
+            content: body.slice(0, 200),
+            postId: String(result.id),
+            postUrl: result.url,
+          });
+          console.log(`[Max] Article posted: ${result.url}`);
+        } else {
+          console.warn(`[Max] Article rejected after retry (${quality.score.average}/10) — skipping`);
+        }
+      } // end on-demand fallback
     } catch (err) {
       console.error('[Max] Dev.to post failed:', err);
     }

@@ -16,8 +16,8 @@ export interface MaxConfig {
   resendApiKey: string;
   reportEmail: string;
 
-  // Gemini (content generation)
-  geminiApiKey: string;
+  // Claude / Anthropic (content generation)
+  claudeApiKey: string;
 
   // Bluesky
   blueskyHandle: string;
@@ -66,7 +66,7 @@ export function loadConfig(): MaxConfig {
     resendApiKey: requireEnv('RESEND_API_KEY'),
     reportEmail: requireEnv('REPORT_EMAIL'),
 
-    geminiApiKey: requireEnv('GEMINI_API_KEY'),
+    claudeApiKey: requireEnv('ANTHROPIC_API_KEY'),
 
     blueskyHandle: optionalEnv('BLUESKY_HANDLE', ''),
     blueskyAppPassword: optionalEnv('BLUESKY_APP_PASSWORD', ''),

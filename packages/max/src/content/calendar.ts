@@ -9,7 +9,7 @@
 
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { generateContent } from './gemini.js';
+import { generateContent } from './claude.js';
 import type { ContentCategory } from './templates.js';
 import type { WarmupStage } from './scheduler.js';
 
@@ -154,7 +154,7 @@ Respond in EXACTLY this JSON format, nothing else:
 ]`;
 
 export async function generateWeeklyCalendar(
-  geminiApiKey: string,
+  claudeApiKey: string,
   stage: WarmupStage,
   dataDir: string,
   ctx?: CalendarContext,
@@ -166,9 +166,10 @@ export async function generateWeeklyCalendar(
   if (ctx?.topCategory) console.log(`[Max] Top category last week: ${ctx.topCategory}`);
   if (ctx?.weakCategory) console.log(`[Max] Weak category last week: ${ctx.weakCategory}`);
 
-  const raw = await generateContent(geminiApiKey, GENERATION_PROMPT(stage, monday, ctx), {
+  const raw = await generateContent(claudeApiKey, GENERATION_PROMPT(stage, monday, ctx), {
     temperature: 0.8,
     maxTokens: 1000,
+    model: 'claude-sonnet-4-6',
   });
 
   let days: CalendarDay[];
