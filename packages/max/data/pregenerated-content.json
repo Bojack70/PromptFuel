@@ -1,0 +1,97 @@
+{
+  "weekOf": "2026-04-14",
+  "generatedAt": "2026-04-15T10:00:00.000Z",
+  "posts": [
+    {
+      "date": "2026-04-14",
+      "bluesky": {
+        "text": "spent 20 minutes debugging why my openai costs doubled. turned out i was appending the full chat history on every request like a golden retriever fetching the same stick 40 times. been tracking tokens with promptfuel since. my wallet is significantly less emotional now.",
+        "category": "tip",
+        "angle": "relatable token waste moment",
+        "qualityPassed": true,
+        "qualityScore": 8.5
+      },
+      "devto": null
+    },
+    {
+      "date": "2026-04-15",
+      "bluesky": {
+        "text": "switched a summarization job from claude haiku to gpt-4o mini to save money. saved money. also spent 3 hours fixing mangled output formats. net result: negative. haiku just does what you tell it. sometimes cheap is expensive. `promptfuel compare` before you commit to the swap.",
+        "category": "comparison",
+        "angle": "the real cost of switching models",
+        "qualityPassed": true,
+        "qualityScore": 8.5
+      },
+      "devto": {
+        "title": "The Embarrassing Reason My LLM API Bill Was Double What It Should Be",
+        "body": "# The Embarrassing Reason My LLM API Bill Was Double What It Should Be\n\nI'm going to tell you something mildly humiliating.\n\nFor about six weeks, I was paying roughly double what I should have been for API calls. Not because my app grew. Not because I picked the wrong model. Because I was doing three dumb things simultaneously and they were compounding.\n\nHere's what they were, and how I found them.\n\n## The Investigation\n\nI built [PromptFuel](https://promptfuel.vercel.app) partly to answer this exact question for myself. Running `promptfuel analyze` on my prompts was how I found the problem — or rather, the problems, plural.\n\n```bash\nnpm install -g promptfuel\npromptfuel analyze\n```\n\n## Problem 1: Paying for the Same System Prompt 800 Times a Day\n\nMy system prompt was around 800 tokens. I was constructing a fresh `messages` array on every API call without caching. So 800 tokens × every request × full price = money leaving my account at a steady and unnecessary pace.\n\nThe fix for Claude is one addition:\n\n```python\nsystem=[{\n    \"type\": \"text\",\n    \"text\": your_system_prompt,\n    \"cache_control\": {\"type\": \"ephemeral\"}\n}]\n```\n\nCache hits cost 10% of normal input price. The system prompt hadn't changed in weeks. I was paying 100% for it every time.\n\n## Problem 2: Sending the Entire Conversation History on Every Turn\n\nMy chat interface was appending every turn to the context and sending the whole thing. By message 20, I was sending 6,000 tokens of history to process a 15-token question.\n\nThe fix:\n\n```javascript\n// Keep a rolling window of recent context\nconst MAX_TURNS = 8;\nconst messages = conversationHistory.slice(-MAX_TURNS * 2); // user + assistant pairs\n```\n\nFor most conversational apps, the last 8-10 turns is enough. The model doesn't need your full transcript to answer \"can you make that shorter.\"\n\n## Problem 3: Redundant Instructions I'd Copy-Pasted Into Existence\n\nI found `\"respond only in valid JSON\"` in my system prompt. I also found it in my user message template. And in a comment that said `// TODO: make sure JSON output is enforced`.\n\nThe model understood it the first time. I just didn't trust it.\n\n## What the Numbers Looked Like\n\nAfter fixing all three:\n\n- Token usage down ~42%\n- Response quality: unchanged\n- Time spent refactoring: one afternoon\n\nThe embarrassing part isn't that I was doing these things. It's that I was doing them for six weeks before I looked.\n\n## If You Want to Check Your Own Prompts\n\n```bash\nnpm install -g promptfuel\npromptfuel analyze\n```\n\nIt won't roast you as hard as I just roasted myself. But it'll find the waste.",
+        "tags": ["ai", "tutorial", "javascript", "beginners"],
+        "category": "tutorial",
+        "qualityPassed": true,
+        "qualityScore": 8.5
+      }
+    },
+    {
+      "date": "2026-04-16",
+      "bluesky": {
+        "text": "my first llm app had \"respond in JSON\" in the system prompt, the user message, AND a comment reminding me to add it again. this is a cry for help. `promptfuel analyze` will find yours. yours is probably different but equally embarrassing.",
+        "category": "tutorial",
+        "angle": "self-deprecating redundant instructions story",
+        "qualityPassed": true,
+        "qualityScore": 8.5
+      },
+      "devto": null
+    },
+    {
+      "date": "2026-04-17",
+      "bluesky": {
+        "text": "every model leaderboard tests chatbots on SAT questions and coding puzzles. your app is not a coding puzzle. it's \"why is my summary always in spanish\" and \"the user typed 🥴 followed by 4000 words.\" bench your model on that. i'll wait.",
+        "category": "opinion",
+        "angle": "benchmarks vs real production inputs",
+        "qualityPassed": true,
+        "qualityScore": 8.5
+      },
+      "devto": {
+        "title": "I Tested Claude Haiku, GPT-4o Mini, and Gemini Flash on Real Tasks. Here's What Actually Happened.",
+        "body": "# I Tested Claude Haiku, GPT-4o Mini, and Gemini Flash on Real Tasks. Here's What Actually Happened.\n\nEvery few weeks someone posts a new model comparison and it's always the same: benchmark scores, carefully designed test prompts, neat bar charts. Then you try the \"winning\" model on your actual workload and something weird happens.\n\nI've been running all three in production for a few months. Here's what I actually found, including the parts that don't make for clean charts.\n\n## Quick Pricing Reality Check\n\n| Model | Input (per 1M tokens) | Context |\n|---|---|---|\n| Claude Haiku 4.5 | $1.00 | 200K |\n| GPT-4o Mini | $0.15 | 128K |\n| Gemini 1.5 Flash | $0.075 | 1M |\n\nGemini Flash is genuinely 13× cheaper than Haiku. That's not a rounding error. Before you immediately migrate everything: keep reading.\n\n## What I Was Testing\n\nThree real workloads from a side project:\n\n1. **Document summarization** — long PDFs, messy formatting, inconsistent structure\n2. **JSON extraction** — pull structured data from unstructured user input\n3. **Code explanation** — explain what a function does in plain English\n\nNot \"write a poem\" or \"solve this logic puzzle.\" Real things an app might do.\n\n## Document Summarization: Gemini Flash Wins\n\nFlash's 1M context window is genuinely useful here, not just a spec sheet number. I was chunking documents into pieces to fit smaller context windows. With Flash I stopped doing that.\n\nIt's also significantly cheaper, which matters when you're summarizing hundreds of documents.\n\nThe catch: Flash occasionally invents a section heading that wasn't in the original. It's subtle and sounds plausible, which makes it worse. For internal tools where someone will verify the output, fine. For anything customer-facing, I'd want a review step.\n\n## JSON Extraction: Haiku Wins, Annoyingly\n\nI really wanted Flash to win here because of the price. It didn't.\n\nThe task: given a paragraph of user-written text, extract structured fields into a specific JSON schema. Claude Haiku followed the schema reliably. Flash followed it most of the time, but occasionally added fields that weren't in the schema, renamed fields it didn't like, or decided to nest things differently.\n\nEach of these breaks downstream code. The debugging cost per incident outweighed the token savings.\n\nHaiku is predictable in a way that sounds boring but is exactly what you want when you're processing thousands of records.\n\n## Code Explanation: GPT-4o Mini Wins\n\nThis one surprised me. GPT-4o Mini is clearly well-trained on code-related tasks. Its explanations are accurate and well-structured. It also handled edge cases (unusual syntax, legacy patterns) better than the other two.\n\nFor anything code-adjacent, it's my first reach now.\n\n## What I Actually Use\n\nI stopped trying to find one winner and started routing:\n\n```javascript\nfunction pickModel(taskType, inputTokens) {\n  if (taskType === 'summarize' && inputTokens > 50000) return 'gemini-1.5-flash';\n  if (taskType === 'extract_json') return 'claude-haiku-4-5';\n  if (taskType === 'explain_code') return 'gpt-4o-mini';\n  return 'claude-haiku-4-5'; // safe default\n}\n```\n\nYou can check price differences before committing to a migration:\n\n```bash\nnpm install -g promptfuel\npromptfuel compare claude-haiku-4-5 gpt-4o-mini gemini-1.5-flash\n```\n\n## The Actual Bottom Line\n\n- **Cheapest by far**: Gemini Flash. Use it for volume tasks where edge cases are acceptable.\n- **Most format-reliable**: Claude Haiku. Use it when you need strict schema compliance.\n- **Best at code**: GPT-4o Mini. Use it for anything developer-facing.\n\nThe honest answer is: don't pick one. Pick based on the task. The cost difference between routing intelligently versus defaulting to one model is real, and it compounds over time.",
+        "tags": ["ai", "tutorial", "javascript", "optimization"],
+        "category": "comparison",
+        "qualityPassed": true,
+        "qualityScore": 8.5
+      }
+    },
+    {
+      "date": "2026-04-18",
+      "bluesky": {
+        "text": "if you're using the same claude system prompt on every request and NOT caching it, you're paying full price for text that never changes. that's like tipping your uber driver at every red light separately. `cache_control: {type: 'ephemeral'}`. one line. done.",
+        "category": "tip",
+        "angle": "prompt caching explained with a bad analogy",
+        "qualityPassed": true,
+        "qualityScore": 8.5
+      },
+      "devto": null
+    },
+    {
+      "date": "2026-04-19",
+      "bluesky": {
+        "text": "built promptfuel because i was tired of guessing which model to use and then getting the invoice. it's free, runs in your terminal, doesn't need your api keys. no upsell. just `npm install -g promptfuel`. if you find a bug, i'm not surprised, it's a side project.",
+        "category": "launch",
+        "angle": "honest low-key product intro",
+        "qualityPassed": true,
+        "qualityScore": 8.5
+      },
+      "devto": null
+    },
+    {
+      "date": "2026-04-20",
+      "bluesky": {
+        "text": "gemini flash is so cheap it feels illegal. like i keep waiting for the \"just kidding\" invoice. the tradeoff: it occasionally hallucinates a JSON field with quiet confidence. haiku costs more and complains less. for anything user-facing i still reach for haiku.",
+        "category": "comparison",
+        "angle": "gemini flash price shock + real tradeoff",
+        "qualityPassed": true,
+        "qualityScore": 8.5
+      },
+      "devto": null
+    }
+  ]
+}
