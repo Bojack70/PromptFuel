@@ -127,34 +127,29 @@ async function daily() {
   const state = loadState(config.dataDir);
   const history = loadHistory(config.dataDir);
 
-  // Load weekly content calendar (generated during weekly brain run)
-  let calendar = loadCalendar(config.dataDir);
-  if (!isCalendarCurrent(calendar)) {
-    // Calendar missing or stale — generate on-demand as fallback
-    try {
-      const { getStage } = await import('./content/scheduler.js');
-      const stage = getStage((state as any).warmupStartDate);
-      calendar = await generateWeeklyCalendar(config.claudeApiKey, stage, config.dataDir);
-    } catch (err) {
-      console.warn('[Max] Calendar generation failed (non-fatal):', (err as Error).message);
-    }
-  }
-  const calendarDay = calendar ? getTodayFromCalendar(calendar) : null;
+  // Load weekly content calendar
+  const calendar = loadCalendar(config.dataDir);
+  const calendarDay = calendar && isCalendarCurrent(calendar) ? getTodayFromCalendar(calendar) : null;
   if (calendarDay) {
     console.log(`[Max] Calendar: Bluesky=${calendarDay.bluesky ?? 'skip'} Dev.to=${calendarDay.devto ?? 'skip'}`);
   }
 
   const plan = planToday(state as any, history, calendarDay);
-
   console.log(`[Max] Stage: ${plan.stage} | Bluesky: ${plan.bluesky?.category ?? 'skip'} | Dev.to: ${plan.devto?.category ?? 'skip'}`);
 
   const ctx = buildPromptContext(snapshot, history);
 
-  // Check for pre-generated content (from weekly brain)
+  // Check for pre-generated content (committed to repo each Monday)
   const pregenerated = loadPregenerated(config.dataDir);
   const todayPregen = isPregeneratedCurrent(pregenerated) ? getTodayPregenerated(pregenerated!) : null;
+
   if (todayPregen) {
-    console.log('[Max] Using pre-generated content for today');
+    console.log('[Max] Pre-generated content found for today');
+  } else {
+    console.log('[Max] No pre-generated content for today — will attempt on-demand generation');
+    if (!config.claudeApiKey) {
+      console.warn('[Max] No ANTHROPIC_API_KEY set and no pre-generated content — skipping content publishing');
+    }
   }
 
   // ── Bluesky ──
@@ -183,8 +178,8 @@ async function daily() {
           passed: true,
           retried: false,
         });
-      } else {
-        // On-demand generation fallback
+      } else if (config.claudeApiKey) {
+        // On-demand generation fallback (only if API key available)
         console.log(`[Max] Generating ${plan.bluesky.category} Bluesky post on-demand...`);
         const prompt = blueskyPrompt(plan.bluesky.category, ctx);
         let postText = await generateBlueskyPost(prompt, config.claudeApiKey);
@@ -262,8 +257,8 @@ async function daily() {
           passed: true,
           retried: false,
         });
-      } else {
-        // On-demand generation fallback
+      } else if (config.claudeApiKey) {
+        // On-demand generation fallback (only if API key available)
         console.log(`[Max] Generating ${plan.devto.category} article on-demand...`);
         const prompt = devtoPrompt(plan.devto.category, ctx);
         let markdown = await generateContent(config.claudeApiKey, prompt, {
@@ -362,6 +357,51 @@ async function dashboard() {
   console.log('[Max] Dashboard complete.');
 }
 
+/**
+ * Local content generation — run this manually each Monday before the week starts.
+ * Requires ANTHROPIC_API_KEY set locally. Generates pregenerated-content.json which
+ * you then commit so the daily GitHub Actions runs can just publish without an API key.
+ *
+ * Usage: ANTHROPIC_API_KEY=sk-ant-... node dist/index.js --mode generate-week
+ */
+async function generateWeek() {
+  const config = loadConfig();
+  if (!config.claudeApiKey) {
+    console.error('[Max] ANTHROPIC_API_KEY is required for generate-week. Set it in your environment.');
+    process.exit(1);
+  }
+
+  console.log('[Max] Starting local content pre-generation for this week...');
+
+  // Need analytics snapshot for context
+  const snapshot = await collectAndSave(config);
+  console.log(`[Max] Snapshot: ${snapshot.github.stars} stars, ${snapshot.github.forks} forks`);
+
+  const history = loadHistory(config.dataDir);
+  const state = loadState(config.dataDir);
+  const ctx = buildPromptContext(snapshot, history);
+
+  // Generate or load calendar
+  let calendar = loadCalendar(config.dataDir);
+  if (!calendar || !isCalendarCurrent(calendar)) {
+    console.log('[Max] Generating new weekly calendar...');
+    const stageDay = Math.floor((Date.now() - new Date('2026-03-24').getTime()) / 86400000);
+    const stage = stageDay < 15 ? 'warmup' : stageDay < 31 ? 'transition' : 'active';
+    calendar = await generateWeeklyCalendar(config.claudeApiKey, stage as any, config.dataDir);
+  } else {
+    console.log(`[Max] Using existing calendar for week of ${calendar.weekOf}`);
+  }
+
+  // Pre-generate all content for the week
+  const { pregenerateWeek } = await import('./content/pregenerate.js');
+  const week = await pregenerateWeek(config.claudeApiKey, calendar, ctx, config.dataDir);
+
+  const passed = week.posts.filter((p) => p.bluesky?.qualityPassed || p.devto?.qualityPassed).length;
+  console.log(`\n[Max] Done! ${passed}/${week.posts.length} days have passing content.`);
+  console.log(`[Max] File saved: packages/max/data/pregenerated-content.json`);
+  console.log('[Max] Commit and push this file so the daily workflow can publish from it.');
+}
+
 async function postBlueskyManual() {
   const config = loadConfig();
   const text = process.env.POST_TEXT;
@@ -396,8 +436,11 @@ async function main() {
       case 'post':
         await postBlueskyManual();
         break;
+      case 'generate-week':
+        await generateWeek();
+        break;
       default:
-        console.error(`Unknown mode: ${mode}. Use --mode daily|weekly|dashboard|post`);
+        console.error(`Unknown mode: ${mode}. Use --mode daily|weekly|dashboard|post|generate-week`);
         process.exit(1);
     }
   } catch (err) {

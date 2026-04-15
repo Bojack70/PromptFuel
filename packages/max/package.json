@@ -6,7 +6,8 @@
   "scripts": {
     "build": "tsup",
     "daily": "node dist/index.js --mode daily",
-    "weekly": "node dist/index.js --mode weekly"
+    "weekly": "node dist/index.js --mode weekly",
+    "generate-week": "node dist/index.js --mode generate-week"
   },
   "devDependencies": {
     "tsup": "^8.5.1",
