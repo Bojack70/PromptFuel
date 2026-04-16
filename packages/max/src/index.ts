@@ -469,6 +469,22 @@ async function socialTestReddit() {
   console.log(`[Max] Smoke test done. Tab ID: ${result.tabId}. URL: ${result.submittedUrl}`);
 }
 
+/**
+ * Smoke test: posts a tweet via OpenTabs.
+ *
+ * Usage:
+ *   node dist/index.js --mode social-test-twitter          (dry run: fill compose box only)
+ *   node dist/index.js --mode social-test-twitter --submit (actually tweets)
+ */
+async function socialTestTwitter() {
+  const { postTweet } = await import('./publish/opentabs/twitter.js');
+  const shouldSubmit = args.includes('--submit');
+  const text = `Automation smoke test — ${new Date().toISOString().split('T')[0]} (ignore this)`;
+  console.log(`[Max] Smoke test: ${shouldSubmit ? 'REAL TWEET' : 'dry run (compose fill only)'}`);
+  const result = await postTweet({ text, dryRun: !shouldSubmit });
+  console.log(`[Max] Smoke test done. Tab ID: ${result.tabId}. URL: ${result.url}`);
+}
+
 async function main() {
   try {
     switch (mode) {
@@ -493,8 +509,11 @@ async function main() {
       case 'social-test-reddit':
         await socialTestReddit();
         break;
+      case 'social-test-twitter':
+        await socialTestTwitter();
+        break;
       default:
-        console.error(`Unknown mode: ${mode}. Use --mode daily|weekly|dashboard|post|generate-week|social-test-hn|social-test-reddit`);
+        console.error(`Unknown mode: ${mode}. Use --mode daily|weekly|dashboard|post|generate-week|social-test-hn|social-test-reddit|social-test-twitter`);
         process.exit(1);
     }
   } catch (err) {
