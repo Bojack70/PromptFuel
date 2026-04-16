@@ -471,6 +471,33 @@ async function socialTestReddit() {
 }
 
 /**
+ * Engagement warmup — likes, upvotes, and comments on other people's content.
+ *
+ * Usage:
+ *   node dist/index.js --mode social-engage                  (all platforms)
+ *   node dist/index.js --mode social-engage --twitter-only
+ *   node dist/index.js --mode social-engage --reddit-only
+ *   node dist/index.js --mode social-engage --hn-only
+ *   node dist/index.js --mode social-engage --dry-run        (log actions, no clicks)
+ */
+async function socialEngage() {
+  const { runEngagement } = await import('./publish/opentabs/engagement.js');
+  const twitterOnly = args.includes('--twitter-only');
+  const redditOnly = args.includes('--reddit-only');
+  const hnOnly = args.includes('--hn-only');
+  const anySpecific = twitterOnly || redditOnly || hnOnly;
+  const result = await runEngagement({
+    platforms: {
+      twitter: anySpecific ? twitterOnly : true,
+      reddit: anySpecific ? redditOnly : true,
+      hn: anySpecific ? hnOnly : true,
+    },
+    dryRun: args.includes('--dry-run'),
+  });
+  console.log('[Max] Engagement complete:', JSON.stringify(result, null, 2));
+}
+
+/**
  * Trigger-based social posting across Twitter, Reddit, and HN.
  *
  * Usage:
@@ -545,8 +572,11 @@ async function main() {
       case 'social-post':
         await socialPost();
         break;
+      case 'social-engage':
+        await socialEngage();
+        break;
       default:
-        console.error(`Unknown mode: ${mode}. Use --mode daily|weekly|dashboard|post|generate-week|social-test-hn|social-test-reddit|social-test-twitter|social-post`);
+        console.error(`Unknown mode: ${mode}. Use --mode daily|weekly|dashboard|post|generate-week|social-test-hn|social-test-reddit|social-test-twitter|social-post|social-engage`);
         process.exit(1);
     }
   } catch (err) {
