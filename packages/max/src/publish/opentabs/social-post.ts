@@ -1,0 +1,173 @@
+/**
+ * Social-post orchestration — trigger-based browser automation posting.
+ *
+ * Uses pre-generated content from data/pregenerated-content.json (generated
+ * each Monday via `node dist/index.js --mode generate-week`). No API key needed
+ * at post time.
+ *
+ * Usage:
+ *   node dist/index.js --mode social-post                   (Twitter only)
+ *   node dist/index.js --mode social-post --reddit          (+ Reddit human-submit)
+ *   node dist/index.js --mode social-post --hn              (+ HN human-submit)
+ *   node dist/index.js --mode social-post --dry-run         (print content, no posting)
+ */
+
+import { loadPregenerated, getTodayPregenerated } from '../../content/pregenerate.js';
+import { postTweet } from './twitter.js';
+import { submitToReddit } from './reddit.js';
+import { submitToHN } from './hn.js';
+import { jitter, sleep } from './client.js';
+
+export interface SocialPostConfig {
+  dataDir: string;
+  platforms: {
+    twitter: boolean;
+    reddit: boolean;
+    hn: boolean;
+  };
+  dryRun: boolean;
+}
+
+export interface SocialPostResult {
+  twitter?: { url: string } | null;
+  reddit?: { url: string } | null;
+  hn?: { url: string; itemId?: string } | null;
+  skipped?: string[];
+}
+
+/**
+ * Derive a Reddit/HN discussion title from the pre-generated post.
+ * Uses devto.title when available; otherwise builds one from the angle metadata.
+ */
+function deriveTitle(post: { bluesky: { text: string; angle?: string; category?: string }; devto: { title?: string } | null }): string {
+  if (post.devto?.title) return post.devto.title;
+  // Fallback: use the angle as a discussion-friendly title
+  const angle = post.bluesky.angle ?? post.bluesky.category ?? 'Discussion';
+  // Capitalise first letter
+  return angle.charAt(0).toUpperCase() + angle.slice(1);
+}
+
+/**
+ * Derive Reddit/HN body text from the pre-generated post.
+ * Uses first 400 chars of devto.body when available; otherwise uses bluesky.text.
+ */
+function deriveBody(post: { bluesky: { text: string }; devto: { body?: string } | null }): string {
+  if (post.devto?.body) {
+    // Strip markdown headers and trim to ~400 chars for a discussion opener
+    const plain = post.devto.body
+      .replace(/^#+\s.+$/gm, '')  // remove headers
+      .replace(/```[\s\S]*?```/g, '') // remove code blocks
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+    // Take first paragraph that has enough substance
+    const paragraphs = plain.split('\n\n').filter((p) => p.trim().length > 80);
+    return (paragraphs[0] ?? plain).slice(0, 400).trim();
+  }
+  return post.bluesky.text;
+}
+
+/**
+ * Run the social posting orchestration using pre-generated content.
+ */
+export async function runSocialPost(config: SocialPostConfig): Promise<SocialPostResult> {
+  const result: SocialPostResult = { skipped: [] };
+
+  // Load today's pre-generated content
+  const week = loadPregenerated(config.dataDir);
+  const todayPost = week ? getTodayPregenerated(week) : null;
+
+  if (!todayPost) {
+    console.error(
+      `[Max] social-post: no pre-generated content for today.\n` +
+      `Run "node dist/index.js --mode generate-week" on Monday to pre-generate this week's content.\n` +
+      `Pre-generated weeks cover Mon–Sun, so run it at the start of each week.`
+    );
+    process.exit(1);
+  }
+
+  const platforms = Object.entries(config.platforms)
+    .filter(([, v]) => v)
+    .map(([k]) => k)
+    .join('+');
+
+  console.log(`[Max] Social post: ${new Date().toISOString().split('T')[0]} | category=${todayPost.bluesky.category} | platforms=${platforms}`);
+  console.log(`[Max] Social post: "${todayPost.bluesky.text.slice(0, 80)}..."`);
+
+  // --- Twitter ---
+  if (config.platforms.twitter) {
+    // Use bluesky text, trim to 280 chars for Twitter's limit
+    const tweet = todayPost.bluesky.text.trim().slice(0, 280);
+
+    console.log(`[Max] Twitter: ${tweet.length} chars — "${tweet.slice(0, 60)}..."`);
+
+    if (config.dryRun) {
+      console.log(`[Max] Twitter: DRY RUN — would post this tweet`);
+      result.twitter = null;
+    } else {
+      await jitter(1000, 3000);
+      const r = await postTweet({ text: tweet });
+      console.log(`[Max] Twitter: posted — ${r.url}`);
+      result.twitter = { url: r.url };
+    }
+  }
+
+  // --- Reddit ---
+  if (config.platforms.reddit) {
+    // Space out from Twitter
+    if (config.platforms.twitter && !config.dryRun) {
+      const wait = Math.floor(5000 + Math.random() * 10000);
+      console.log(`[Max] Reddit: waiting ${Math.round(wait / 1000)}s...`);
+      await sleep(wait);
+    }
+
+    const title = deriveTitle(todayPost as Parameters<typeof deriveTitle>[0]);
+    const text = deriveBody(todayPost as Parameters<typeof deriveBody>[0]);
+
+    console.log(`[Max] Reddit: title — "${title.slice(0, 80)}"`);
+    console.log(`[Max] Reddit: body — "${text.slice(0, 80)}..."`);
+
+    if (config.dryRun) {
+      console.log(`[Max] Reddit: DRY RUN — would open r/test with the above content`);
+      result.reddit = null;
+    } else {
+      await jitter(800, 2000);
+      const r = await submitToReddit({
+        subreddit: 'test',
+        title: title.slice(0, 300),
+        text: text,
+        waitForHuman: true,
+        humanTimeoutMs: 3 * 60_000,
+      });
+      console.log(`[Max] Reddit: submitted — ${r.submittedUrl}`);
+      result.reddit = { url: r.submittedUrl };
+    }
+  }
+
+  // --- Hacker News ---
+  if (config.platforms.hn) {
+    if ((config.platforms.twitter || config.platforms.reddit) && !config.dryRun) {
+      const wait = Math.floor(8000 + Math.random() * 12000);
+      console.log(`[Max] HN: waiting ${Math.round(wait / 1000)}s...`);
+      await sleep(wait);
+    }
+
+    const title = deriveTitle(todayPost as Parameters<typeof deriveTitle>[0]);
+    const text = deriveBody(todayPost as Parameters<typeof deriveBody>[0]);
+
+    // HN titles must be ≤80 chars
+    const hnTitle = title.slice(0, 80);
+    console.log(`[Max] HN: title — "${hnTitle}"`);
+
+    if (config.dryRun) {
+      console.log(`[Max] HN: DRY RUN — would open HN submit with the above content`);
+      result.hn = null;
+    } else {
+      await jitter(800, 2000);
+      const r = await submitToHN({ title: hnTitle, text });
+      console.log(`[Max] HN: submitted — ${r.submittedUrl}`);
+      result.hn = { url: r.submittedUrl, itemId: r.itemId };
+    }
+  }
+
+  return result;
+}

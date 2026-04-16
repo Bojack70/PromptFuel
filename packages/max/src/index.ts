@@ -7,6 +7,7 @@
 
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { loadConfig } from './config.js';
 import { collectAndSave, type DaySnapshot } from './analytics/collector.js';
 import { appendHistory, loadHistory, type ContentLogEntry } from './content/history.js';
@@ -470,6 +471,35 @@ async function socialTestReddit() {
 }
 
 /**
+ * Trigger-based social posting across Twitter, Reddit, and HN.
+ *
+ * Usage:
+ *   node dist/index.js --mode social-post                  (Twitter only, auto-post)
+ *   node dist/index.js --mode social-post --reddit         (+ Reddit human-submit)
+ *   node dist/index.js --mode social-post --hn             (+ HN human-submit)
+ *   node dist/index.js --mode social-post --dry-run        (generate content, no posting)
+ *
+ * Requires ANTHROPIC_API_KEY in environment.
+ */
+async function socialPost() {
+  const { runSocialPost } = await import('./publish/opentabs/social-post.js');
+  // social-post only needs dataDir — skip loadConfig() which validates unrelated secrets.
+  // fileURLToPath handles spaces in the path (new URL().pathname returns %20-encoded strings
+  // which existsSync/readFileSync don't recognise as valid filesystem paths).
+  const dataDir = process.env.MAX_DATA_DIR ?? fileURLToPath(new URL('../data', import.meta.url));
+  const result = await runSocialPost({
+    dataDir,
+    platforms: {
+      twitter: true,
+      reddit: args.includes('--reddit'),
+      hn: args.includes('--hn'),
+    },
+    dryRun: args.includes('--dry-run'),
+  });
+  console.log('[Max] Social post complete:', JSON.stringify(result, null, 2));
+}
+
+/**
  * Smoke test: posts a tweet via OpenTabs.
  *
  * Usage:
@@ -512,8 +542,11 @@ async function main() {
       case 'social-test-twitter':
         await socialTestTwitter();
         break;
+      case 'social-post':
+        await socialPost();
+        break;
       default:
-        console.error(`Unknown mode: ${mode}. Use --mode daily|weekly|dashboard|post|generate-week|social-test-hn|social-test-reddit|social-test-twitter`);
+        console.error(`Unknown mode: ${mode}. Use --mode daily|weekly|dashboard|post|generate-week|social-test-hn|social-test-reddit|social-test-twitter|social-post`);
         process.exit(1);
     }
   } catch (err) {
