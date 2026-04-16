@@ -24,7 +24,12 @@ interface StateJson {
 const WARMUP_START = '2026-03-24';
 
 // Categories ordered for rotation. 'stats' excluded during warmup.
-const ALL_CATEGORIES: ContentCategory[] = ['tip', 'comparison', 'tutorial', 'launch', 'opinion', 'stats'];
+// General-topic categories (ai_general, economics, philosophy) included in active
+// rotation but excluded from warmup — during warmup we establish PromptFuel's identity first.
+const ALL_CATEGORIES: ContentCategory[] = [
+  'tip', 'comparison', 'tutorial', 'launch', 'opinion', 'stats',
+  'ai_general', 'economics', 'philosophy',
+];
 const WARMUP_CATEGORIES: ContentCategory[] = ['tip', 'comparison', 'tutorial', 'opinion', 'launch'];
 
 // Dev.to posting days by stage (0=Sun, 1=Mon, ... 6=Sat)
