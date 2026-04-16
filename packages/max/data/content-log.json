@@ -1,1 +1,10 @@
-[]
+[
+  {
+    "date": "2026-04-16",
+    "timestamp": "2026-04-16T07:27:55.660Z",
+    "platform": "bluesky",
+    "category": "tutorial",
+    "content": "my first llm app had \"respond in JSON\" in the system prompt, the user message, AND a comment reminding me to add it again. this is a cry for help. `promptfuel analyze` will find yours. yours is probably different but equally embarrassing.",
+    "postId": "at://did:plc:n54y6c7lx2tt42tpx2brzcdi/app.bsky.feed.post/3mjlv4pzmzr2t"
+  }
+]

@@ -1,0 +1,18 @@
+[
+  {
+    "date": "2026-04-16",
+    "timestamp": "2026-04-16T07:27:55.660Z",
+    "platform": "bluesky",
+    "category": "tutorial",
+    "qualityScores": {
+      "authenticity": 7,
+      "value": 7,
+      "accuracy": 7,
+      "engagement": 7,
+      "average": 8.5,
+      "feedback": "pre-generated"
+    },
+    "passed": true,
+    "retried": false
+  }
+]
