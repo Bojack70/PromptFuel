@@ -421,6 +421,54 @@ async function postBlueskyManual() {
   console.log('[Max] Content log updated.');
 }
 
+/**
+ * Smoke test: fills HN submit form via OpenTabs. Defaults to DRY RUN (no submission).
+ * Requires `opentabs start` running + Nate Voss logged into HN in the connected browser.
+ *
+ * Usage: node dist/index.js --mode social-test-hn            (dry run)
+ *        node dist/index.js --mode social-test-hn --submit   (actually posts)
+ */
+async function socialTestHN() {
+  const { submitToHN } = await import('./publish/opentabs/hn.js');
+  const shouldSubmit = args.includes('--submit');
+  const title = `Test — verifying automation flow (${new Date().toISOString().split('T')[0]})`;
+  const text = `This is a smoke-test fill of the HN submit form. Not meant for public posting.`;
+  console.log(`[Max] Smoke test: ${shouldSubmit ? 'REAL SUBMISSION' : 'dry run (form fill only, no submit)'}`);
+  const result = await submitToHN({ title, text, dryRun: !shouldSubmit });
+  console.log(`[Max] Smoke test done. Tab ID: ${result.tabId}. URL: ${result.submittedUrl}`);
+  if (result.itemId) console.log(`[Max] Item ID: ${result.itemId}`);
+}
+
+/**
+ * Smoke test: fills r/test submit form via OpenTabs.
+ *
+ * Usage:
+ *   node dist/index.js --mode social-test-reddit                  (dry run: fill only)
+ *   node dist/index.js --mode social-test-reddit --submit         (auto-submit; fails if captcha shown)
+ *   node dist/index.js --mode social-test-reddit --human-submit   (fill + wait for you to solve captcha + click submit)
+ */
+async function socialTestReddit() {
+  const { submitToReddit } = await import('./publish/opentabs/reddit.js');
+  const humanSubmit = args.includes('--human-submit');
+  const shouldSubmit = args.includes('--submit') || humanSubmit;
+  const title = `Automation smoke test — ${new Date().toISOString().split('T')[0]}`;
+  const text = `Verifying OpenTabs → Max integration on r/test. This sub is for testing; please ignore.`;
+  const mode = humanSubmit
+    ? 'HUMAN-ASSISTED SUBMIT to r/test (you click captcha + submit)'
+    : shouldSubmit
+      ? 'REAL SUBMISSION to r/test (auto-click)'
+      : 'dry run (form fill only, no submit)';
+  console.log(`[Max] Smoke test: ${mode}`);
+  const result = await submitToReddit({
+    subreddit: 'test',
+    title,
+    text,
+    dryRun: !shouldSubmit,
+    waitForHuman: humanSubmit,
+  });
+  console.log(`[Max] Smoke test done. Tab ID: ${result.tabId}. URL: ${result.submittedUrl}`);
+}
+
 async function main() {
   try {
     switch (mode) {
@@ -439,8 +487,14 @@ async function main() {
       case 'generate-week':
         await generateWeek();
         break;
+      case 'social-test-hn':
+        await socialTestHN();
+        break;
+      case 'social-test-reddit':
+        await socialTestReddit();
+        break;
       default:
-        console.error(`Unknown mode: ${mode}. Use --mode daily|weekly|dashboard|post|generate-week`);
+        console.error(`Unknown mode: ${mode}. Use --mode daily|weekly|dashboard|post|generate-week|social-test-hn|social-test-reddit`);
         process.exit(1);
     }
   } catch (err) {
