@@ -65,13 +65,8 @@ export function getTodayPregenerated(week: PregeneratedWeek): PregeneratedPost |
 
 export function isPregeneratedCurrent(week: PregeneratedWeek | null): boolean {
   if (!week) return false;
-  const now = new Date();
-  const day = now.getUTCDay();
-  const diff = day === 0 ? -6 : 1 - day;
-  const monday = new Date(now);
-  monday.setUTCDate(now.getUTCDate() + diff);
-  const currentMonday = monday.toISOString().split('T')[0];
-  return week.weekOf === currentMonday;
+  const today = new Date().toISOString().split('T')[0];
+  return week.posts.some((p) => p.date === today);
 }
 
 /**
