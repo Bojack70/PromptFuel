@@ -32,6 +32,11 @@ const ALL_CATEGORIES: ContentCategory[] = [
 ];
 const WARMUP_CATEGORIES: ContentCategory[] = ['tip', 'comparison', 'tutorial', 'opinion', 'launch'];
 
+// Hard-promo categories: explicitly sell PromptFuel. Cap at 2/week.
+export const PROMO_CATEGORIES: ContentCategory[] = ['launch', 'stats'];
+// Pure audience-building: no product mention. Ensure at least 2/week.
+export const AUDIENCE_CATEGORIES: ContentCategory[] = ['ai_general', 'economics', 'philosophy'];
+
 // Dev.to posting days by stage (0=Sun, 1=Mon, ... 6=Sat)
 export const DEVTO_DAYS: Record<WarmupStage, number[]> = {
   warmup: [2],        // Tuesday
@@ -69,12 +74,23 @@ function pickCategory(
   const pool = stage === 'warmup' ? WARMUP_CATEGORIES : ALL_CATEGORIES;
   const recentCategories = recent.slice(-3).map((e) => e.category);
 
-  // Pick the first category not used in the last 3 posts
+  // Count promo posts in the last 7 to enforce the 2/week cap
+  const recentPromoCount = recent.slice(-7).filter((e) => PROMO_CATEGORIES.includes(e.category)).length;
+  const promoCapReached = recentPromoCount >= 2;
+
+  // Pick the first category not used recently, respecting the promo cap
   for (const cat of pool) {
-    if (!recentCategories.includes(cat)) return cat;
+    if (recentCategories.includes(cat)) continue;
+    if (promoCapReached && PROMO_CATEGORIES.includes(cat)) continue;
+    return cat;
   }
 
-  // All recently used — just cycle from the start
+  // All non-promo options exhausted — cycle from start, still respecting cap
+  for (const cat of pool) {
+    if (promoCapReached && PROMO_CATEGORIES.includes(cat)) continue;
+    return cat;
+  }
+
   return pool[0];
 }
 

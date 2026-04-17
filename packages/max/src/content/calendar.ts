@@ -11,7 +11,7 @@ import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { generateContent } from './claude.js';
 import type { ContentCategory } from './templates.js';
-import { DEVTO_DAYS, type WarmupStage } from './scheduler.js';
+import { DEVTO_DAYS, PROMO_CATEGORIES, AUDIENCE_CATEGORIES, type WarmupStage } from './scheduler.js';
 
 export interface CalendarDay {
   date: string; // YYYY-MM-DD
@@ -164,6 +164,8 @@ Rules:
 - Each entry should have a brief "angle" (1 sentence) describing the specific take or topic
 - Dev.to entries should be null on non-posting days
 - Bluesky should have a category every day
+- Promo ratio: use "launch" or "stats" (hard-promo) at most 2 times across the full week
+- Audience-building: include at least 2 posts from "ai_general", "economics", or "philosophy" — these build Nate's personal brand without mentioning PromptFuel
 
 Respond in EXACTLY this JSON format, nothing else:
 [
@@ -171,6 +173,34 @@ Respond in EXACTLY this JSON format, nothing else:
   ...7 entries
 ]`;
 };
+
+const SOFT_PROMO_FALLBACK: ContentCategory[] = ['tip', 'comparison', 'tutorial', 'opinion'];
+
+function enforcePromoRatio(days: CalendarDay[]): CalendarDay[] {
+  const MAX_PROMO = 2;
+  const MIN_AUDIENCE = 2;
+
+  let promoCount = days.filter((d) => d.bluesky && PROMO_CATEGORIES.includes(d.bluesky)).length;
+  let audienceCount = days.filter((d) => d.bluesky && AUDIENCE_CATEGORIES.includes(d.bluesky)).length;
+
+  return days.map((d) => {
+    if (!d.bluesky) return d;
+
+    // Cap promo: swap excess promo days to soft-promo
+    if (PROMO_CATEGORIES.includes(d.bluesky) && promoCount > MAX_PROMO) {
+      promoCount--;
+      return { ...d, bluesky: SOFT_PROMO_FALLBACK[promoCount % SOFT_PROMO_FALLBACK.length] };
+    }
+
+    // Ensure audience minimum: swap soft-promo to audience-building if under quota
+    if (!PROMO_CATEGORIES.includes(d.bluesky) && !AUDIENCE_CATEGORIES.includes(d.bluesky) && audienceCount < MIN_AUDIENCE) {
+      audienceCount++;
+      return { ...d, bluesky: AUDIENCE_CATEGORIES[audienceCount % AUDIENCE_CATEGORIES.length] };
+    }
+
+    return d;
+  });
+}
 
 export async function generateWeeklyCalendar(
   claudeApiKey: string,
@@ -209,6 +239,9 @@ export async function generateWeeklyCalendar(
         devtoAngle: d.devtoAngle || undefined,
       };
     });
+
+    // Enforce promo ratio: cap hard-promo at 2, ensure 2 audience-building posts
+    days = enforcePromoRatio(days);
   } catch {
     console.warn('[Max] Calendar generation parse failed — using fallback rotation');
     days = generateFallbackCalendar(monday, stage);
