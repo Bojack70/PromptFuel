@@ -12,13 +12,16 @@ import { join } from 'node:path';
 import { generateContent } from './claude.js';
 import type { ContentCategory } from './templates.js';
 import { DEVTO_DAYS, PROMO_CATEGORIES, AUDIENCE_CATEGORIES, type WarmupStage } from './scheduler.js';
+import type { FormatInsights, PostFormat } from '../brain/format-research.js';
 
 export interface CalendarDay {
   date: string; // YYYY-MM-DD
   bluesky: ContentCategory | null;
   devto: ContentCategory | null;
-  blueskyAngle?: string; // brief note on the specific angle
+  blueskyAngle?: string;
   devtoAngle?: string;
+  blueskyFormat?: PostFormat; // format pattern to use for the Bluesky post
+  devtoFormat?: PostFormat;   // format pattern to use for the Dev.to article
 }
 
 export interface WeeklyCalendar {
@@ -37,6 +40,7 @@ export interface CalendarContext {
   strategyDecision?: { decision: string; parameters?: { categoryWeights?: Partial<Record<ContentCategory, number>>; postingFrequency?: { bluesky: number; devto: number } } };
   correlationInsights?: string[];
   engagementRankings?: Array<{ category: ContentCategory; avgScore: number }>;
+  formatInsights?: FormatInsights;
 }
 
 const CALENDAR_FILE = 'calendar.json';
@@ -127,6 +131,19 @@ function buildExperimentBlock(ctx?: CalendarContext): string {
   return parts.join('\n');
 }
 
+function buildFormatBlock(fi: FormatInsights): string {
+  const parts: string[] = ['\nFORMAT RESEARCH — WHAT\'S WORKING THIS WEEK:'];
+  if (fi.blueskyToolSummary) parts.push(`- Bluesky dev/tool posts: ${fi.blueskyToolSummary}`);
+  if (fi.blueskyPersonalSummary) parts.push(`- Bluesky personal brand posts: ${fi.blueskyPersonalSummary}`);
+  if (fi.devtoSummary) parts.push(`- Dev.to articles: ${fi.devtoSummary}`);
+  if (fi.topFormatsThisWeek.length) parts.push(`- Top formats observed: ${fi.topFormatsThisWeek.join(', ')} — lean into these`);
+  if (fi.insights.length) {
+    parts.push('- Specific observations:');
+    fi.insights.slice(0, 5).forEach((i) => parts.push(`  • [${i.platform}/${i.categoryType}] ${i.format}: ${i.observation}. Example: "${i.exampleOpener}"`));
+  }
+  return parts.join('\n');
+}
+
 function devtoDatesForStage(monday: string, stage: WarmupStage): string[] {
   const base = new Date(monday + 'T00:00:00Z');
   const allowedUTCDays = DEVTO_DAYS[stage];
@@ -145,31 +162,37 @@ const GENERATION_PROMPT = (stage: WarmupStage, mondayDate: string, ctx?: Calenda
   const devtoDates = devtoDatesForStage(mondayDate, stage);
   const devtoScheduleNote = `EXACTLY these dates: ${devtoDates.join(', ')} — set devto to null on all other days`;
 
+  const formatBlock = ctx?.formatInsights ? buildFormatBlock(ctx.formatInsights) : '';
+
   return `You are planning a week of content for PromptFuel, a free open-source token optimization toolkit for LLM applications. The persona is Nate Voss (@natevoss), an indie developer.
 
 Current warmup stage: ${stage}
 
-Content categories available: tip, comparison, tutorial, stats, launch, opinion
+Content categories available: tip, comparison, tutorial, stats, launch, opinion, ai_general, economics, philosophy
 ${stage === 'warmup' ? 'NOTE: During warmup, do NOT use the "stats" category — the account is too new for metrics-bragging to look authentic.' : ''}
+
+Post formats available (assign one per day):
+story_opener, hot_take, question_hook, data_drop, confession, list_insight
 
 Posting schedule for ${stage} stage:
 - Bluesky: 1 post/day (every day)
 - Dev.to: ${devtoScheduleNote}
-${buildExperimentBlock(ctx)}
+${buildExperimentBlock(ctx)}${formatBlock}
 
 Generate a 7-day content calendar starting from ${mondayDate} (Monday) through the following Sunday.
 
 Rules:
-- Vary the categories — no more than 2 of the same category in a row for Bluesky
+- Vary both categories AND formats — no 2 consecutive days with the same format
 - Each entry should have a brief "angle" (1 sentence) describing the specific take or topic
 - Dev.to entries should be null on non-posting days
 - Bluesky should have a category every day
 - Promo ratio: use "launch" or "stats" (hard-promo) at most 2 times across the full week
 - Audience-building: include at least 2 posts from "ai_general", "economics", or "philosophy" — these build Nate's personal brand without mentioning PromptFuel
+- Assign blueskyFormat based on what's working this week (from format insights above)
 
 Respond in EXACTLY this JSON format, nothing else:
 [
-  {"date":"YYYY-MM-DD","bluesky":"category","devto":"category_or_null","blueskyAngle":"brief angle","devtoAngle":"brief angle or null"},
+  {"date":"YYYY-MM-DD","bluesky":"category","devto":"category_or_null","blueskyAngle":"brief angle","devtoAngle":"brief angle or null","blueskyFormat":"format","devtoFormat":"format_or_null"},
   ...7 entries
 ]`;
 };
@@ -237,6 +260,8 @@ export async function generateWeeklyCalendar(
         devto: allowedDevtoDays.includes(utcDay) ? (d.devto || null) : null,
         blueskyAngle: d.blueskyAngle || undefined,
         devtoAngle: d.devtoAngle || undefined,
+        blueskyFormat: d.blueskyFormat || undefined,
+        devtoFormat: d.devtoFormat || undefined,
       };
     });
 

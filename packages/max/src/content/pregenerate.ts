@@ -88,9 +88,9 @@ export async function pregenerateWeek(
     // Generate Bluesky post
     if (day.bluesky) {
       try {
-        console.log(`[Max] Pre-generating ${day.date} Bluesky (${day.bluesky})...`);
+        console.log(`[Max] Pre-generating ${day.date} Bluesky (${day.bluesky}${day.blueskyFormat ? `/${day.blueskyFormat}` : ''})...`);
         const angleHint = day.blueskyAngle ? `\n\nANGLE FOR TODAY: ${day.blueskyAngle}` : '';
-        const prompt = blueskyPrompt(day.bluesky, ctx) + angleHint;
+        const prompt = blueskyPrompt(day.bluesky, { ...ctx, postFormat: day.blueskyFormat }) + angleHint;
 
         let text = await generateBlueskyText(claudeApiKey, prompt);
         let quality = await reviewBlueskyPost(text, claudeApiKey);
@@ -119,9 +119,9 @@ export async function pregenerateWeek(
     // Generate Dev.to article (only on scheduled days)
     if (day.devto) {
       try {
-        console.log(`[Max] Pre-generating ${day.date} Dev.to (${day.devto})...`);
+        console.log(`[Max] Pre-generating ${day.date} Dev.to (${day.devto}${day.devtoFormat ? `/${day.devtoFormat}` : ''})...`);
         const angleHint = day.devtoAngle ? `\n\nFOCUS: ${day.devtoAngle}` : '';
-        const prompt = devtoPrompt(day.devto, ctx) + angleHint;
+        const prompt = devtoPrompt(day.devto, { ...ctx, postFormat: day.devtoFormat }) + angleHint;
 
         let markdown = await generateContent(claudeApiKey, prompt, {
           temperature: 0.8,

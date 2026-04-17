@@ -22,6 +22,7 @@ export interface PromptContext {
   npmDownloadsMonth: number;
   deltaStars: number;
   recentPosts: string[];
+  postFormat?: string; // e.g. "story_opener", "hot_take", "confession"
 }
 
 /** UTM-tagged URLs for attribution tracking in Vercel Analytics. */
@@ -44,6 +45,20 @@ const DEVTO_RULES = `Write a Dev.to article in markdown. Start with a single # t
 const AVOID_REPETITION = (recent: string[]) =>
   recent.length > 0
     ? `\n\nAvoid covering the same ground as these recent posts:\n${recent.map((p) => `- ${p}`).join('\n')}`
+    : '';
+
+const FORMAT_DESCRIPTIONS: Record<string, string> = {
+  story_opener: 'Open with a first-person story or experience ("I spent X doing Y and found Z"). Pull the reader in with a relatable moment before landing the insight.',
+  hot_take: 'Open with a contrarian or surprising claim ("Everyone does X but actually Y"). Be direct and confident — this is an opinion, not a question.',
+  question_hook: 'Open with a direct question to the reader ("How many tokens did your last API call use?"). Make it something they probably don\'t know the answer to.',
+  data_drop: 'Lead with a concrete number or metric ("42% reduction. One line of code."). The stat IS the hook — no preamble.',
+  confession: 'Open with an admission of a mistake, failure, or embarrassing truth ("I did something dumb for 6 weeks"). Self-deprecating and honest — earns trust.',
+  list_insight: 'Frame around a small numbered list ("3 things I learned from..."). The number signals value upfront.',
+};
+
+const FORMAT_INSTRUCTION = (format?: string) =>
+  format && FORMAT_DESCRIPTIONS[format]
+    ? `\n\nFORMAT INSTRUCTION: ${FORMAT_DESCRIPTIONS[format]}`
     : '';
 
 const BLUESKY_PROMPTS: Record<ContentCategory, (ctx: PromptContext) => string> = {
@@ -105,11 +120,11 @@ const DEVTO_PROMPTS: Record<ContentCategory, (ctx: PromptContext) => string> = {
 };
 
 export function blueskyPrompt(category: ContentCategory, ctx: PromptContext): string {
-  return BLUESKY_PROMPTS[category](ctx);
+  return BLUESKY_PROMPTS[category](ctx) + FORMAT_INSTRUCTION(ctx.postFormat);
 }
 
 export function devtoPrompt(category: ContentCategory, ctx: PromptContext): string {
-  return DEVTO_PROMPTS[category](ctx);
+  return DEVTO_PROMPTS[category](ctx) + FORMAT_INSTRUCTION(ctx.postFormat);
 }
 
 const TWITTER_RULES = `Write a single tweet. MUST be under 280 characters (including spaces and punctuation) — this is a hard limit, count carefully. No thread format. Punchy and direct.`;

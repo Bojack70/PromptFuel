@@ -29,6 +29,8 @@ import {
   type MetricsSnapshot,
   type StrategyMemory,
 } from './strategy.js';
+import { fetchInfluencerPosts } from '../analytics/influencer.js';
+import { researchFormats, loadFormatInsights, type FormatInsights } from './format-research.js';
 
 function getMonday(date: Date): string {
   const d = new Date(date);
@@ -536,7 +538,23 @@ export async function weeklyReflection(config: MaxConfig): Promise<void> {
     console.warn('[Max] Strategy decision extraction failed (non-fatal):', (err as Error).message);
   }
 
-  // 10. Generate Reddit/HN/LinkedIn drafts (before email so drafts appear in digest)
+  // 10. Influencer format research — study what's working this week across platforms
+  let formatInsights: FormatInsights | undefined;
+  try {
+    console.log('[Max] Running influencer format research...');
+    const research = await fetchInfluencerPosts();
+    if (research.posts.length > 0 && config.claudeApiKey) {
+      formatInsights = await researchFormats(config.claudeApiKey, research, config.dataDir);
+    } else {
+      formatInsights = loadFormatInsights(config.dataDir) ?? undefined;
+      if (formatInsights) console.log('[Max] Using cached format insights');
+    }
+  } catch (err) {
+    console.warn('[Max] Format research failed (non-fatal):', (err as Error).message);
+    formatInsights = loadFormatInsights(config.dataDir) ?? undefined;
+  }
+
+  // 11. Generate Reddit/HN/LinkedIn drafts (before email so drafts appear in digest)
   console.log('[Max] Generating platform drafts...');
   const latest = snapshots[snapshots.length - 1];
   let hnDraft = '';
@@ -563,7 +581,7 @@ export async function weeklyReflection(config: MaxConfig): Promise<void> {
     if (existsSync(linkedinPath)) linkedinDraft = readFileSync(linkedinPath, 'utf-8');
   }
 
-  // 11. Build and send weekly email
+  // 12. Build and send weekly email
   const { subject, html } = buildWeeklyDigest(prevMonday, summary, evaluation, reflection, stage, goalEval, strategyMemory, hnDraft, linkedinDraft);
   const emailResult = await sendEmail(config.resendApiKey, {
     to: config.reportEmail,
@@ -572,7 +590,7 @@ export async function weeklyReflection(config: MaxConfig): Promise<void> {
   });
   console.log(`[Max] Weekly digest sent: ${emailResult.id}`);
 
-  // 12. Generate next week's calendar — WITH enriched context
+  // 13. Generate next week's calendar — WITH enriched context
   console.log('[Max] Generating next week calendar with enriched context...');
   const calendarCtx: CalendarContext = {
     topCategory: evaluation.topCategory,
@@ -582,10 +600,11 @@ export async function weeklyReflection(config: MaxConfig): Promise<void> {
     strategyDecision,
     correlationInsights: evaluation.correlations?.insights,
     engagementRankings: evaluation.correlations?.categoryRankings,
+    formatInsights,
   };
   const calendar = await generateWeeklyCalendar(config.claudeApiKey, stage, config.dataDir, calendarCtx);
 
-  // 12b. Pre-generate this week's content (so daily runs just publish, no API calls needed)
+  // 13b. Pre-generate this week's content (so daily runs just publish, no API calls needed)
   try {
     const latest = snapshots[snapshots.length - 1];
     if (latest) {
@@ -608,12 +627,12 @@ export async function weeklyReflection(config: MaxConfig): Promise<void> {
     console.warn('[Max] Content pre-generation failed (non-fatal):', (err as Error).message);
   }
 
-  // 13. Save correlation report
+  // 14. Save correlation report
   if (evaluation.correlations) {
     saveCorrelationReport(config.dataDir, evaluation.correlations);
   }
 
-  // 14. Update state
+  // 15. Update state
   state.lastWeeklyRun = new Date().toISOString();
   state.growthStatus = goalEval.status;
   state.stalledWeeks = goalEval.stalledWeeks;
