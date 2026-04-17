@@ -14,5 +14,21 @@
     },
     "passed": true,
     "retried": false
+  },
+  {
+    "date": "2026-04-17",
+    "timestamp": "2026-04-17T05:52:54.338Z",
+    "platform": "bluesky",
+    "category": "opinion",
+    "qualityScores": {
+      "authenticity": 7,
+      "value": 7,
+      "accuracy": 7,
+      "engagement": 7,
+      "average": 8.5,
+      "feedback": "pre-generated"
+    },
+    "passed": true,
+    "retried": false
   }
 ]

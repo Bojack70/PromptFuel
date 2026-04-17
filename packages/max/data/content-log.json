@@ -6,5 +6,13 @@
     "category": "tutorial",
     "content": "my first llm app had \"respond in JSON\" in the system prompt, the user message, AND a comment reminding me to add it again. this is a cry for help. `promptfuel analyze` will find yours. yours is probably different but equally embarrassing.",
     "postId": "at://did:plc:n54y6c7lx2tt42tpx2brzcdi/app.bsky.feed.post/3mjlv4pzmzr2t"
+  },
+  {
+    "date": "2026-04-17",
+    "timestamp": "2026-04-17T05:52:54.338Z",
+    "platform": "bluesky",
+    "category": "opinion",
+    "content": "every model leaderboard tests chatbots on SAT questions and coding puzzles. your app is not a coding puzzle. it's \"why is my summary always in spanish\" and \"the user typed 🥴 followed by 4000 words.\" bench your model on that. i'll wait.",
+    "postId": "at://did:plc:n54y6c7lx2tt42tpx2brzcdi/app.bsky.feed.post/3mjoabqbmt42t"
   }
 ]

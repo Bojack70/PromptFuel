@@ -14,5 +14,20 @@
   {
     "date": "2026-04-16",
     "posts": []
+  },
+  {
+    "date": "2026-04-17",
+    "posts": [
+      {
+        "postId": "at://did:plc:n54y6c7lx2tt42tpx2brzcdi/app.bsky.feed.post/3mjlv4pzmzr2t",
+        "platform": "bluesky",
+        "collectedAt": "2026-04-17T05:52:53.313Z",
+        "metrics": {
+          "likes": 0,
+          "reposts": 0,
+          "replies": 0
+        }
+      }
+    ]
   }
 ]
