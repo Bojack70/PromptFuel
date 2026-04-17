@@ -11,7 +11,7 @@ import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { generateContent } from './claude.js';
 import type { ContentCategory } from './templates.js';
-import type { WarmupStage } from './scheduler.js';
+import { DEVTO_DAYS, type WarmupStage } from './scheduler.js';
 
 export interface CalendarDay {
   date: string; // YYYY-MM-DD
@@ -127,7 +127,25 @@ function buildExperimentBlock(ctx?: CalendarContext): string {
   return parts.join('\n');
 }
 
-const GENERATION_PROMPT = (stage: WarmupStage, mondayDate: string, ctx?: CalendarContext) => `You are planning a week of content for PromptFuel, a free open-source token optimization toolkit for LLM applications. The persona is Nate Voss (@natevoss), an indie developer.
+function devtoDatesForStage(monday: string, stage: WarmupStage): string[] {
+  const base = new Date(monday + 'T00:00:00Z');
+  const allowedUTCDays = DEVTO_DAYS[stage];
+  const dates: string[] = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(base);
+    d.setUTCDate(base.getUTCDate() + i);
+    if (allowedUTCDays.includes(d.getUTCDay())) {
+      dates.push(d.toISOString().split('T')[0]);
+    }
+  }
+  return dates;
+}
+
+const GENERATION_PROMPT = (stage: WarmupStage, mondayDate: string, ctx?: CalendarContext) => {
+  const devtoDates = devtoDatesForStage(mondayDate, stage);
+  const devtoScheduleNote = `EXACTLY these dates: ${devtoDates.join(', ')} — set devto to null on all other days`;
+
+  return `You are planning a week of content for PromptFuel, a free open-source token optimization toolkit for LLM applications. The persona is Nate Voss (@natevoss), an indie developer.
 
 Current warmup stage: ${stage}
 
@@ -136,7 +154,7 @@ ${stage === 'warmup' ? 'NOTE: During warmup, do NOT use the "stats" category —
 
 Posting schedule for ${stage} stage:
 - Bluesky: 1 post/day (every day)
-- Dev.to: ${stage === 'warmup' ? '1 article on Tuesday' : stage === 'transition' ? '2 articles on Tuesday and Thursday' : '3 articles on Monday, Wednesday, Friday'}
+- Dev.to: ${devtoScheduleNote}
 ${buildExperimentBlock(ctx)}
 
 Generate a 7-day content calendar starting from ${mondayDate} (Monday) through the following Sunday.
@@ -152,6 +170,7 @@ Respond in EXACTLY this JSON format, nothing else:
   {"date":"YYYY-MM-DD","bluesky":"category","devto":"category_or_null","blueskyAngle":"brief angle","devtoAngle":"brief angle or null"},
   ...7 entries
 ]`;
+};
 
 export async function generateWeeklyCalendar(
   claudeApiKey: string,
@@ -179,13 +198,17 @@ export async function generateWeeklyCalendar(
       cleaned = cleaned.replace(/^```[\w]*\n?/, '').replace(/\n?```$/, '');
     }
     const parsed = JSON.parse(cleaned);
-    days = parsed.map((d: any) => ({
-      date: d.date,
-      bluesky: d.bluesky || null,
-      devto: d.devto || null,
-      blueskyAngle: d.blueskyAngle || undefined,
-      devtoAngle: d.devtoAngle || undefined,
-    }));
+    const allowedDevtoDays = DEVTO_DAYS[stage];
+    days = parsed.map((d: any) => {
+      const utcDay = new Date(d.date + 'T12:00:00Z').getUTCDay();
+      return {
+        date: d.date,
+        bluesky: d.bluesky || null,
+        devto: allowedDevtoDays.includes(utcDay) ? (d.devto || null) : null,
+        blueskyAngle: d.blueskyAngle || undefined,
+        devtoAngle: d.devtoAngle || undefined,
+      };
+    });
   } catch {
     console.warn('[Max] Calendar generation parse failed — using fallback rotation');
     days = generateFallbackCalendar(monday, stage);

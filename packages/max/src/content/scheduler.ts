@@ -33,7 +33,7 @@ const ALL_CATEGORIES: ContentCategory[] = [
 const WARMUP_CATEGORIES: ContentCategory[] = ['tip', 'comparison', 'tutorial', 'opinion', 'launch'];
 
 // Dev.to posting days by stage (0=Sun, 1=Mon, ... 6=Sat)
-const DEVTO_DAYS: Record<WarmupStage, number[]> = {
+export const DEVTO_DAYS: Record<WarmupStage, number[]> = {
   warmup: [2],        // Tuesday
   transition: [2, 4], // Tue + Thu
   active: [1, 3, 5],  // Mon + Wed + Fri
