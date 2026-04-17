@@ -112,9 +112,6 @@ export function planToday(
 
   // Fallback: ad-hoc rotation
   const utcDay = new Date().getUTCDay();
-  const devtoAlreadyPosted = alreadyPostedToday(history, 'devto');
-  const devtoDaysForStage = DEVTO_DAYS[stage];
-  console.log(`[Max][debug] utcDay=${utcDay} stage=${stage} devtoDays=${JSON.stringify(devtoDaysForStage)} inDevtoDays=${devtoDaysForStage.includes(utcDay)} alreadyPostedDevto=${devtoAlreadyPosted} calendarDay=${calendarDay !== undefined ? JSON.stringify(calendarDay) : 'no-param'}`);
 
   let bluesky: DailyPlan['bluesky'] = null;
   if (!alreadyPostedToday(history, 'bluesky')) {
@@ -123,7 +120,7 @@ export function planToday(
   }
 
   let devto: DailyPlan['devto'] = null;
-  if (devtoDaysForStage.includes(utcDay) && !devtoAlreadyPosted) {
+  if (DEVTO_DAYS[stage].includes(utcDay) && !alreadyPostedToday(history, 'devto')) {
     const recent = recentForPlatform(history, 'devto', 10);
     devto = { category: pickCategory(recent, stage) };
   }

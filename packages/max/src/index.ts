@@ -146,6 +146,12 @@ async function daily() {
 
   if (todayPregen) {
     console.log('[Max] Pre-generated content found for today');
+    // Pre-generated content was quality-reviewed for this specific date — publish it
+    // regardless of day-of-week gating in the scheduler.
+    if (!plan.devto && todayPregen.devto?.qualityPassed) {
+      plan.devto = { category: todayPregen.devto.category };
+      console.log('[Max] Dev.to plan overridden: pre-generated article available for today');
+    }
   } else {
     console.log('[Max] No pre-generated content for today — will attempt on-demand generation');
     if (!config.claudeApiKey) {
