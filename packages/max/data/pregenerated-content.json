@@ -63,9 +63,9 @@
     {
       "date": "2026-04-18",
       "bluesky": {
-        "text": "if you're using the same claude system prompt on every request and NOT caching it, you're paying full price for text that never changes. that's like tipping your uber driver at every red light separately. `cache_control: {type: 'ephemeral'}`. one line. done.",
-        "category": "tip",
-        "angle": "prompt caching explained with a bad analogy",
+        "text": "the economics of software have flipped. the expensive part used to be compute. now it's attention — yours, your users', the model's. and unlike EC2 instances, you can't autoscale human focus. we're all just figuring out how to build with that constraint.",
+        "category": "economics",
+        "angle": "attention as the new scarce resource in software",
         "qualityPassed": true,
         "qualityScore": 8.5
       },
@@ -85,9 +85,9 @@
     {
       "date": "2026-04-20",
       "bluesky": {
-        "text": "gemini flash is so cheap it feels illegal. like i keep waiting for the \"just kidding\" invoice. the tradeoff: it occasionally hallucinates a JSON field with quiet confidence. haiku costs more and complains less. for anything user-facing i still reach for haiku.",
-        "category": "comparison",
-        "angle": "gemini flash price shock + real tradeoff",
+        "text": "everyone's racing to build AI that passes bar exams and writes poetry. meanwhile i just want mine to consistently return valid JSON. the gap between \"AI can do X\" and \"AI reliably does X in prod\" is where most of us actually live.",
+        "category": "ai_general",
+        "angle": "the gap between AI benchmarks and production reality",
         "qualityPassed": true,
         "qualityScore": 8.5
       },
