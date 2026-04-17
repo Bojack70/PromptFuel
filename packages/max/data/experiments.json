@@ -46,5 +46,21 @@
     },
     "passed": true,
     "retried": false
+  },
+  {
+    "date": "2026-04-17",
+    "timestamp": "2026-04-17T07:28:37.596Z",
+    "platform": "devto",
+    "category": "comparison",
+    "qualityScores": {
+      "authenticity": 7,
+      "value": 7,
+      "accuracy": 7,
+      "engagement": 7,
+      "average": 8.5,
+      "feedback": "pre-generated"
+    },
+    "passed": true,
+    "retried": false
   }
 ]

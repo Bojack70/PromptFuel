@@ -79,5 +79,41 @@
         }
       }
     ]
+  },
+  {
+    "date": "2026-04-17",
+    "posts": [
+      {
+        "postId": "at://did:plc:n54y6c7lx2tt42tpx2brzcdi/app.bsky.feed.post/3mjlv4pzmzr2t",
+        "platform": "bluesky",
+        "collectedAt": "2026-04-17T07:28:36.029Z",
+        "metrics": {
+          "likes": 0,
+          "reposts": 0,
+          "replies": 0
+        }
+      },
+      {
+        "postId": "at://did:plc:n54y6c7lx2tt42tpx2brzcdi/app.bsky.feed.post/3mjoabqbmt42t",
+        "platform": "bluesky",
+        "collectedAt": "2026-04-17T07:28:36.029Z",
+        "metrics": {
+          "likes": 0,
+          "reposts": 0,
+          "replies": 0
+        }
+      },
+      {
+        "postId": "3513761",
+        "platform": "devto",
+        "collectedAt": "2026-04-17T07:28:36.029Z",
+        "metrics": {
+          "views": 0,
+          "reactions": 0,
+          "comments": 0,
+          "readingTime": 3
+        }
+      }
+    ]
   }
 ]
