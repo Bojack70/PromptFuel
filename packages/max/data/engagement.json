@@ -115,5 +115,52 @@
         }
       }
     ]
+  },
+  {
+    "date": "2026-04-18",
+    "posts": [
+      {
+        "postId": "at://did:plc:n54y6c7lx2tt42tpx2brzcdi/app.bsky.feed.post/3mjlv4pzmzr2t",
+        "platform": "bluesky",
+        "collectedAt": "2026-04-18T07:03:13.036Z",
+        "metrics": {
+          "likes": 0,
+          "reposts": 0,
+          "replies": 0
+        }
+      },
+      {
+        "postId": "at://did:plc:n54y6c7lx2tt42tpx2brzcdi/app.bsky.feed.post/3mjoabqbmt42t",
+        "platform": "bluesky",
+        "collectedAt": "2026-04-18T07:03:13.036Z",
+        "metrics": {
+          "likes": 0,
+          "reposts": 0,
+          "replies": 0
+        }
+      },
+      {
+        "postId": "3513761",
+        "platform": "devto",
+        "collectedAt": "2026-04-18T07:03:13.036Z",
+        "metrics": {
+          "views": 10,
+          "reactions": 0,
+          "comments": 0,
+          "readingTime": 3
+        }
+      },
+      {
+        "postId": "3514122",
+        "platform": "devto",
+        "collectedAt": "2026-04-18T07:03:13.036Z",
+        "metrics": {
+          "views": 1,
+          "reactions": 0,
+          "comments": 0,
+          "readingTime": 3
+        }
+      }
+    ]
   }
 ]

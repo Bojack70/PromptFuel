@@ -62,5 +62,21 @@
     },
     "passed": true,
     "retried": false
+  },
+  {
+    "date": "2026-04-18",
+    "timestamp": "2026-04-18T07:03:14.338Z",
+    "platform": "bluesky",
+    "category": "economics",
+    "qualityScores": {
+      "authenticity": 7,
+      "value": 7,
+      "accuracy": 7,
+      "engagement": 7,
+      "average": 8.5,
+      "feedback": "pre-generated"
+    },
+    "passed": true,
+    "retried": false
   }
 ]

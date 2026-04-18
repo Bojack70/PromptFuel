@@ -34,5 +34,13 @@
     "content": "# I Tested Claude Haiku, GPT-4o Mini, and Gemini Flash on Real Tasks. Here's What Actually Happened.\n\nEvery few weeks someone posts a new model comparison and it's always the same: benchmark scores, c",
     "postId": "3514122",
     "postUrl": "https://dev.to/natevoss/i-tested-claude-haiku-gpt-4o-mini-and-gemini-flash-on-real-tasks-heres-what-actually-happened-1ec0"
+  },
+  {
+    "date": "2026-04-18",
+    "timestamp": "2026-04-18T07:03:14.338Z",
+    "platform": "bluesky",
+    "category": "economics",
+    "content": "the economics of software have flipped. the expensive part used to be compute. now it's attention — yours, your users', the model's. and unlike EC2 instances, you can't autoscale human focus. we're all just figuring out how to build with that constraint.",
+    "postId": "at://did:plc:n54y6c7lx2tt42tpx2brzcdi/app.bsky.feed.post/3mjquogaa3b2f"
   }
 ]

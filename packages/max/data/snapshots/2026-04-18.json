@@ -1,0 +1,48 @@
+{
+  "date": "2026-04-18",
+  "collectedAt": "2026-04-18T07:03:13.035Z",
+  "github": {
+    "stars": 0,
+    "forks": 0,
+    "watchers": 0,
+    "openIssues": 0,
+    "clones": {
+      "count": 0,
+      "uniques": 0
+    },
+    "views": {
+      "count": 0,
+      "uniques": 0
+    },
+    "referrers": []
+  },
+  "npm": {
+    "packages": {
+      "promptfuel": {
+        "downloadsLastDay": 1,
+        "downloadsLastWeek": 157,
+        "downloadsLastMonth": 2732
+      },
+      "@promptfuel/sdk": {
+        "downloadsLastDay": 0,
+        "downloadsLastWeek": 2,
+        "downloadsLastMonth": 11
+      },
+      "@promptfuel/core": {
+        "downloadsLastDay": 0,
+        "downloadsLastWeek": 16,
+        "downloadsLastMonth": 463
+      },
+      "@promptfuel/mcp": {
+        "downloadsLastDay": 0,
+        "downloadsLastWeek": 17,
+        "downloadsLastMonth": 167
+      }
+    }
+  },
+  "deltas": {
+    "stars": 0,
+    "forks": 0,
+    "npmDownloadsDay": 1
+  }
+}
