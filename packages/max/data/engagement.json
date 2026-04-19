@@ -162,5 +162,62 @@
         }
       }
     ]
+  },
+  {
+    "date": "2026-04-19",
+    "posts": [
+      {
+        "postId": "at://did:plc:n54y6c7lx2tt42tpx2brzcdi/app.bsky.feed.post/3mjlv4pzmzr2t",
+        "platform": "bluesky",
+        "collectedAt": "2026-04-19T07:14:55.116Z",
+        "metrics": {
+          "likes": 0,
+          "reposts": 0,
+          "replies": 0
+        }
+      },
+      {
+        "postId": "at://did:plc:n54y6c7lx2tt42tpx2brzcdi/app.bsky.feed.post/3mjoabqbmt42t",
+        "platform": "bluesky",
+        "collectedAt": "2026-04-19T07:14:55.116Z",
+        "metrics": {
+          "likes": 0,
+          "reposts": 0,
+          "replies": 0
+        }
+      },
+      {
+        "postId": "at://did:plc:n54y6c7lx2tt42tpx2brzcdi/app.bsky.feed.post/3mjquogaa3b2f",
+        "platform": "bluesky",
+        "collectedAt": "2026-04-19T07:14:55.116Z",
+        "metrics": {
+          "likes": 0,
+          "reposts": 0,
+          "replies": 0
+        }
+      },
+      {
+        "postId": "3513761",
+        "platform": "devto",
+        "collectedAt": "2026-04-19T07:14:55.116Z",
+        "metrics": {
+          "views": 10,
+          "reactions": 0,
+          "comments": 0,
+          "readingTime": 3
+        }
+      },
+      {
+        "postId": "3514122",
+        "platform": "devto",
+        "collectedAt": "2026-04-19T07:14:55.116Z",
+        "metrics": {
+          "views": 3,
+          "reactions": 0,
+          "comments": 0,
+          "readingTime": 3
+        }
+      }
+    ]
   }
 ]

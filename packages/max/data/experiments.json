@@ -78,5 +78,21 @@
     },
     "passed": true,
     "retried": false
+  },
+  {
+    "date": "2026-04-19",
+    "timestamp": "2026-04-19T07:14:56.576Z",
+    "platform": "bluesky",
+    "category": "launch",
+    "qualityScores": {
+      "authenticity": 7,
+      "value": 7,
+      "accuracy": 7,
+      "engagement": 7,
+      "average": 8.5,
+      "feedback": "pre-generated"
+    },
+    "passed": true,
+    "retried": false
   }
 ]

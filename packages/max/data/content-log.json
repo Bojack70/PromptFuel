@@ -42,5 +42,13 @@
     "category": "economics",
     "content": "the economics of software have flipped. the expensive part used to be compute. now it's attention — yours, your users', the model's. and unlike EC2 instances, you can't autoscale human focus. we're all just figuring out how to build with that constraint.",
     "postId": "at://did:plc:n54y6c7lx2tt42tpx2brzcdi/app.bsky.feed.post/3mjquogaa3b2f"
+  },
+  {
+    "date": "2026-04-19",
+    "timestamp": "2026-04-19T07:14:56.576Z",
+    "platform": "bluesky",
+    "category": "launch",
+    "content": "built promptfuel because i was tired of guessing which model to use and then getting the invoice. it's free, runs in your terminal, doesn't need your api keys. no upsell. just `npm install -g promptfuel`. if you find a bug, i'm not surprised, it's a side project.",
+    "postId": "at://did:plc:n54y6c7lx2tt42tpx2brzcdi/app.bsky.feed.post/3mjtfsbfcsu2u"
   }
 ]
