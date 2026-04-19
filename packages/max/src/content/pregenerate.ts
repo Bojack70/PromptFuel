@@ -12,7 +12,8 @@
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { generateContent } from './claude.js';
-import { blueskyPrompt, devtoPrompt, tagsForCategory, type ContentCategory, type PromptContext } from './templates.js';
+import { blueskyPrompt, devtoPrompt, mediumPrompt, tagsForCategory, type ContentCategory, type PromptContext } from './templates.js';
+import type { FormatInsights } from '../brain/format-research.js';
 import { reviewBlueskyPost, reviewArticle } from './quality.js';
 import { parseArticle } from '../publish/devto.js';
 import type { WeeklyCalendar } from './calendar.js';
@@ -35,6 +36,26 @@ export interface PregeneratedPost {
     category: ContentCategory;
     qualityPassed: boolean;
     qualityScore: number;
+  } | null;
+  medium: {
+    title: string;
+    body: string;
+    category: ContentCategory;
+    qualityPassed: boolean;
+    qualityScore: number;
+  } | null;
+  /**
+   * Substack content — zero extra API calls.
+   * note: mirrors bluesky.text (same content, posted to Substack Notes feed)
+   * newsletter: mirrors medium content (same article, different distribution layer)
+   */
+  substack: {
+    note: string | null;
+    newsletter: {
+      title: string;
+      body: string;
+      category: ContentCategory;
+    } | null;
   } | null;
 }
 
@@ -78,12 +99,13 @@ export async function pregenerateWeek(
   calendar: WeeklyCalendar,
   ctx: PromptContext,
   dataDir: string,
+  formatInsights?: FormatInsights,
 ): Promise<PregeneratedWeek> {
   console.log('[Max] Pre-generating week of content with Claude...');
   const posts: PregeneratedPost[] = [];
 
   for (const day of calendar.days) {
-    const post: PregeneratedPost = { date: day.date, bluesky: null, devto: null };
+    const post: PregeneratedPost = { date: day.date, bluesky: null, devto: null, medium: null, substack: null };
 
     // Generate Bluesky post
     if (day.bluesky) {
@@ -156,6 +178,60 @@ export async function pregenerateWeek(
         console.warn(`[Max]   Dev.to pre-gen failed for ${day.date}:`, (err as Error).message);
       }
     }
+
+    // Generate Medium article on the same days as Dev.to (both are long-form platforms).
+    // Medium content is generated independently — different tone, different angle.
+    if (day.devto) {
+      try {
+        // Use same category as Dev.to but generate independently — different persona + style.
+        const mediumCategory = day.devto;
+        console.log(`[Max] Pre-generating ${day.date} Medium (${mediumCategory})...`);
+        const angleHint = day.devtoAngle ? `\n\nFOCUS: ${day.devtoAngle}` : '';
+        const mediumStyleHint = formatInsights?.mediumSummary
+          ? `\n\nMEDIUM STYLE LEARNINGS (from trending articles this week — learn from these patterns, don't copy):\n${formatInsights.mediumSummary}`
+          : '';
+        const prompt = mediumPrompt(mediumCategory, { ...ctx, postFormat: day.devtoFormat }) + angleHint + mediumStyleHint;
+
+        let markdown = await generateContent(claudeApiKey, prompt, {
+          temperature: 0.9,
+          maxTokens: 4096,
+          model: 'claude-opus-4-7',
+        });
+        let { title, body } = parseArticle(markdown);
+
+        let quality = await reviewArticle(title, body, claudeApiKey);
+
+        if (!quality.passed) {
+          markdown = await generateContent(
+            claudeApiKey,
+            `${prompt}\n\nFEEDBACK: ${quality.score.feedback}. Address this and make the article significantly better.`,
+            { temperature: 0.9, maxTokens: 4096, model: 'claude-opus-4-7' },
+          );
+          ({ title, body } = parseArticle(markdown));
+          quality = await reviewArticle(title, body, claudeApiKey);
+        }
+
+        post.medium = {
+          title,
+          body,
+          category: mediumCategory,
+          qualityPassed: quality.passed,
+          qualityScore: quality.score.average,
+        };
+        console.log(`[Max]   Medium ${day.date}: ${quality.score.average}/10 (${quality.passed ? 'pass' : 'fail'})`);
+      } catch (err) {
+        console.warn(`[Max]   Medium pre-gen failed for ${day.date}:`, (err as Error).message);
+      }
+    }
+
+    // Populate Substack from existing content — zero extra API calls.
+    // Notes mirror Bluesky; Newsletter mirrors Medium.
+    post.substack = {
+      note: post.bluesky?.text ?? null,
+      newsletter: post.medium
+        ? { title: post.medium.title, body: post.medium.body, category: post.medium.category }
+        : null,
+    };
 
     posts.push(post);
   }

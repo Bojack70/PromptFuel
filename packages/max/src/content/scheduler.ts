@@ -28,14 +28,17 @@ const WARMUP_START = '2026-03-24';
 // rotation but excluded from warmup — during warmup we establish PromptFuel's identity first.
 const ALL_CATEGORIES: ContentCategory[] = [
   'tip', 'comparison', 'tutorial', 'launch', 'opinion', 'stats',
-  'ai_general', 'economics', 'philosophy',
+  'ai_general', 'economics', 'philosophy', 'short_story',
+  'mystery_interactive', 'character_dark',
+  // Substack-native categories — also scheduled for Bluesky/Dev.to (they have prompts for both)
+  'letter', 'field_notes', 'essay_long', 'contrarian', 'thread_story',
 ];
 const WARMUP_CATEGORIES: ContentCategory[] = ['tip', 'comparison', 'tutorial', 'opinion', 'launch'];
 
 // Hard-promo categories: explicitly sell PromptFuel. Cap at 2/week.
 export const PROMO_CATEGORIES: ContentCategory[] = ['launch', 'stats'];
 // Pure audience-building: no product mention. Ensure at least 2/week.
-export const AUDIENCE_CATEGORIES: ContentCategory[] = ['ai_general', 'economics', 'philosophy'];
+export const AUDIENCE_CATEGORIES: ContentCategory[] = ['ai_general', 'economics', 'philosophy', 'short_story', 'mystery_interactive', 'character_dark'];
 
 // Dev.to posting days by stage (0=Sun, 1=Mon, ... 6=Sat)
 export const DEVTO_DAYS: Record<WarmupStage, number[]> = {

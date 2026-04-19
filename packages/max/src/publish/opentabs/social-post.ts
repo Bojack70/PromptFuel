@@ -9,6 +9,7 @@
  *   node dist/index.js --mode social-post                   (Twitter only)
  *   node dist/index.js --mode social-post --reddit          (+ Reddit human-submit)
  *   node dist/index.js --mode social-post --hn              (+ HN human-submit)
+ *   node dist/index.js --mode social-post --medium          (+ Medium human-assisted publish)
  *   node dist/index.js --mode social-post --dry-run         (print content, no posting)
  */
 
@@ -16,6 +17,8 @@ import { loadPregenerated, getTodayPregenerated } from '../../content/pregenerat
 import { postTweet } from './twitter.js';
 import { submitToReddit } from './reddit.js';
 import { submitToHN } from './hn.js';
+import { postToMedium } from './medium.js';
+import { postSubstackNote } from './substack.js';
 import { jitter, sleep } from './client.js';
 
 export interface SocialPostConfig {
@@ -24,6 +27,8 @@ export interface SocialPostConfig {
     twitter: boolean;
     reddit: boolean;
     hn: boolean;
+    medium: boolean;
+    substack: boolean;
   };
   dryRun: boolean;
 }
@@ -32,6 +37,8 @@ export interface SocialPostResult {
   twitter?: { url: string } | null;
   reddit?: { url: string } | null;
   hn?: { url: string; itemId?: string } | null;
+  medium?: { url: string } | null;
+  substack?: { url: string } | null;
   skipped?: string[];
 }
 
@@ -166,6 +173,63 @@ export async function runSocialPost(config: SocialPostConfig): Promise<SocialPos
       const r = await submitToHN({ title: hnTitle, text });
       console.log(`[Max] HN: submitted — ${r.submittedUrl}`);
       result.hn = { url: r.submittedUrl, itemId: r.itemId };
+    }
+  }
+
+  // --- Medium ---
+  if (config.platforms.medium) {
+    if ((config.platforms.twitter || config.platforms.reddit || config.platforms.hn) && !config.dryRun) {
+      const wait = Math.floor(5000 + Math.random() * 10000);
+      console.log(`[Max] Medium: waiting ${Math.round(wait / 1000)}s...`);
+      await sleep(wait);
+    }
+
+    if (!todayPost.medium?.title || !todayPost.medium?.body) {
+      console.log(`[Max] Medium: skipping — no Medium content pre-generated for today (run generate-week to populate)`);
+      result.skipped = [...(result.skipped ?? []), 'medium (no pregenerated content)'];
+    } else {
+      console.log(`[Max] Medium: title — "${todayPost.medium.title.slice(0, 80)}"`);
+
+      if (config.dryRun) {
+        console.log(`[Max] Medium: DRY RUN — would open medium.com/new-story and fill story`);
+        result.medium = null;
+      } else {
+        await jitter(800, 2000);
+        const r = await postToMedium({
+          title: todayPost.medium.title,
+          body: todayPost.medium.body,
+        });
+        console.log(`[Max] Medium: published — ${r.submittedUrl}`);
+        result.medium = { url: r.submittedUrl };
+      }
+    }
+  }
+
+  // --- Substack Note ---
+  if (config.platforms.substack) {
+    if ((config.platforms.twitter || config.platforms.reddit || config.platforms.hn || config.platforms.medium) && !config.dryRun) {
+      const wait = Math.floor(3000 + Math.random() * 5000);
+      console.log(`[Max] Substack: waiting ${Math.round(wait / 1000)}s...`);
+      await sleep(wait);
+    }
+
+    const noteText = todayPost.substack?.note ?? todayPost.bluesky?.text ?? null;
+
+    if (!noteText) {
+      console.log(`[Max] Substack: skipping — no note content available for today`);
+      result.skipped = [...(result.skipped ?? []), 'substack (no note content)'];
+    } else {
+      console.log(`[Max] Substack Note: "${noteText.slice(0, 80)}..."`);
+
+      if (config.dryRun) {
+        console.log(`[Max] Substack: DRY RUN — would post note to Substack Notes feed`);
+        result.substack = null;
+      } else {
+        await jitter(800, 2000);
+        const r = await postSubstackNote({ text: noteText });
+        console.log(`[Max] Substack Note: posted — ${r.url}`);
+        result.substack = { url: r.url };
+      }
     }
   }
 
