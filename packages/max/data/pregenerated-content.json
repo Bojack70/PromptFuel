@@ -1,6 +1,6 @@
 {
   "weekOf": "2026-04-20",
-  "generatedAt": "2026-04-20T13:12:19.118Z",
+  "generatedAt": "2026-04-20T17:26:28.175Z",
   "posts": [
     {
       "date": "2026-04-20",
@@ -40,59 +40,121 @@
         "qualityPassed": true,
         "qualityScore": 7
       },
-      "medium": null,
+      "medium": {
+        "title": "3 Things I Learned Running the Same 5 Prompts Through Claude, GPT-4o, and Gemini for a Month",
+        "body": "It was 2 AM and my invoice dashboard was showing a number I didn't want to explain to my wife. I'd been routing everything through one provider for six months because it was \"good enough.\" That night I finally opened a spreadsheet and decided to actually measure.\n\nWhat started as a cost-cutting exercise became a month-long experiment across five real tasks I was already paying to run: structured extraction, code review, long-document summarization, customer email classification, and a retrieval-augmented Q&A loop.\n\nHere's what actually surprised me.\n\n## 1. The cheapest model on paper wasn't the cheapest in production.\n\nI assumed the lowest per-token price would win. It didn't.\n\nOne provider had the lowest input cost but consistently used 30-40% more output tokens on the same task — more hedging, more preamble, more \"Certainly! Here's a breakdown...\". By the time I tallied a week of real traffic, the \"cheap\" model cost me more than the mid-tier competitor.\n\n**The sticker price is a rounding error compared to how verbose a model is by default.**\n\nI started measuring cost-per-completed-task instead of cost-per-token. That one change reordered my entire ranking.\n\n## 2. Each model had a task it was weirdly good at — and I'd been blind to it.\n\nRunning the same five prompts across all three providers was humbling.\n\nFor structured extraction, one model returned clean JSON 97% of the time without any schema gymnastics. The other two needed retry logic or schema-enforcement tools that added latency and complexity. That's not a \"vibes\" difference — that's an engineering budget difference.\n\nFor long-document summarization, a different provider held coherent reasoning past 40k tokens where the others started drifting. For code review, the third one caught a subtle off-by-one bug the others missed three times in a row.\n\n**There is no \"best model.\" There's only best-for-this-prompt-shape.**\n\nI felt stupid for not running this experiment sooner. Six months of default-routing had cost me real money and real quality on tasks that didn't match my default pick.\n\n## 3. Routing is the actual product.\n\nThe thing nobody talks about: once you admit different models win different tasks, you've accidentally signed up to build a routing layer.\n\nThat means a cost table, a latency table, a retry policy, and a fallback chain. It means logging every call with enough metadata to do this analysis again next month, because prices change and models get deprecated and your traffic shape drifts.\n\nI spent a weekend building a thin wrapper that tagged every call with `task_type` and `provider` and dumped it to a local SQLite file. Boring. Ugly. Saved me more money than any clever prompt-compression trick I'd tried.\n\n**The highest-leverage code in an AI app is usually the part that isn't calling the AI.**\n\n## The tradeoffs, honestly\n\nSwitching providers per task adds complexity. You now have three SDKs, three auth flows, three rate-limit regimes, three sets of edge cases. For a solo dev or early-stage team, that overhead is real.\n\nMy honest take after the month: if you're doing less than a few thousand calls a day, pick one provider and move on. If you're past that threshold, the ~3 hours it takes to build a routing layer pays for itself in the first week.\n\nThe discipline isn't picking the right model. The discipline is measuring often enough to notice when \"right\" has quietly changed.\n\nWhat's one assumption about your stack you haven't actually measured in the last six months?",
+        "category": "comparison",
+        "qualityPassed": true,
+        "qualityScore": 8.3
+      },
       "substack": {
         "note": "How many tokens did your last API call use? Tested Haiku, GPT-4o Mini, Flash on JSON—same prompt. Haiku: 847 tokens, perfect. GPT-4o Mini: 1200 tokens, sloppy. Cost per usable output tells the real story. Test yours: promptfuel.vercel.app",
-        "newsletter": null
+        "newsletter": {
+          "title": "3 Things I Learned Running the Same 5 Prompts Through Claude, GPT-4o, and Gemini for a Month",
+          "body": "It was 2 AM and my invoice dashboard was showing a number I didn't want to explain to my wife. I'd been routing everything through one provider for six months because it was \"good enough.\" That night I finally opened a spreadsheet and decided to actually measure.\n\nWhat started as a cost-cutting exercise became a month-long experiment across five real tasks I was already paying to run: structured extraction, code review, long-document summarization, customer email classification, and a retrieval-augmented Q&A loop.\n\nHere's what actually surprised me.\n\n## 1. The cheapest model on paper wasn't the cheapest in production.\n\nI assumed the lowest per-token price would win. It didn't.\n\nOne provider had the lowest input cost but consistently used 30-40% more output tokens on the same task — more hedging, more preamble, more \"Certainly! Here's a breakdown...\". By the time I tallied a week of real traffic, the \"cheap\" model cost me more than the mid-tier competitor.\n\n**The sticker price is a rounding error compared to how verbose a model is by default.**\n\nI started measuring cost-per-completed-task instead of cost-per-token. That one change reordered my entire ranking.\n\n## 2. Each model had a task it was weirdly good at — and I'd been blind to it.\n\nRunning the same five prompts across all three providers was humbling.\n\nFor structured extraction, one model returned clean JSON 97% of the time without any schema gymnastics. The other two needed retry logic or schema-enforcement tools that added latency and complexity. That's not a \"vibes\" difference — that's an engineering budget difference.\n\nFor long-document summarization, a different provider held coherent reasoning past 40k tokens where the others started drifting. For code review, the third one caught a subtle off-by-one bug the others missed three times in a row.\n\n**There is no \"best model.\" There's only best-for-this-prompt-shape.**\n\nI felt stupid for not running this experiment sooner. Six months of default-routing had cost me real money and real quality on tasks that didn't match my default pick.\n\n## 3. Routing is the actual product.\n\nThe thing nobody talks about: once you admit different models win different tasks, you've accidentally signed up to build a routing layer.\n\nThat means a cost table, a latency table, a retry policy, and a fallback chain. It means logging every call with enough metadata to do this analysis again next month, because prices change and models get deprecated and your traffic shape drifts.\n\nI spent a weekend building a thin wrapper that tagged every call with `task_type` and `provider` and dumped it to a local SQLite file. Boring. Ugly. Saved me more money than any clever prompt-compression trick I'd tried.\n\n**The highest-leverage code in an AI app is usually the part that isn't calling the AI.**\n\n## The tradeoffs, honestly\n\nSwitching providers per task adds complexity. You now have three SDKs, three auth flows, three rate-limit regimes, three sets of edge cases. For a solo dev or early-stage team, that overhead is real.\n\nMy honest take after the month: if you're doing less than a few thousand calls a day, pick one provider and move on. If you're past that threshold, the ~3 hours it takes to build a routing layer pays for itself in the first week.\n\nThe discipline isn't picking the right model. The discipline is measuring often enough to notice when \"right\" has quietly changed.\n\nWhat's one assumption about your stack you haven't actually measured in the last six months?",
+          "category": "comparison"
+        }
       }
     },
     {
       "date": "2026-04-22",
-      "bluesky": null,
+      "bluesky": {
+        "text": "asked Claude to 'optimize my code' but didn't specify what mattered. got back something elegant that solved the wrong thing. that's the moment: AI doesn't replace thinking—it just reflects how lazy yours was.",
+        "category": "ai_general",
+        "angle": "The moment I realized AI wasn't replacing my thinking — it was just reflecting my laziest assumptions back at me",
+        "qualityPassed": true,
+        "qualityScore": 8.8
+      },
       "devto": null,
       "medium": null,
       "substack": {
-        "note": null,
+        "note": "asked Claude to 'optimize my code' but didn't specify what mattered. got back something elegant that solved the wrong thing. that's the moment: AI doesn't replace thinking—it just reflects how lazy yours was.",
         "newsletter": null
       }
     },
     {
       "date": "2026-04-23",
-      "bluesky": null,
-      "devto": null,
-      "medium": null,
+      "bluesky": {
+        "text": "47 tokens. Same prompt, 6 models — Claude 142, GPT-4o 189, Gemini 156. That spread multiplies with every call. PromptFuel shows the cost delta. npm install -g promptfuel",
+        "category": "comparison",
+        "angle": "Same prompt, 6 models — the token count gaps that will quietly blow up your API budget",
+        "qualityPassed": true,
+        "qualityScore": 8
+      },
+      "devto": {
+        "title": "How I Accidentally Spent $800/Month on LLM Tokens I Didn't Need (And How to Fix It)",
+        "body": "I spent six weeks shipping the wrong thing.\n\nI built PromptFuel because I was hemorrhaging money on API calls. Not because I was building at scale—I wasn't. I was building *dumb*. I'd write a prompt in isolation, test it once, ship it, then wonder why my OpenAI bill jumped $200. Turns out I was doing things like:\n\n- Asking GPT-4 to write validation logic that Haiku could handle just fine\n- Sending full context windows when 30% of it was redundant\n- Retrying identical requests with slightly different temperatures instead of picking one and sticking with it\n- Including examples in prompts that the model was already trained on\n\nThe real kick? None of this was visible. I had no idea which requests were wasteful, which models were overkill for my tasks, or where I was throwing money away. I just had a credit card statement and regret.\n\nSo I built a tool to see what I was actually doing. And then I optimized it. Here's how.\n\n## The Problem Nobody Talks About\n\nChoosing the right model for a job isn't about capabilities. A Haiku can validate JSON, classify text, and format output just as well as GPT-4o for most real work. The difference is cost: Haiku costs 10x less per token.\n\nBut without visibility, you default to the expensive one. Because it's safe. Because you can't see the waste.\n\nAfter I started measuring, I found:\n- **35% of my requests didn't need GPT-4o.** They were hitting it because it was the default, not because it was the right tool.\n- **20% of my prompts had bloat.** Instructions that contradicted each other, examples I copy-pasted but never used, context I included \"just in case.\"\n- **15% of requests were duplicates.** Same input, same model, within minutes. If I'd cached or batched them, I'd cut token spend by half.\n\nTotal: **40% waste.** $800 → $480. Not revolutionary, but real money for an indie project.\n\nThe fix wasn't rocket science. It was boring infrastructure: measure, analyze, optimize, repeat.\n\n## Step 1: See What You're Actually Doing\n\nInstall PromptFuel:\n\n```bash\nnpm install -g promptfuel\n```\n\nThat's it. No API keys, no auth, no bullshit. The tool runs locally.\n\nNow run this on any prompt or code snippet:\n\n```bash\npf optimize --input \"Your prompt here\"\n```\n\nOr point it at a file:\n\n```bash\npf optimize --file my-prompt.txt\n```\n\nYou get back:\n- **Token count** — exactly what you'll be charged for\n- **Cost estimates** — broken down by model (Haiku, Sonnet, GPT-4o, etc.)\n- **Optimization suggestions** — what you can trim without losing meaning\n- **Model recommendations** — which model actually makes sense for this task\n\nExample output:\n```\nCurrent prompt: 412 tokens\n\nOptimization suggestions:\n  - Remove redundant instruction (line 8)\n  - Simplify JSON schema example (saves 34 tokens)\n  - Collapse repeated context (saves 18 tokens)\n\nCost per call:\n  - GPT-4o: $0.006 (❌ overpowered)\n  - Claude 3.5 Sonnet: $0.002 (✓ recommended)\n  - Claude 3 Haiku: $0.0004 (✓ if you only need classification)\n\nEstimated monthly (1000 calls):\n  - Current setup: $6.12\n  - Optimized: $1.84\n```\n\nThat's the insight. That's what I was missing.\n\n## Step 2: Understand Your Actual Costs\n\nOpen the dashboard:\n\n```bash\npf dashboard\n```\n\nYour default browser opens to a local dashboard showing:\n- **All your recent prompts** and their token counts\n- **Cost distribution** — which requests ate the most budget\n- **Model usage** — are you using the expensive ones too much?\n- **Optimization opportunities** — ranked by potential savings\n\nThe dashboard doesn't need your API keys. It's analyzing local data. But it *will* tell you which of your shipped prompts are costing way more than they should.\n\nSpend 10 minutes here. You'll probably find something you didn't realize you were doing.\n\n## Step 3: Integrate into Your Stack\n\nOnce you see the waste, you'll want to catch it earlier. That's where the SDK and MCP server come in.\n\n**Option A: JavaScript SDK (for Next.js, Node apps)**\n\n```bash\nnpm install @promptfuel/sdk\n```\n\n```javascript\nimport { PromptOptimizer } from '@promptfuel/sdk';\n\nconst optimizer = new PromptOptimizer();\n\nconst prompt = `You are a helpful assistant...\nClassify the following text into categories...\n[20 more lines of context you don't actually need]`;\n\nconst analysis = await optimizer.analyze(prompt);\n\nconsole.log(`This prompt costs $${analysis.costPerCall.gpt4o}`);\nconsole.log(`Optimized version: $${analysis.optimized.costPerCall.gpt4o}`);\n\n// Actually use the optimized version\nconst optimizedPrompt = analysis.optimized.text;\n```\n\n**Option B: Claude Code MCP Server (for use in Claude directly)**\n\nIf you're like me and you use Claude for a lot of your thinking, add the PromptFuel MCP server to your Claude Code settings. Then ask Claude directly:\n\n```\n@promptfuel optimize my prompt for cost\n\n[paste your prompt]\n```\n\nClaude runs it through PromptFuel's analysis and tells you exactly where you're bleeding money. Then it generates an optimized version.\n\nBoth approaches catch waste before it ships.\n\n## What Happened Next\n\nAfter I actually measured and optimized my stuff, here's what I learned:\n\n1. **You don't need the expensive model as often as you think.** Most of my classification, formatting, and even some reasoning tasks work fine on Haiku.\n2. **Prompt bloat is real.** Every instruction that contradicts another one, every \"just in case\" example, every \"let me explain the context\" paragraph adds tokens and confusion.\n3. **Token count scales weird.** I thought I'd save 10%. I saved 40%. Because once you see the pattern, you fix it everywhere.\n\nFor me: $800 → $480/month. For you, it might be different. But it won't be zero.\n\n## Getting Started (Right Now)\n\n1. Install: `npm install -g promptfuel`\n2. Optimize a single prompt: `pf optimize --file your-prompt.txt`\n3. Open the dashboard: `pf dashboard`\n4. If you like it, integrate the SDK or MCP server into your workflow\n\nNo commitment. No API keys. No upsell. Just a free tool that shows you where your money's going.\n\nThe tool exists because I was tired of guessing. If you are too, give it a try: https://promptfuel.vercel.app?utm_source=devto&utm_medium=social&utm_campaign=max",
+        "tags": [
+          "ai",
+          "tutorial",
+          "javascript",
+          "beginners"
+        ],
+        "category": "tutorial",
+        "qualityPassed": true,
+        "qualityScore": 8.3
+      },
+      "medium": {
+        "title": "I Spent Three Weeks Debugging a Problem That Was Just Me Being Lazy",
+        "body": "The Slack message came in at 11:47pm on a Tuesday. A friend using my side project sent a screenshot of a hallucinated product name, three emojis, and the words \"is this normal.\"\n\nIt was not normal. But the reason it was happening was embarrassing enough that I didn't tell him the truth for another three weeks.\n\nI had been stuffing the entire conversation history into every single model call. Every turn. No trimming, no summarization, no sliding window. Just the whole thing, over and over, until the context got so bloated the model started forgetting its own instructions and inventing features that didn't exist.\n\n## The part where I convinced myself it was complicated\n\nMy first instinct was that the model was the problem. Maybe the provider shipped a bad update. Maybe I needed a better system prompt. Maybe I needed to switch to a larger context window.\n\n**I spent a full week tuning prompts for a problem that had nothing to do with prompts.**\n\nI rewrote the system message four times. I added few-shot examples. I experimented with temperature. I even drafted a migration plan to a different provider, complete with a spreadsheet comparing pricing tiers.\n\nNone of it worked, because none of it was the problem.\n\n## The moment I actually looked at the request payload\n\nOn a Saturday morning, mostly out of frustration, I logged the raw JSON body of one outbound request. The file was 180 KB. For a chat that had been going on for maybe fifteen minutes.\n\nI scrolled. And scrolled. And realized I was sending the same onboarding instructions, user profile blob, and tool schema on every single turn — plus the full message history, uncompressed, including the parts the user had already scrolled past and forgotten about.\n\n**The model wasn't hallucinating. It was drowning.**\n\nThe actually-relevant context for any given turn was maybe 3% of what I was sending. The other 97% was noise I'd never bothered to prune because early on, when chats were short, it didn't matter.\n\n## What I actually changed\n\nI did three boring things that together cut the payload by roughly two-thirds.\n\nFirst, I moved the static instructions and tool schemas into a cached system block instead of re-sending them raw each turn. The API supports this. I had just never read that part of the docs.\n\nSecond, I wrote a dumb little sliding window: keep the last N turns verbatim, and for everything older than that, replace it with a one-line summary generated once and stored. Not clever. Not novel. Just discipline.\n\nThird, I stopped sending the user's profile blob when the turn didn't need it. A function calling the weather tool does not need to know the user's timezone preferences and notification settings and referral source.\n\n## What I'd do differently\n\nI'd instrument the payload size from day one. Not the token count returned by the API — the actual bytes going out the door, logged per request, graphed over time.\n\n**You can't fix what you refuse to look at.**\n\nI spent three weeks treating this like a model-quality problem because looking at the payload felt too basic. Too obvious. Surely the problem was something more interesting than \"you are sending too much stuff.\"\n\nIt almost never is. The problem is almost always that you are sending too much stuff, or looping when you shouldn't, or doing work on the server that should have been cached. The interesting problems are rare. The boring ones will eat your budget alive.\n\nWhat's the dumbest bug you've shipped that took way too long to find?",
+        "category": "tutorial",
+        "qualityPassed": true,
+        "qualityScore": 8.3
+      },
       "substack": {
-        "note": null,
-        "newsletter": null
+        "note": "47 tokens. Same prompt, 6 models — Claude 142, GPT-4o 189, Gemini 156. That spread multiplies with every call. PromptFuel shows the cost delta. npm install -g promptfuel",
+        "newsletter": {
+          "title": "I Spent Three Weeks Debugging a Problem That Was Just Me Being Lazy",
+          "body": "The Slack message came in at 11:47pm on a Tuesday. A friend using my side project sent a screenshot of a hallucinated product name, three emojis, and the words \"is this normal.\"\n\nIt was not normal. But the reason it was happening was embarrassing enough that I didn't tell him the truth for another three weeks.\n\nI had been stuffing the entire conversation history into every single model call. Every turn. No trimming, no summarization, no sliding window. Just the whole thing, over and over, until the context got so bloated the model started forgetting its own instructions and inventing features that didn't exist.\n\n## The part where I convinced myself it was complicated\n\nMy first instinct was that the model was the problem. Maybe the provider shipped a bad update. Maybe I needed a better system prompt. Maybe I needed to switch to a larger context window.\n\n**I spent a full week tuning prompts for a problem that had nothing to do with prompts.**\n\nI rewrote the system message four times. I added few-shot examples. I experimented with temperature. I even drafted a migration plan to a different provider, complete with a spreadsheet comparing pricing tiers.\n\nNone of it worked, because none of it was the problem.\n\n## The moment I actually looked at the request payload\n\nOn a Saturday morning, mostly out of frustration, I logged the raw JSON body of one outbound request. The file was 180 KB. For a chat that had been going on for maybe fifteen minutes.\n\nI scrolled. And scrolled. And realized I was sending the same onboarding instructions, user profile blob, and tool schema on every single turn — plus the full message history, uncompressed, including the parts the user had already scrolled past and forgotten about.\n\n**The model wasn't hallucinating. It was drowning.**\n\nThe actually-relevant context for any given turn was maybe 3% of what I was sending. The other 97% was noise I'd never bothered to prune because early on, when chats were short, it didn't matter.\n\n## What I actually changed\n\nI did three boring things that together cut the payload by roughly two-thirds.\n\nFirst, I moved the static instructions and tool schemas into a cached system block instead of re-sending them raw each turn. The API supports this. I had just never read that part of the docs.\n\nSecond, I wrote a dumb little sliding window: keep the last N turns verbatim, and for everything older than that, replace it with a one-line summary generated once and stored. Not clever. Not novel. Just discipline.\n\nThird, I stopped sending the user's profile blob when the turn didn't need it. A function calling the weather tool does not need to know the user's timezone preferences and notification settings and referral source.\n\n## What I'd do differently\n\nI'd instrument the payload size from day one. Not the token count returned by the API — the actual bytes going out the door, logged per request, graphed over time.\n\n**You can't fix what you refuse to look at.**\n\nI spent three weeks treating this like a model-quality problem because looking at the payload felt too basic. Too obvious. Surely the problem was something more interesting than \"you are sending too much stuff.\"\n\nIt almost never is. The problem is almost always that you are sending too much stuff, or looping when you shouldn't, or doing work on the server that should have been cached. The interesting problems are rare. The boring ones will eat your budget alive.\n\nWhat's the dumbest bug you've shipped that took way too long to find?",
+          "category": "tutorial"
+        }
       }
     },
     {
       "date": "2026-04-24",
-      "bluesky": null,
+      "bluesky": {
+        "text": "3 rewrite tricks that cut prompts 30%+:\n1. Kill filler adjectives (15% gone instantly)\n2. Examples > long explanations (20% savings)\n3. Ruthlessly trim chain-of-thought (10% more)\n\nnpm install -g promptfuel to measure your own.",
+        "category": "tutorial",
+        "angle": "Three rewrite patterns that reliably shrink prompts 30%+ without degrading output quality — install `promptfuel` to measure it yourself",
+        "qualityPassed": true,
+        "qualityScore": 7.8
+      },
       "devto": null,
       "medium": null,
       "substack": {
-        "note": null,
+        "note": "3 rewrite tricks that cut prompts 30%+:\n1. Kill filler adjectives (15% gone instantly)\n2. Examples > long explanations (20% savings)\n3. Ruthlessly trim chain-of-thought (10% more)\n\nnpm install -g promptfuel to measure your own.",
         "newsletter": null
       }
     },
     {
       "date": "2026-04-25",
-      "bluesky": null,
+      "bluesky": {
+        "text": "i automated something that deserved thinking. shipped it fast anyway. we're so obsessed with speed and cost we forgot what happens when you actually sit with a hard question. the answer changes.",
+        "category": "philosophy",
+        "angle": "We keep optimizing for speed and cost but nobody talks about what we lose when we stop sitting with a hard question",
+        "qualityPassed": true,
+        "qualityScore": 8
+      },
       "devto": null,
       "medium": null,
       "substack": {
-        "note": null,
+        "note": "i automated something that deserved thinking. shipped it fast anyway. we're so obsessed with speed and cost we forgot what happens when you actually sit with a hard question. the answer changes.",
         "newsletter": null
       }
     },
     {
       "date": "2026-04-26",
-      "bluesky": null,
+      "bluesky": {
+        "text": "cost dropped 10x in 18 months. you're still picking models like 2023. haiku: $0.80/1M. flash: $0.075/1M. built promptfuel to test the real gates: latency and reliability. 2,826 downloads last month. small tool, real problem.",
+        "category": "stats",
+        "angle": "LLM API costs have dropped 10x in 18 months — here's the number that should change how you architect your next feature",
+        "qualityPassed": true,
+        "qualityScore": 8.3
+      },
       "devto": null,
       "medium": null,
       "substack": {
-        "note": null,
+        "note": "cost dropped 10x in 18 months. you're still picking models like 2023. haiku: $0.80/1M. flash: $0.075/1M. built promptfuel to test the real gates: latency and reliability. 2,826 downloads last month. small tool, real problem.",
         "newsletter": null
       }
     }

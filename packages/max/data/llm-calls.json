@@ -286,5 +286,165 @@
     "ms": 4486,
     "ok": false,
     "error": "claude CLI exit 1: You've hit your limit · resets 9:30pm (Asia/Calcutta)"
+  },
+  {
+    "ts": "2026-04-20T17:19:18.194Z",
+    "date": "2026-04-20",
+    "mode": "cli",
+    "model": "claude-opus-4-7",
+    "promptChars": 2533,
+    "responseChars": 3597,
+    "ms": 28817,
+    "ok": true
+  },
+  {
+    "ts": "2026-04-20T17:19:24.768Z",
+    "date": "2026-04-20",
+    "mode": "cli",
+    "model": "claude-sonnet-4-6",
+    "promptChars": 2511,
+    "responseChars": 292,
+    "ms": 6572,
+    "ok": true
+  },
+  {
+    "ts": "2026-04-20T17:20:09.098Z",
+    "date": "2026-04-20",
+    "mode": "cli",
+    "model": "claude-haiku-4-5",
+    "promptChars": 2151,
+    "responseChars": 208,
+    "ms": 44328,
+    "ok": true
+  },
+  {
+    "ts": "2026-04-20T17:20:23.283Z",
+    "date": "2026-04-20",
+    "mode": "cli",
+    "model": "claude-haiku-4-5",
+    "promptChars": 1085,
+    "responseChars": 170,
+    "ms": 14184,
+    "ok": true
+  },
+  {
+    "ts": "2026-04-20T17:21:24.116Z",
+    "date": "2026-04-20",
+    "mode": "cli",
+    "model": "claude-haiku-4-5",
+    "promptChars": 2102,
+    "responseChars": 169,
+    "ms": 60832,
+    "ok": true
+  },
+  {
+    "ts": "2026-04-20T17:21:43.898Z",
+    "date": "2026-04-20",
+    "mode": "cli",
+    "model": "claude-haiku-4-5",
+    "promptChars": 1046,
+    "responseChars": 243,
+    "ms": 19781,
+    "ok": true
+  },
+  {
+    "ts": "2026-04-20T17:22:08.030Z",
+    "date": "2026-04-20",
+    "mode": "cli",
+    "model": "claude-haiku-4-5",
+    "promptChars": 2297,
+    "responseChars": 6211,
+    "ms": 24131,
+    "ok": true
+  },
+  {
+    "ts": "2026-04-20T17:22:15.954Z",
+    "date": "2026-04-20",
+    "mode": "cli",
+    "model": "claude-sonnet-4-6",
+    "promptChars": 2502,
+    "responseChars": 341,
+    "ms": 7923,
+    "ok": true
+  },
+  {
+    "ts": "2026-04-20T17:22:44.839Z",
+    "date": "2026-04-20",
+    "mode": "cli",
+    "model": "claude-opus-4-7",
+    "promptChars": 2594,
+    "responseChars": 3567,
+    "ms": 28884,
+    "ok": true
+  },
+  {
+    "ts": "2026-04-20T17:22:49.736Z",
+    "date": "2026-04-20",
+    "mode": "cli",
+    "model": "claude-sonnet-4-6",
+    "promptChars": 2486,
+    "responseChars": 242,
+    "ms": 4896,
+    "ok": true
+  },
+  {
+    "ts": "2026-04-20T17:23:26.646Z",
+    "date": "2026-04-20",
+    "mode": "cli",
+    "model": "claude-haiku-4-5",
+    "promptChars": 2116,
+    "responseChars": 227,
+    "ms": 36908,
+    "ok": true
+  },
+  {
+    "ts": "2026-04-20T17:23:43.619Z",
+    "date": "2026-04-20",
+    "mode": "cli",
+    "model": "claude-haiku-4-5",
+    "promptChars": 1104,
+    "responseChars": 217,
+    "ms": 16973,
+    "ok": true
+  },
+  {
+    "ts": "2026-04-20T17:24:26.846Z",
+    "date": "2026-04-20",
+    "mode": "cli",
+    "model": "claude-haiku-4-5",
+    "promptChars": 2118,
+    "responseChars": 194,
+    "ms": 43225,
+    "ok": true
+  },
+  {
+    "ts": "2026-04-20T17:24:38.359Z",
+    "date": "2026-04-20",
+    "mode": "cli",
+    "model": "claude-haiku-4-5",
+    "promptChars": 1071,
+    "responseChars": 220,
+    "ms": 11511,
+    "ok": true
+  },
+  {
+    "ts": "2026-04-20T17:25:56.130Z",
+    "date": "2026-04-20",
+    "mode": "cli",
+    "model": "claude-haiku-4-5",
+    "promptChars": 2211,
+    "responseChars": 224,
+    "ms": 77751,
+    "ok": true
+  },
+  {
+    "ts": "2026-04-20T17:26:28.174Z",
+    "date": "2026-04-20",
+    "mode": "cli",
+    "model": "claude-haiku-4-5",
+    "promptChars": 1101,
+    "responseChars": 210,
+    "ms": 32043,
+    "ok": true
   }
 ]
