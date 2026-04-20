@@ -452,6 +452,105 @@ ${reflection}
 
 // ── Main Weekly Flow ──
 
+/**
+ * Data-only weekly pass — the CI-safe subset of {@link weeklyReflection}.
+ *
+ * Runs the deterministic, non-LLM pieces:
+ *   1. Aggregate week snapshots
+ *   2. Collect fresh engagement data
+ *   3. Evaluate experiments + correlations
+ *   4. Summarize week (metrics + engagement)
+ *   5. Evaluate growth goals
+ *   6. Evaluate past strategy outcomes
+ *   7. Save correlation report
+ *   8. Update state.json so daily runs see fresh growth status
+ *
+ * Does NOT send an email, generate a reflection, extract a strategy decision,
+ * research formats, generate drafts, build next week's calendar, or
+ * pre-generate content — those all need the Claude LLM and run locally via
+ * `--mode weekly` where the Claude Code CLI has subscription access.
+ *
+ * GitHub Actions invokes this so the dashboard + correlation report stay
+ * fresh without touching the paid Anthropic API.
+ */
+export async function weeklyDataOnly(config: MaxConfig): Promise<void> {
+  const now = new Date();
+  const weekStart = getMonday(now);
+  const prevMonday = new Date(new Date(weekStart + 'T00:00:00Z').getTime() - 7 * 24 * 60 * 60 * 1000)
+    .toISOString().split('T')[0];
+
+  console.log(`[Max] Weekly data-only pass for week of ${prevMonday}`);
+
+  const snapshots = loadWeekSnapshots(config.dataDir, prevMonday);
+  const prevSnapshots = loadPrevWeekSnapshots(config.dataDir, prevMonday);
+  console.log(`[Max] Loaded ${snapshots.length} snapshots (prev week: ${prevSnapshots.length})`);
+
+  try {
+    console.log('[Max] Collecting fresh engagement data...');
+    await collectEngagement(config);
+  } catch (err) {
+    console.warn('[Max] Engagement collection failed (non-fatal):', (err as Error).message);
+  }
+
+  const evaluation = evaluateWeek(config.dataDir, prevMonday);
+  console.log(`[Max] Evaluated ${evaluation.totalExperiments} experiments, ${evaluation.results.length} hypotheses`);
+  for (const r of evaluation.results) {
+    console.log(`[Max]   ${r.name}: ${r.verdict} — ${r.summary}`);
+  }
+  if (evaluation.correlations) {
+    console.log(`[Max] Correlation report: ${evaluation.correlations.correlations.length} posts correlated`);
+    for (const insight of evaluation.correlations.insights) {
+      console.log(`[Max]   Insight: ${insight}`);
+    }
+  }
+
+  const stateFile = join(config.dataDir, 'state.json');
+  const state = existsSync(stateFile)
+    ? JSON.parse(readFileSync(stateFile, 'utf-8'))
+    : { warmupStartDate: '2026-03-24' };
+  const summary = summarizeWeek(snapshots, prevSnapshots, config.dataDir, prevMonday);
+
+  const prevStalledWeeks = state.stalledWeeks ?? 0;
+  const goalEval = evaluateGoals(summary, prevStalledWeeks);
+  console.log(`[Max] Growth status: ${goalEval.status} (met: ${goalEval.met.join(', ') || 'none'}, missed: ${goalEval.missed.join(', ') || 'none'})`);
+
+  const currentMetrics = buildMetricsSnapshot(summary);
+  const prevSummary = summarizeWeek(
+    prevSnapshots,
+    [],
+    config.dataDir,
+    new Date(new Date(prevMonday + 'T00:00:00Z').getTime() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+  );
+  const prevMetrics = buildMetricsSnapshot(prevSummary);
+  try {
+    evaluateOutcomes(config.dataDir, currentMetrics, prevMetrics);
+    console.log('[Max] Strategy outcomes evaluated');
+  } catch (err) {
+    console.warn('[Max] Strategy outcome evaluation failed (non-fatal):', (err as Error).message);
+  }
+
+  if (evaluation.correlations) {
+    saveCorrelationReport(config.dataDir, evaluation.correlations);
+  }
+
+  state.lastWeeklyDataRun = new Date().toISOString();
+  state.growthStatus = goalEval.status;
+  state.stalledWeeks = goalEval.stalledWeeks;
+  state.lastGoalEval = {
+    week: prevMonday,
+    status: goalEval.status,
+    met: goalEval.met,
+    missed: goalEval.missed,
+  };
+  state.lastEngagementRun = new Date().toISOString();
+  state.lastCorrelationRun = evaluation.correlations ? new Date().toISOString() : state.lastCorrelationRun;
+  writeFileSync(stateFile, JSON.stringify(state, null, 2));
+
+  console.log('[Max] Weekly data-only pass complete.');
+  console.log('[Max] Next: run `node packages/max/dist/index.js --mode weekly` locally');
+  console.log('[Max]   to generate reflection, next week\'s calendar, and pre-generated content.');
+}
+
 export async function weeklyReflection(config: MaxConfig): Promise<void> {
   const now = new Date();
   const weekStart = getMonday(now);

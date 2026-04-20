@@ -23,7 +23,7 @@ import { loadCalendar, isCalendarCurrent, getTodayFromCalendar, generateWeeklyCa
 import { sendEmail } from './reports/email.js';
 import { buildDailyDigest } from './reports/digest.js';
 import { recordExperiment } from './experiments/tracker.js';
-import { weeklyReflection } from './brain/weekly.js';
+import { weeklyReflection, weeklyDataOnly } from './brain/weekly.js';
 import { generateDashboard } from './dashboard/generator.js';
 import { collectEngagement } from './analytics/engagement.js';
 
@@ -354,6 +354,23 @@ async function weekly() {
     await weeklyReflection(config);
   } catch (err) {
     console.warn('[Max] Weekly reflection failed (non-fatal):', (err as Error).message);
+  }
+}
+
+/**
+ * CI-safe weekly pass — runs the deterministic (non-LLM) portion of the
+ * weekly brain. Used by `.github/workflows/max-weekly.yml` because GitHub
+ * Actions has neither the Claude Code CLI nor access to the subscription
+ * keychain, and the zero-cost policy forbids hitting the paid Anthropic API
+ * from CI. Run `--mode weekly` locally on Mondays to produce the reflection,
+ * next week's calendar, and pre-generated content.
+ */
+async function weeklyData() {
+  const config = loadConfig();
+  try {
+    await weeklyDataOnly(config);
+  } catch (err) {
+    console.warn('[Max] Weekly data-only pass failed (non-fatal):', (err as Error).message);
   }
 }
 
@@ -716,6 +733,9 @@ async function main() {
       case 'weekly':
         await weekly();
         break;
+      case 'weekly-data':
+        await weeklyData();
+        break;
       case 'dashboard':
         await dashboard();
         break;
@@ -756,7 +776,7 @@ async function main() {
         await mediumEngage();
         break;
       default:
-        console.error(`Unknown mode: ${mode}. Use --mode daily|weekly|dashboard|post|generate-week|social-test-hn|social-test-reddit|social-test-twitter|social-post|social-engage|medium-engage|social-test-medium|social-test-substack|publish-substack`);
+        console.error(`Unknown mode: ${mode}. Use --mode daily|weekly|weekly-data|dashboard|post|generate-week|social-test-hn|social-test-reddit|social-test-twitter|social-post|social-engage|medium-engage|social-test-medium|social-test-substack|publish-substack`);
         process.exit(1);
     }
   } catch (err) {

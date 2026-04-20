@@ -1,8 +1,17 @@
-name: Max Weekly Brain
+name: Max Weekly Brain (Data-Only)
+
+# CI-safe weekly pass: aggregates snapshots, collects engagement, evaluates
+# experiments + strategy outcomes, updates state, regenerates the dashboard.
+#
+# Does NOT generate the weekly reflection, next week's calendar, or the
+# pre-generated content — those require Claude and run locally via
+# `node packages/max/dist/index.js --mode weekly`. Zero-cost policy forbids
+# hitting the paid Anthropic API from CI, and the Claude Code CLI isn't
+# installed on GitHub runners.
 
 on:
   schedule:
-    - cron: '0 3 * * 1'  # Monday 03:00 UTC — runs before daily (06:00) so pre-generated content is ready
+    - cron: '0 3 * * 1'  # Monday 03:00 UTC — runs before daily (06:00) so state is fresh
   workflow_dispatch:       # Manual trigger
 
 permissions:
@@ -27,7 +36,7 @@ jobs:
       - name: Build Max
         run: pnpm --filter @promptfuel/max build
 
-      - name: Run weekly brain
+      - name: Run weekly data-only pass
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_OWNER: Bojack70
@@ -42,7 +51,7 @@ jobs:
           REDDIT_PASSWORD: ${{ secrets.REDDIT_PASSWORD }}
           DEVTO_API_KEY: ${{ secrets.DEVTO_API_KEY }}
           MAX_DATA_DIR: packages/max/data
-        run: node packages/max/dist/index.js --mode weekly
+        run: node packages/max/dist/index.js --mode weekly-data
 
       - name: Generate dashboard
         env:
