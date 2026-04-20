@@ -621,7 +621,7 @@ export async function weeklyReflection(config: MaxConfig): Promise<void> {
           e.platform === 'bluesky' ? e.content : (e.title ?? e.content.slice(0, 80)),
         ),
       };
-      await pregenerateWeek(config.claudeApiKey, calendar, promptCtx, config.dataDir);
+      await pregenerateWeek(config.claudeApiKey, calendar, promptCtx, config.dataDir, formatInsights);
     }
   } catch (err) {
     console.warn('[Max] Content pre-generation failed (non-fatal):', (err as Error).message);

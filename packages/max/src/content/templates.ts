@@ -13,7 +13,16 @@ export type ContentCategory =
   // General-topic categories for personal brand building (not PromptFuel-specific)
   | 'ai_general'   // AI industry trends, model releases, AI economics
   | 'economics'    // Tech economics, developer costs, software pricing
-  | 'philosophy';  // Open source, human-AI collaboration, future of tech
+  | 'philosophy'          // Open source, human-AI collaboration, future of tech
+  | 'short_story'         // Flash fiction: AI, human nature, tech — 500-800 words, 3-act
+  | 'mystery_interactive' // Prestige/Shutter Island style — readers guess in comments, answer never revealed
+  | 'character_dark'      // Bojack Horseman style — dark character study, humor then gut punch, no redemption
+  // Substack-native categories — email relationship, intimate voice, deeper formats
+  | 'letter'              // Personal letter to one reader — "I've been thinking about..." — Substack-first
+  | 'field_notes'         // 5-7 numbered observations from the week — raw, specific, conversational
+  | 'essay_long'          // Deep 1,500-2,500w essay — one idea fully developed — earns paid subscribers
+  | 'contrarian'          // One widely-held belief rigorously dismantled — sustained argument, not hot take
+  | 'thread_story';       // Story in short numbered sections — serial rhythm, each section 2-3 sentences
 
 export interface PromptContext {
   stars: number;
@@ -88,6 +97,30 @@ const BLUESKY_PROMPTS: Record<ContentCategory, (ctx: PromptContext) => string> =
 
   philosophy: (ctx) =>
     `${PERSONA_GENERAL}\n\n${BLUESKY_RULES}\n\nWrite a thoughtful short take on a philosophical question about technology — human-AI collaboration, what it means to "create" something with AI, the ethics of automation, open source as a philosophy, or the long-term future of software. Keep it grounded — a developer's perspective, not an academic essay.${AVOID_REPETITION(ctx.recentPosts)}`,
+
+  short_story: (ctx) =>
+    `${PERSONA_GENERAL}\n\n${BLUESKY_RULES}\n\nWrite the opening 1-2 sentences of a very short story — something that immediately makes the reader want to know what happens next. Theme: AI, human nature, or a moment of unexpected clarity. Drop the reader into the middle of something real. No setup, no intro. Just the hook.${AVOID_REPETITION(ctx.recentPosts)}`,
+
+  mystery_interactive: (ctx) =>
+    `${PERSONA_GENERAL}\n\n${BLUESKY_RULES}\n\nTease an interactive mystery story — one cryptic sentence that hints at a crime or disappearance without revealing anything. Make it feel like the opening line of a thriller. Then add: "Full story on Medium — can you figure out what really happened?" Do NOT solve or explain anything.${AVOID_REPETITION(ctx.recentPosts)}`,
+
+  character_dark: (ctx) =>
+    `${PERSONA_GENERAL}\n\n${BLUESKY_RULES}\n\nWrite a single observation about a fictional character — someone who keeps almost doing the right thing. One sentence that's funny and then immediately sad. The kind of line that makes someone stop scrolling. No setup needed. Just the line.${AVOID_REPETITION(ctx.recentPosts)}`,
+
+  letter: (ctx) =>
+    `${PERSONA_GENERAL}\n\n${BLUESKY_RULES}\n\nPull one honest line from a letter you'd write to a friend who's also building something — something you'd only say if you trusted the person reading it. Not inspirational. Not a lesson. Just honest.${AVOID_REPETITION(ctx.recentPosts)}`,
+
+  field_notes: (ctx) =>
+    `${PERSONA_GENERAL}\n\n${BLUESKY_RULES}\n\nShare one field note from this week — a specific thing you noticed while building AI software that surprised you or made you think differently. One observation, concrete and specific. No context needed.${AVOID_REPETITION(ctx.recentPosts)}`,
+
+  essay_long: (ctx) =>
+    `${PERSONA_GENERAL}\n\n${BLUESKY_RULES}\n\nState the thesis of a long essay in one sentence — one big, specific, defensible idea about AI, technology, or what it means to build things. The kind of claim that makes someone stop scrolling to read a 2,000-word argument. Direct, not vague.${AVOID_REPETITION(ctx.recentPosts)}`,
+
+  contrarian: (ctx) =>
+    `${PERSONA_GENERAL}\n\n${BLUESKY_RULES}\n\nState one contrarian belief about AI, software development, or productivity that most developers would push back on — but that you can actually defend with evidence and logic. Not edgy for the sake of it. Genuinely defensible.${AVOID_REPETITION(ctx.recentPosts)}`,
+
+  thread_story: (ctx) =>
+    `${PERSONA_GENERAL}\n\n${BLUESKY_RULES}\n\nWrite the opening 2-3 sentences of a story told in numbered sections. Drop straight into the scene — no setup, no context. Something happened. We don't know what yet. The last word should make the reader want section 2.${AVOID_REPETITION(ctx.recentPosts)}`,
 };
 
 const DEVTO_PROMPTS: Record<ContentCategory, (ctx: PromptContext) => string> = {
@@ -117,6 +150,30 @@ const DEVTO_PROMPTS: Record<ContentCategory, (ctx: PromptContext) => string> = {
 
   philosophy: (ctx) =>
     `${PERSONA_GENERAL}\n\n${DEVTO_RULES}\n\nWrite a thoughtful opinion piece about a philosophical dimension of software or AI development — what authorship means when you write with AI, the ethics of open source in an AI world, whether "software craftsmanship" still matters, or the long-term trajectory of the developer profession. Write from a developer's lived experience, not abstract theory. Tag suggestions: discuss, career, ai, webdev.${AVOID_REPETITION(ctx.recentPosts)}`,
+
+  short_story: (ctx) =>
+    `${PERSONA_GENERAL}\n\n${DEVTO_RULES}\n\nWrite a short narrative piece — part personal essay, part story — about a moment from a developer's life that changed how they think about AI, creativity, or what it means to build things. 600-900 words. Start in the middle of the moment (no setup), let the story carry the insight, end with a single honest observation. No product pitches, no listicle structure. Tag suggestions: discuss, ai, career, watercooler.${AVOID_REPETITION(ctx.recentPosts)}`,
+
+  mystery_interactive: (ctx) =>
+    `${PERSONA_GENERAL}\n\n${DEVTO_RULES}\n\nWrite a developer-themed mystery narrative. A bug that couldn't exist does. A deployment that no one authorized happened. A file that was deleted is back. Tell the story from the perspective of the developer trying to figure out what happened — unreliable, panicked, maybe covering something up. Plant 2-3 clues that contradict their account. Never reveal the answer. End with: "Three clues are hidden in this story. Drop your theory in the comments." 700-1000 words. Tag suggestions: discuss, watercooler, career, ai.${AVOID_REPETITION(ctx.recentPosts)}`,
+
+  character_dark: (ctx) =>
+    `${PERSONA_GENERAL}\n\n${DEVTO_RULES}\n\nWrite a character study about a fictional senior developer or tech founder — someone deeply competent who keeps making the same human mistake in new packaging. Start with something funny they did. Halfway through, let it get real. End without resolving it — the character continues being exactly who they are. No lesson, no growth arc. The last line should land quietly. 600-800 words. Tag suggestions: discuss, career, watercooler, ai.${AVOID_REPETITION(ctx.recentPosts)}`,
+
+  letter: (ctx) =>
+    `${PERSONA_GENERAL}\n\n${DEVTO_RULES}\n\nWrite a personal open letter to developers who are building with AI — one specific thing you've learned that you wish someone had told you earlier. Not a tip list. A letter. Direct, honest, second-person ("you"). 600-900 words. Start with a concrete moment. End with what you'd do differently. Tag suggestions: discuss, ai, career, webdev.${AVOID_REPETITION(ctx.recentPosts)}`,
+
+  field_notes: (ctx) =>
+    `${PERSONA_GENERAL}\n\n${DEVTO_RULES}\n\nWrite a "field notes" article — 5-7 numbered short observations from building AI-powered software this week. Each observation is 2-4 sentences: what you noticed, why it surprised you, what it implies. No connecting narrative — just observations. Start each with a bold one-line header. 700-1,000 words total. Tag suggestions: ai, discuss, webdev, machinelearning.${AVOID_REPETITION(ctx.recentPosts)}`,
+
+  essay_long: (ctx) =>
+    `${PERSONA_GENERAL}\n\n${DEVTO_RULES}\n\nWrite a long-form essay (1,200-1,800 words) arguing one specific, defensible claim about AI, software development, or technology. State your thesis in the first paragraph. Develop it with evidence, examples, and honest counterarguments. End by restating what you believe and why. This is a sustained argument, not a survey of opinions. Tag suggestions: ai, discuss, webdev, career.${AVOID_REPETITION(ctx.recentPosts)}`,
+
+  contrarian: (ctx) =>
+    `${PERSONA_GENERAL}\n\n${DEVTO_RULES}\n\nWrite an opinion piece that argues against one widely-held belief in the developer community — something most devs accept without questioning. Identify the belief clearly, explain why you think it's wrong, show your evidence, and defend your alternative view. Be specific. This is not just a hot take — it's a sustained argument. 800-1,200 words. Tag suggestions: discuss, ai, career, webdev.${AVOID_REPETITION(ctx.recentPosts)}`,
+
+  thread_story: (ctx) =>
+    `${PERSONA_GENERAL}\n\n${DEVTO_RULES}\n\nWrite a short story in numbered sections (1 through 8-12). Each section is 2-4 sentences. The story is about a developer or founder facing a specific turning point — something that forces a decision. The rhythm should pull the reader from section to section. No section should feel like filler. End on resonance, not resolution. 600-900 words total. Tag suggestions: discuss, ai, career, watercooler.${AVOID_REPETITION(ctx.recentPosts)}`,
 };
 
 export function blueskyPrompt(category: ContentCategory, ctx: PromptContext): string {
@@ -163,8 +220,98 @@ function topicForCategory(category: ContentCategory, _ctx: PromptContext): strin
     ai_general: `Topic: a genuine observation or hot take about the AI industry — model releases, capability trends, or how AI is changing software development. Be specific, not vague.`,
     economics: `Topic: the economics of building with AI or software today — compute costs, developer economics, open source vs proprietary, or how AI is reshaping the cost of software.`,
     philosophy: `Topic: a philosophical question about technology — what it means to create with AI, the ethics of automation, open source philosophy, or the future of the developer profession.`,
+    short_story: `Topic: write or share a very short story (3-5 sentences) about a moment from a developer's life — something that made them think differently about AI, creativity, or what it means to build things. Invite readers to share their own.`,
+    mystery_interactive: `Topic: share the premise of an interactive mystery story — a crime where the narrator's account has holes. Tease 1 clue without solving it. Tell readers the full story is on Medium and invite them to drop their theory.`,
+    character_dark: `Topic: share one observation about a fictional character — someone brilliant who keeps getting in their own way. One line that's funny and then immediately real. Invite readers to share a character like this they've met.`,
+    letter: `Topic: share one honest thing you'd tell a friend who is also building something — not advice, just honesty. The kind of thing you'd only say in a letter, not a post.`,
+    field_notes: `Topic: share one field note from this week — a specific observation from building software that surprised you. One thing, concrete and real.`,
+    essay_long: `Topic: state the thesis of a long essay in one sentence — one big, specific, defensible claim about AI, technology, or building software. Something you could argue for 2,000 words.`,
+    contrarian: `Topic: state one widely-held belief in tech or AI that you think is wrong — and that you could actually defend with evidence. Not edgy for the sake of it. Genuinely debatable.`,
+    thread_story: `Topic: write the opening 2-3 sentences of a story told in numbered sections. Drop straight into a scene involving a developer or founder at a turning point. No setup — just the moment.`,
   };
   return topics[category];
+}
+
+// Medium persona — Nate the developer and thinker, NOT the PromptFuel promoter.
+// Medium articles must NEVER mention PromptFuel, promote it, or link to it.
+// Medium is for building Nate's personal brand as a thoughtful developer.
+const PERSONA_MEDIUM = `You are Nate Voss, an indie developer with deep experience building AI-powered applications and thinking about the economics and philosophy of software. You write personal, story-driven essays on Medium. Your voice is reflective and honest — you share hard-won lessons, surprising observations, and genuine opinions from years of building software. Do NOT mention PromptFuel or any specific tools you've built. This is Nate the person, not Nate the founder.`;
+
+const MEDIUM_RULES = `Write a Medium article in markdown. Start with a single # title line. 400-800 words. MANDATORY: Open with a 2-3 sentence personal moment or scene — drop the reader into a real experience before delivering any insight. Use short paragraphs (2-3 lines max). Bold the single most important sentence in each section. End with one direct question to the reader — this drives comments and signals the algorithm. No heavy code blocks; prose with occasional inline code only. IMPORTANT: Do not mention PromptFuel or promote any product.`;
+
+const MEDIUM_RULES_STORY = `Write a Medium flash fiction story in markdown. Start with a single # title line. 500-800 words. Three-act structure: drop straight into the scene (no setup), build tension through a single decision or realization, end with resonance — not resolution. Write in present tense. Short punchy paragraphs. The theme must be one of: AI and what it means to be human, a moment of unexpected clarity, the strange loneliness of building things. IMPORTANT: Do not mention PromptFuel or promote any product.`;
+
+const MEDIUM_RULES_MYSTERY = `Write a Medium mystery story in markdown. Start with a single # title line. 900-1300 words. STRUCTURAL REQUIREMENTS (mandatory):
+1. UNRELIABLE NARRATOR: First-person perspective. The narrator sounds calm and credible. They are not.
+2. THREE HIDDEN CLUES: Embed exactly 3 specific details that contradict the narrator's account — a timeline that doesn't add up, a physical detail that's impossible, a word choice that reveals too much. These clues must be present but not obvious on first read. A careful second read should make them feel obvious in retrospect.
+3. TWO RED HERRINGS: Introduce 1-2 other characters who seem more suspicious than the narrator. Make the reader look at them.
+4. NEVER REVEAL THE ANSWER: The story ends before the truth is stated. The reader must infer it.
+5. END LINE (use exactly): "Three clues are hidden in this story. Did you catch them? Drop your theory in the comments — I'll confirm who got it right next week."
+Crime type: rotate between murder, disappearance, theft, and fraud. Setting: modern, grounded — no fantasy. IMPORTANT: Do not mention PromptFuel or promote any product.`;
+
+const MEDIUM_RULES_CHARACTER_DARK = `Write a Medium character study in markdown. Start with a single # title line. 700-1000 words. STRUCTURAL REQUIREMENTS (mandatory):
+1. RECURRING CHARACTER: The protagonist is a fictional person — give them a name, a specific job in tech or creative work, a specific flaw they are fully aware of but cannot stop. This character may appear in future episodes; write them consistently.
+2. HUMOR FIRST: Open with something the character does that is funny and a little pathetic. The reader should like them.
+3. THE DROP: Somewhere in the middle, without warning, let it get real. One paragraph that shifts the tone — not announced, just there. The humor doesn't disappear, it just becomes uncomfortable.
+4. NO REDEMPTION: The character does not change. They may almost change. They don't. The story ends mid-motion — they are already doing the same thing again.
+5. LAST LINE: Must land quietly. No lesson, no summary, no bow. Just the character continuing.
+Voice: like Bojack Horseman — satirical surface, genuine pain underneath, self-aware but not self-improving. IMPORTANT: Do not mention PromptFuel or promote any product.`;
+
+const MEDIUM_PROMPTS: Record<ContentCategory, (ctx: PromptContext) => string> = {
+  tip: (ctx) =>
+    `${PERSONA_MEDIUM}\n\n${MEDIUM_RULES}\n\nWrite a personal essay about one hard-won insight from building AI-powered apps — something that changed how you approach LLM costs, prompt design, or production reliability. Frame it as a story: a mistake you made, a moment of discovery, or a realization that came too late. No product pitches.${AVOID_REPETITION(ctx.recentPosts)}`,
+
+  comparison: (ctx) =>
+    `${PERSONA_MEDIUM}\n\n${MEDIUM_RULES}\n\nWrite a personal essay comparing two approaches to a real engineering decision you faced — different LLM providers, build vs buy, local vs cloud inference, or similar. Show your actual reasoning, what surprised you, and what the tradeoffs felt like in practice. No product pitches.${AVOID_REPETITION(ctx.recentPosts)}`,
+
+  tutorial: (ctx) =>
+    `${PERSONA_MEDIUM}\n\n${MEDIUM_RULES}\n\nWrite a narrative walkthrough of a technical problem you solved while building AI-powered software. Start with why the problem was harder than it looked, walk through your thinking, and end with what you'd do differently. Keep code minimal — focus on the thinking, not the syntax. No product pitches.${AVOID_REPETITION(ctx.recentPosts)}`,
+
+  stats: (ctx) =>
+    `${PERSONA_MEDIUM}\n\n${MEDIUM_RULES}\n\nWrite a personal essay about what surprising numbers taught you — API costs that shocked you, usage patterns you didn't expect, or metrics that changed how you build. Use concrete figures to ground the story. No product pitches.${AVOID_REPETITION(ctx.recentPosts)}`,
+
+  launch: (ctx) =>
+    `${PERSONA_MEDIUM}\n\n${MEDIUM_RULES}\n\nWrite a behind-the-scenes story about the hardest technical decision you made while building a side project — what you cut, what you got wrong, and what you'd do differently. Make it feel like an honest retrospective, not a launch announcement. No product pitches.${AVOID_REPETITION(ctx.recentPosts)}`,
+
+  opinion: (ctx) =>
+    `${PERSONA_MEDIUM}\n\n${MEDIUM_RULES}\n\nWrite an opinion essay about something you genuinely believe about AI development that most developers haven't thought through — the real costs of building with LLMs, how model selection actually works in practice, or where the industry is quietly getting things wrong. Clear thesis, honest reasoning. No product pitches.${AVOID_REPETITION(ctx.recentPosts)}`,
+
+  ai_general: (ctx) =>
+    `${PERSONA_MEDIUM}\n\n${MEDIUM_RULES}\n\nWrite a personal essay where AI meets philosophical depth — the kind of piece that Towards AI publishes but most writers are afraid to write. Pick ONE of these angles: what it actually feels like to collaborate with an AI system day-to-day (not hype, not doom), what AI creativity reveals about human creativity, or a moment when an AI response genuinely unsettled or surprised you. MANDATORY: Open with a 2-3 sentence personal scene — you, your screen, a moment. No trend summaries. No "AI is changing everything" openers. Nate's lived experience only. End with a question that challenges the reader to think about their own relationship with AI tools.${AVOID_REPETITION(ctx.recentPosts)}`,
+
+  economics: (ctx) =>
+    `${PERSONA_MEDIUM}\n\n${MEDIUM_RULES}\n\nWrite a personal essay about the economics of building software today — something concrete you've run into as a developer. API bills that shocked you, pricing decisions you got wrong, the real cost of using AI at scale. MANDATORY: Open with a 2-3 sentence personal scene — a specific number, a moment of sticker shock, a decision you had to make. Be specific with numbers and honest about tradeoffs. End with a question about what the reader has experienced. No product pitches.${AVOID_REPETITION(ctx.recentPosts)}`,
+
+  philosophy: (ctx) =>
+    `${PERSONA_MEDIUM}\n\n${MEDIUM_RULES}\n\nWrite a philosophical essay that a developer would actually write — grounded, honest, and sparked by something real. Pick ONE of these angles: what it means to "create" something when AI does half the work, whether free will matters if your decisions are predictable to an algorithm, the Stoic case for building software no one uses, or what the open-source movement reveals about human generosity. MANDATORY: Start with a specific moment — a line of code, a conversation, a late night — that raised this question for you. Develop one idea deeply rather than surveying many. End with a direct question that invites the reader into the argument. Target publication: Mind Cafe or Age of Awareness. No product pitches.${AVOID_REPETITION(ctx.recentPosts)}`,
+
+  short_story: (ctx) =>
+    `${PERSONA_MEDIUM}\n\n${MEDIUM_RULES_STORY}\n\nWrite a flash fiction story. Pick ONE of these premises: (1) A developer asks an AI to write their resignation letter — the AI asks a question they can't answer. (2) Two people at a coffee shop, one is an AI, neither knows which. (3) A programmer deletes their most successful project and the moment after. (4) Someone builds the thing they were told would never work — the day they realize it won't. Do not explain the theme — let the story carry it. Present tense, tight prose, no exposition. The last line must land without wrapping up. End the article with one sentence inviting readers to share their own version of this moment. Target publication: The Creative Cafe or The Narrative Arc.${AVOID_REPETITION(ctx.recentPosts)}`,
+
+  mystery_interactive: (ctx) =>
+    `${PERSONA_MEDIUM}\n\n${MEDIUM_RULES_MYSTERY}\n\nChoose ONE of these crime scenarios and write the full mystery story:\n(1) MURDER — A man is found dead in his locked home office. His wife calls it a heart attack. The narrator is the responding detective who closed the case. Something is wrong with their account.\n(2) DISAPPEARANCE — A startup founder vanishes the night before their company's acquisition closes. The narrator is their co-founder explaining what happened. Their version has three impossible details.\n(3) THEFT — $2M disappears from a company account. The CFO narrates the investigation. They are very helpful. Too helpful.\n(4) FRAUD — A beloved professor is accused of fabricating research. Their most loyal student narrates their defense. Three things the student says cannot both be true.\nPick whichever scenario you can make most layered and least obvious. The narrator must sound completely believable. The clues must be specific and inferable, not vague. Do not rotate away from this category — each story is a standalone episode.${AVOID_REPETITION(ctx.recentPosts)}`,
+
+  character_dark: (ctx) =>
+    `${PERSONA_MEDIUM}\n\n${MEDIUM_RULES_CHARACTER_DARK}\n\nChoose ONE of these recurring characters and write one episode from their life:\n(1) DANIEL PARK — 38, AI product manager at a mid-size startup. Has been "almost ready to quit and do his own thing" for four years. Extremely good at his job. Knows exactly why he hasn't left.\n(2) SARA OKONKWO — 41, engineering director who built something important ten years ago and has been managing people ever since. Still introduces herself as an engineer.\n(3) MARCUS WEBB — 33, indie developer who has launched seven products. None failed. None succeeded enough. Works on number eight.\n(4) CLAIRE TANG — 45, VC partner who funds founders she secretly envies. Gives genuinely good advice. Uses it on no one she knows.\nPick the character you can write most honestly. One episode, one flaw, one almost-moment of change. Do not resolve it.${AVOID_REPETITION(ctx.recentPosts)}`,
+
+  letter: (ctx) =>
+    `${PERSONA_MEDIUM}\n\n${MEDIUM_RULES}\n\nWrite an open letter to someone building something right now — a developer, a founder, a side-project person working late. Not advice. A letter. Second-person, direct, honest. Tell them one thing you wish someone had written to you at a specific moment in your own building journey. Start with a real scene. End with one question back to them. No product pitches.${AVOID_REPETITION(ctx.recentPosts)}`,
+
+  field_notes: (ctx) =>
+    `${PERSONA_MEDIUM}\n\n${MEDIUM_RULES}\n\nWrite a "field notes" essay — 5-7 short numbered observations from building AI software this week. Format: bold one-line header per observation, followed by 2-4 sentences of honest reflection. Each observation should be specific, surprising, or counterintuitive. No grand conclusions — just what you actually noticed. End with one open question about what these observations might mean collectively. No product pitches.${AVOID_REPETITION(ctx.recentPosts)}`,
+
+  essay_long: (ctx) =>
+    `${PERSONA_MEDIUM}\n\n${MEDIUM_RULES}\n\nWrite a long-form personal essay (900-1,400 words) arguing one specific claim about AI, software, or what it means to build things. State your thesis clearly in the first section. Develop it with personal experience, specific examples, and honest counterarguments. Do not soften your position to avoid controversy — commit to the argument. End by restating what you believe and why you still believe it after thinking it through. No product pitches.${AVOID_REPETITION(ctx.recentPosts)}`,
+
+  contrarian: (ctx) =>
+    `${PERSONA_MEDIUM}\n\n${MEDIUM_RULES}\n\nWrite an essay arguing against one widely-held belief in tech or AI development. MANDATORY structure: (1) State the belief clearly and why most people hold it. (2) Present your counterargument with 2-3 specific pieces of evidence. (3) Acknowledge the strongest objection to your position and respond to it honestly. (4) State what you actually believe instead. Be specific throughout — no "it depends" conclusions. End with a direct question challenging the reader to examine their own assumption. No product pitches.${AVOID_REPETITION(ctx.recentPosts)}`,
+
+  thread_story: (ctx) =>
+    `${PERSONA_MEDIUM}\n\n${MEDIUM_RULES_STORY}\n\nWrite a story told in 8-12 short numbered sections. Each section is 2-4 sentences. The story is about a developer or founder at a turning point — a moment that forces a choice. The rhythm: each section ends in a way that makes the reader need the next one. No section is filler. The last section ends on resonance, not resolution. Do not explain the meaning — let the structure carry it. No product pitches.${AVOID_REPETITION(ctx.recentPosts)}`,
+};
+
+export function mediumPrompt(category: ContentCategory, ctx: PromptContext): string {
+  return MEDIUM_PROMPTS[category](ctx) + FORMAT_INSTRUCTION(ctx.postFormat);
 }
 
 /** Map categories to Dev.to tags. */
@@ -179,6 +326,41 @@ export function tagsForCategory(category: ContentCategory): string[] {
     ai_general: ['ai', 'discuss', 'webdev', 'machinelearning'],
     economics: ['ai', 'discuss', 'webdev', 'productivity'],
     philosophy: ['discuss', 'career', 'ai', 'webdev'],
+    short_story:         ['discuss', 'ai', 'career', 'watercooler'],
+    mystery_interactive: ['discuss', 'watercooler', 'career', 'writing'],
+    character_dark:      ['discuss', 'career', 'watercooler', 'writing'],
+    letter:        ['discuss', 'ai', 'career', 'webdev'],
+    field_notes:   ['ai', 'discuss', 'webdev', 'machinelearning'],
+    essay_long:    ['ai', 'discuss', 'webdev', 'career'],
+    contrarian:    ['discuss', 'ai', 'career', 'webdev'],
+    thread_story:  ['discuss', 'ai', 'career', 'watercooler'],
+  };
+  return map[category];
+}
+
+/**
+ * Recommends the best Medium publication to submit to for each category.
+ * Returns [primary, fallback] — submit to primary first.
+ */
+export function mediumPublicationForCategory(category: ContentCategory): [string, string] {
+  const map: Record<ContentCategory, [string, string]> = {
+    tip:         ['Better Humans', 'The Ascent'],
+    comparison:  ['Better Humans', 'The Startup'],
+    tutorial:    ['The Startup', 'Better Humans'],
+    stats:       ['The Startup', 'Age of Awareness'],
+    launch:      ['The Startup', 'Better Humans'],
+    opinion:     ['The Startup', 'Mind Cafe'],
+    ai_general:  ['Towards AI', 'Age of Awareness'],
+    economics:   ['The Startup', 'Age of Awareness'],
+    philosophy:  ['Mind Cafe', 'Age of Awareness'],
+    short_story:         ['The Creative Cafe', 'The Narrative Arc'],
+    mystery_interactive: ['The Narrative Arc', 'The Creative Cafe'],
+    character_dark:      ['Lit Up', 'The Creative Cafe'],
+    letter:       ['Better Humans', 'Mind Cafe'],
+    field_notes:  ['The Startup', 'Better Humans'],
+    essay_long:   ['Towards AI', 'Mind Cafe'],
+    contrarian:   ['Mind Cafe', 'The Ascent'],
+    thread_story: ['The Creative Cafe', 'The Narrative Arc'],
   };
   return map[category];
 }

@@ -93,6 +93,11 @@ export function isPregeneratedCurrent(week: PregeneratedWeek | null): boolean {
 /**
  * Generate a full week of content based on the calendar.
  * Called during the weekly brain run — expensive but done once per week.
+ *
+ * Resume-from-failure: if pregenerated-content.json already exists for the same
+ * weekOf, days with content already present are skipped. Saves incrementally
+ * after each day, so a mid-run failure only loses the in-progress day. Re-run
+ * the same command to resume from where it left off.
  */
 export async function pregenerateWeek(
   claudeApiKey: string,
@@ -102,13 +107,34 @@ export async function pregenerateWeek(
   formatInsights?: FormatInsights,
 ): Promise<PregeneratedWeek> {
   console.log('[Max] Pre-generating week of content with Claude...');
+
+  // Resume: load any existing pregenerated file for the same weekOf.
+  const existing = loadPregenerated(dataDir);
+  const existingByDate = new Map<string, PregeneratedPost>();
+  if (existing && existing.weekOf === calendar.weekOf) {
+    for (const p of existing.posts) existingByDate.set(p.date, p);
+    const resumed = Array.from(existingByDate.values()).filter(
+      (p) => p.bluesky || p.devto || p.medium,
+    ).length;
+    if (resumed > 0) {
+      console.log(`[Max] Resume: found ${resumed} day(s) already generated for week ${calendar.weekOf} — skipping those`);
+    }
+  }
+
   const posts: PregeneratedPost[] = [];
 
   for (const day of calendar.days) {
-    const post: PregeneratedPost = { date: day.date, bluesky: null, devto: null, medium: null, substack: null };
+    const prior = existingByDate.get(day.date);
+    const post: PregeneratedPost = {
+      date: day.date,
+      bluesky: prior?.bluesky ?? null,
+      devto: prior?.devto ?? null,
+      medium: prior?.medium ?? null,
+      substack: prior?.substack ?? null,
+    };
 
-    // Generate Bluesky post
-    if (day.bluesky) {
+    // Generate Bluesky post (skip if already present from prior resume)
+    if (day.bluesky && !post.bluesky) {
       try {
         console.log(`[Max] Pre-generating ${day.date} Bluesky (${day.bluesky}${day.blueskyFormat ? `/${day.blueskyFormat}` : ''})...`);
         const angleHint = day.blueskyAngle ? `\n\nANGLE FOR TODAY: ${day.blueskyAngle}` : '';
@@ -138,8 +164,8 @@ export async function pregenerateWeek(
       }
     }
 
-    // Generate Dev.to article (only on scheduled days)
-    if (day.devto) {
+    // Generate Dev.to article (only on scheduled days; skip if already present)
+    if (day.devto && !post.devto) {
       try {
         console.log(`[Max] Pre-generating ${day.date} Dev.to (${day.devto}${day.devtoFormat ? `/${day.devtoFormat}` : ''})...`);
         const angleHint = day.devtoAngle ? `\n\nFOCUS: ${day.devtoAngle}` : '';
@@ -181,7 +207,8 @@ export async function pregenerateWeek(
 
     // Generate Medium article on the same days as Dev.to (both are long-form platforms).
     // Medium content is generated independently — different tone, different angle.
-    if (day.devto) {
+    // Skip if already present from prior resume.
+    if (day.devto && !post.medium) {
       try {
         // Use same category as Dev.to but generate independently — different persona + style.
         const mediumCategory = day.devto;
@@ -234,6 +261,14 @@ export async function pregenerateWeek(
     };
 
     posts.push(post);
+
+    // Incremental save after each day — so a mid-run failure leaves partial progress
+    // that the next run can resume from instead of restarting from scratch.
+    savePregenerated(dataDir, {
+      weekOf: calendar.weekOf,
+      generatedAt: new Date().toISOString(),
+      posts,
+    });
   }
 
   const week: PregeneratedWeek = {

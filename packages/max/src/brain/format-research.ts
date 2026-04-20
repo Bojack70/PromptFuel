@@ -33,6 +33,7 @@ export interface FormatInsights {
   blueskyToolSummary: string;
   blueskyPersonalSummary: string;
   devtoSummary: string;
+  mediumSummary: string; // style patterns observed in trending Medium articles
   topFormatsThisWeek: PostFormat[];
 }
 
@@ -67,7 +68,13 @@ function buildAnalysisPrompt(research: InfluencerResearch): string {
     .map((p) => `[${p.likes}❤ ${p.views ?? 0} views] ${p.text.slice(0, 200)}`)
     .join('\n---\n');
 
-  return `You are analyzing top-performing social media posts to extract content format patterns that drive engagement. The goal is to help an indie dev persona (Nate Voss) write posts that feel human and perform well.
+  const mediumPosts = research.posts
+    .filter((p) => p.platform === 'medium')
+    .slice(0, 20)
+    .map((p) => `[${p.category}] ${p.text.slice(0, 250)}`)
+    .join('\n---\n');
+
+  return `You are analyzing top-performing social media posts and articles to extract content format and style patterns. The goal is to help an indie dev persona (Nate Voss) write posts that feel human and perform well — learning from what resonates, not copying.
 
 Available formats to classify into:
 - story_opener: starts with a personal experience ("spent X doing Y...")
@@ -86,6 +93,10 @@ ${blueskyPersonal || '(none fetched)'}
 TOP DEV.TO ARTICLES — ALL TOPICS:
 ${devtoPosts || '(none fetched)'}
 
+TRENDING MEDIUM ARTICLES — AI / PROGRAMMING / INDIE HACKING:
+${mediumPosts || '(none fetched)'}
+Note: Medium clap counts aren't public — focus on title hooks, opening lines, and narrative structure signals in the excerpt.
+
 Analyze these posts and respond in EXACTLY this JSON format, nothing else:
 {
   "insights": [
@@ -100,6 +111,7 @@ Analyze these posts and respond in EXACTLY this JSON format, nothing else:
   "blueskyToolSummary": "2 sentences on what format/voice works for dev tool posts on Bluesky this week",
   "blueskyPersonalSummary": "2 sentences on what format/voice works for personal brand posts on Bluesky",
   "devtoSummary": "2 sentences on what article formats/titles perform best on Dev.to this week",
+  "mediumSummary": "2-3 sentences on what title patterns, opening hooks, and narrative styles appear in trending Medium articles this week — focus on structure and voice, not topics",
   "topFormatsThisWeek": ["format1", "format2", "format3"]
 }
 
@@ -134,6 +146,7 @@ export async function researchFormats(
       blueskyToolSummary: '',
       blueskyPersonalSummary: '',
       devtoSummary: '',
+      mediumSummary: '',
       topFormatsThisWeek: [],
     };
   }

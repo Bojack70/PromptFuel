@@ -127,8 +127,8 @@ export async function reviewArticle(
   const prompt = REVIEW_PROMPT_DEVTO(title, body);
   const raw = await generateContent(claudeApiKey, prompt, {
     temperature: 0.3,
-    maxTokens: 200,
-    model: 'claude-haiku-4-5',
+    maxTokens: 300,
+    model: 'claude-sonnet-4-6',
   });
 
   const score = parseScoreResponse(raw);

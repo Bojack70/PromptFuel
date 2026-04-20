@@ -94,8 +94,26 @@ export function getTabInfo(tabId: number): Promise<{ id: number; url: string; ti
   return callTool('browser_get_tab_info', { tabId });
 }
 
-export function executeScript<T = unknown>(tabId: number, code: string): Promise<T> {
-  return callTool<T>('browser_execute_script', { tabId, code });
+/**
+ * Execute JavaScript in a tab. Use `return X;` at the top level to get a value
+ * back — the tool wraps `code` in a function body, so IIFE patterns like
+ * `(function(){ return X })();` evaluate X but the wrapper still returns undefined.
+ *
+ * OpenTabs (v0.0.102) responds with `{value: {value: X}}` — we unwrap both layers
+ * here so callers see T directly. If the response shape drifts, fall back to the
+ * raw payload.
+ */
+export async function executeScript<T = unknown>(tabId: number, code: string): Promise<T> {
+  const raw = await callTool<unknown>('browser_execute_script', { tabId, code });
+  // Unwrap {value: {value: X}} → X. Tolerate {value: X} or X directly.
+  if (raw && typeof raw === 'object' && 'value' in (raw as Record<string, unknown>)) {
+    const inner = (raw as { value: unknown }).value;
+    if (inner && typeof inner === 'object' && 'value' in (inner as Record<string, unknown>)) {
+      return (inner as { value: T }).value;
+    }
+    return inner as T;
+  }
+  return raw as T;
 }
 
 export interface QueryElement {

@@ -5,7 +5,7 @@
  */
 
 export interface InfluencerPost {
-  platform: 'bluesky' | 'devto';
+  platform: 'bluesky' | 'devto' | 'medium';
   text: string;      // post body / article title + intro
   likes: number;
   reposts?: number;
@@ -22,6 +22,9 @@ const BLUESKY_TOOL_QUERIES = ['llm tokens', 'openai costs', 'claude api', 'promp
 const BLUESKY_PERSONAL_QUERIES = ['indie dev life', 'software economics', 'AI opinion', 'developer burnout', 'build in public'];
 const DEVTO_TOOL_TAGS = ['ai', 'llm', 'openai', 'machinelearning'];
 const DEVTO_PERSONAL_TAGS = ['career', 'discuss', 'productivity', 'webdev'];
+// Medium RSS feeds — public, no auth required. Returns ~10 recent articles per tag.
+const MEDIUM_TOOL_TAGS = ['artificial-intelligence', 'machine-learning', 'programming', 'software-development'];
+const MEDIUM_PERSONAL_TAGS = ['indie-hacking', 'entrepreneurship', 'productivity', 'technology'];
 
 async function fetchBlueskyTopPosts(query: string, limit = 5): Promise<InfluencerPost[]> {
   try {
@@ -59,6 +62,48 @@ async function fetchDevtoTopArticles(tag: string, limit = 5): Promise<Influencer
   }
 }
 
+/** Parse RSS XML without npm deps — extracts title + description from <item> blocks. */
+function parseMediumRSS(xml: string): Array<{ title: string; excerpt: string }> {
+  const items = [...xml.matchAll(/<item>([\s\S]*?)<\/item>/g)];
+  return items.map(([, content]) => {
+    const title = (
+      content.match(/<title><!\[CDATA\[([\s\S]*?)\]\]><\/title>/)?.[1] ??
+      content.match(/<title>([\s\S]*?)<\/title>/)?.[1] ?? ''
+    ).trim();
+
+    const rawDesc = (
+      content.match(/<description><!\[CDATA\[([\s\S]*?)\]\]><\/description>/)?.[1] ??
+      content.match(/<description>([\s\S]*?)<\/description>/)?.[1] ?? ''
+    );
+    // Strip HTML tags and collapse whitespace
+    const excerpt = rawDesc
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/&[a-z]+;/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 300);
+
+    return { title, excerpt };
+  }).filter((i) => i.title.length > 10);
+}
+
+async function fetchMediumTopArticles(tag: string, category: 'tool' | 'personal_brand'): Promise<InfluencerPost[]> {
+  try {
+    const url = `https://medium.com/feed/tag/${encodeURIComponent(tag)}`;
+    const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+    if (!res.ok) return [];
+    const xml = await res.text();
+    return parseMediumRSS(xml).map((item) => ({
+      platform: 'medium' as const,
+      text: `${item.title}\n${item.excerpt}`,
+      likes: 0, // Medium RSS doesn't expose clap counts — style analysis only
+      category,
+    }));
+  } catch {
+    return [];
+  }
+}
+
 export async function fetchInfluencerPosts(): Promise<InfluencerResearch> {
   console.log('[Max] Fetching influencer posts for format research...');
 
@@ -86,6 +131,18 @@ export async function fetchInfluencerPosts(): Promise<InfluencerResearch> {
   for (const tag of DEVTO_PERSONAL_TAGS) {
     const posts = await fetchDevtoTopArticles(tag, 5);
     results.push(...posts.map((p) => ({ ...p, category: 'personal_brand' as const })));
+  }
+
+  // Medium — tool/AI tags (style learning only — no clap counts in RSS)
+  for (const tag of MEDIUM_TOOL_TAGS) {
+    const posts = await fetchMediumTopArticles(tag, 'tool');
+    results.push(...posts);
+  }
+
+  // Medium — personal brand tags
+  for (const tag of MEDIUM_PERSONAL_TAGS) {
+    const posts = await fetchMediumTopArticles(tag, 'personal_brand');
+    results.push(...posts);
   }
 
   // Deduplicate by text prefix and sort by engagement

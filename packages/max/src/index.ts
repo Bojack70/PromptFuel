@@ -366,17 +366,25 @@ async function dashboard() {
 
 /**
  * Local content generation — run this manually each Monday before the week starts.
- * Requires ANTHROPIC_API_KEY set locally. Generates pregenerated-content.json which
- * you then commit so the daily GitHub Actions runs can just publish without an API key.
  *
- * Usage: ANTHROPIC_API_KEY=sk-ant-... node dist/index.js --mode generate-week
+ * Defaults to MAX_LLM_MODE=cli (Claude Code subscription subprocess, $0 cost, needs
+ * `claude` on PATH and an active session). Set MAX_LLM_MODE=api + ANTHROPIC_API_KEY
+ * to use the paid API instead (isolated from subscription quota, ~$5–7/mo).
+ *
+ * Resume-from-failure: re-running the same command resumes from where it left off.
+ *
+ * Usage:
+ *   node dist/index.js --mode generate-week                         (cli mode, default)
+ *   MAX_LLM_MODE=api ANTHROPIC_API_KEY=sk-ant-... node dist/index.js --mode generate-week
  */
 async function generateWeek() {
   const config = loadConfig();
-  if (!config.claudeApiKey) {
-    console.error('[Max] ANTHROPIC_API_KEY is required for generate-week. Set it in your environment.');
+  const mode = (process.env.MAX_LLM_MODE ?? 'cli').toLowerCase();
+  if (mode === 'api' && !config.claudeApiKey) {
+    console.error('[Max] MAX_LLM_MODE=api but ANTHROPIC_API_KEY is not set.');
     process.exit(1);
   }
+  console.log(`[Max] LLM mode: ${mode}${mode === 'cli' ? ' (Claude Code subscription subprocess)' : ' (Anthropic API)'}`);
 
   console.log('[Max] Starting local content pre-generation for this week...');
 
@@ -501,6 +509,41 @@ async function socialEngage() {
     dryRun: args.includes('--dry-run'),
   });
   console.log('[Max] Engagement complete:', JSON.stringify(result, null, 2));
+}
+
+/**
+ * Medium engagement — read, clap, and respond to other people's articles.
+ *
+ * Anti-detection-first: conservative caps, human-paced reading, Claude-generated
+ * responses that reference article content.
+ *
+ * Usage:
+ *   node dist/index.js --mode medium-engage
+ *   node dist/index.js --mode medium-engage --dry-run
+ *   node dist/index.js --mode medium-engage --topic artificial-intelligence
+ *
+ * Requires ANTHROPIC_API_KEY for comment generation.
+ */
+async function mediumEngage() {
+  const { engageMedium } = await import('./publish/opentabs/medium-engage.js');
+  const dataDir = process.env.MAX_DATA_DIR ?? fileURLToPath(new URL('../data', import.meta.url));
+  const mode = (process.env.MAX_LLM_MODE ?? 'cli').toLowerCase();
+  const apiKey = process.env.ANTHROPIC_API_KEY ?? '';
+  if (mode === 'api' && !apiKey) {
+    console.error('[Max] MAX_LLM_MODE=api but ANTHROPIC_API_KEY is not set.');
+    process.exit(1);
+  }
+  console.log(`[Max] LLM mode: ${mode}${mode === 'cli' ? ' (Claude Code subscription subprocess)' : ' (Anthropic API)'}`);
+  const topicIdx = args.indexOf('--topic');
+  const topic = topicIdx !== -1 ? args[topicIdx + 1] : undefined;
+  const result = await engageMedium({
+    claudeApiKey: apiKey,
+    dataDir,
+    dryRun: args.includes('--dry-run'),
+    verify: args.includes('--verify'),
+    topic,
+  });
+  console.log('[Max] medium-engage complete:', JSON.stringify(result, null, 2));
 }
 
 /**
@@ -654,6 +697,17 @@ async function publishSubstack() {
 }
 
 async function main() {
+  // Set MAX_DATA_DIR so claude.ts's call counter can find the data dir from any cwd.
+  if (!process.env.MAX_DATA_DIR) {
+    try {
+      const cfg = loadConfig();
+      process.env.MAX_DATA_DIR = cfg.dataDir;
+    } catch {
+      // loadConfig can fail (missing non-LLM secrets) — fall back to relative ./data.
+      process.env.MAX_DATA_DIR = fileURLToPath(new URL('../data', import.meta.url));
+    }
+  }
+
   try {
     switch (mode) {
       case 'daily':
@@ -698,8 +752,11 @@ async function main() {
       case 'social-engage':
         await socialEngage();
         break;
+      case 'medium-engage':
+        await mediumEngage();
+        break;
       default:
-        console.error(`Unknown mode: ${mode}. Use --mode daily|weekly|dashboard|post|generate-week|social-test-hn|social-test-reddit|social-test-twitter|social-post|social-engage|social-test-medium|social-test-substack|publish-substack`);
+        console.error(`Unknown mode: ${mode}. Use --mode daily|weekly|dashboard|post|generate-week|social-test-hn|social-test-reddit|social-test-twitter|social-post|social-engage|medium-engage|social-test-medium|social-test-substack|publish-substack`);
         process.exit(1);
     }
   } catch (err) {
