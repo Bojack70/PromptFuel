@@ -50,5 +50,13 @@
     "category": "launch",
     "content": "built promptfuel because i was tired of guessing which model to use and then getting the invoice. it's free, runs in your terminal, doesn't need your api keys. no upsell. just `npm install -g promptfuel`. if you find a bug, i'm not surprised, it's a side project.",
     "postId": "at://did:plc:n54y6c7lx2tt42tpx2brzcdi/app.bsky.feed.post/3mjtfsbfcsu2u"
+  },
+  {
+    "date": "2026-04-20",
+    "timestamp": "2026-04-20T08:01:47.672Z",
+    "platform": "bluesky",
+    "category": "ai_general",
+    "content": "everyone's racing to build AI that passes bar exams and writes poetry. meanwhile i just want mine to consistently return valid JSON. the gap between \"AI can do X\" and \"AI reliably does X in prod\" is where most of us actually live.",
+    "postId": "at://did:plc:n54y6c7lx2tt42tpx2brzcdi/app.bsky.feed.post/3mjvyuxqq6x2p"
   }
 ]
