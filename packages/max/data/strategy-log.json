@@ -1,0 +1,25 @@
+[
+  {
+    "weekOf": "2026-04-20",
+    "decidedAt": "2026-04-20T13:07:28.261Z",
+    "decision": "Shift content mix to 60% comparison-format articles on Dev.to targeting high-intent tool-evaluation search terms, while eliminating opinion content entirely.",
+    "rationale": "The only measurable signal is 75 npm downloads suggesting organic discovery from people actively evaluating AI tools — comparison content on Dev.to scored 40 vs Bluesky's 18, directly matching this buyer-intent behavior. Opinion posts show negative conversion and should be cut. Doubling down on comparison content captures readers already in the decision funnel.",
+    "type": "category_shift",
+    "parameters": {
+      "categoryWeights": {
+        "tip": 0.1,
+        "comparison": 0.6,
+        "tutorial": 0.2,
+        "stats": 0.1,
+        "launch": 0,
+        "opinion": 0
+      },
+      "postingFrequency": {
+        "bluesky": 7,
+        "devto": 3
+      }
+    },
+    "id": "2026-W17-category_shift",
+    "status": "active"
+  }
+]

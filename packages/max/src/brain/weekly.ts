@@ -680,14 +680,19 @@ export async function weeklyReflection(config: MaxConfig): Promise<void> {
     if (existsSync(linkedinPath)) linkedinDraft = readFileSync(linkedinPath, 'utf-8');
   }
 
-  // 12. Build and send weekly email
+  // 12. Build and send weekly email (non-fatal — calendar + pregen must still run)
   const { subject, html } = buildWeeklyDigest(prevMonday, summary, evaluation, reflection, stage, goalEval, strategyMemory, hnDraft, linkedinDraft);
-  const emailResult = await sendEmail(config.resendApiKey, {
-    to: config.reportEmail,
-    subject,
-    html,
-  });
-  console.log(`[Max] Weekly digest sent: ${emailResult.id}`);
+  try {
+    const emailResult = await sendEmail(config.resendApiKey, {
+      to: config.reportEmail,
+      subject,
+      html,
+    });
+    console.log(`[Max] Weekly digest sent: ${emailResult.id}`);
+  } catch (err) {
+    console.warn('[Max] Weekly email failed (non-fatal):', (err as Error).message);
+    console.warn('[Max] Continuing with calendar + content pre-generation.');
+  }
 
   // 13. Generate next week's calendar — WITH enriched context
   console.log('[Max] Generating next week calendar with enriched context...');

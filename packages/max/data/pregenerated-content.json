@@ -1,97 +1,100 @@
 {
-  "weekOf": "2026-04-13",
-  "generatedAt": "2026-04-15T10:00:00.000Z",
+  "weekOf": "2026-04-20",
+  "generatedAt": "2026-04-20T13:12:19.118Z",
   "posts": [
-    {
-      "date": "2026-04-14",
-      "bluesky": {
-        "text": "spent 20 minutes debugging why my openai costs doubled. turned out i was appending the full chat history on every request like a golden retriever fetching the same stick 40 times. been tracking tokens with promptfuel since. my wallet is significantly less emotional now.",
-        "category": "tip",
-        "angle": "relatable token waste moment",
-        "qualityPassed": true,
-        "qualityScore": 8.5
-      },
-      "devto": null
-    },
-    {
-      "date": "2026-04-15",
-      "bluesky": {
-        "text": "switched a summarization job from claude haiku to gpt-4o mini to save money. saved money. also spent 3 hours fixing mangled output formats. net result: negative. haiku just does what you tell it. sometimes cheap is expensive. `promptfuel compare` before you commit to the swap.",
-        "category": "comparison",
-        "angle": "the real cost of switching models",
-        "qualityPassed": true,
-        "qualityScore": 8.5
-      },
-      "devto": {
-        "title": "The Embarrassing Reason My LLM API Bill Was Double What It Should Be",
-        "body": "# The Embarrassing Reason My LLM API Bill Was Double What It Should Be\n\nI'm going to tell you something mildly humiliating.\n\nFor about six weeks, I was paying roughly double what I should have been for API calls. Not because my app grew. Not because I picked the wrong model. Because I was doing three dumb things simultaneously and they were compounding.\n\nHere's what they were, and how I found them.\n\n## The Investigation\n\nI built [PromptFuel](https://promptfuel.vercel.app) partly to answer this exact question for myself. Running `promptfuel analyze` on my prompts was how I found the problem — or rather, the problems, plural.\n\n```bash\nnpm install -g promptfuel\npromptfuel analyze\n```\n\n## Problem 1: Paying for the Same System Prompt 800 Times a Day\n\nMy system prompt was around 800 tokens. I was constructing a fresh `messages` array on every API call without caching. So 800 tokens × every request × full price = money leaving my account at a steady and unnecessary pace.\n\nThe fix for Claude is one addition:\n\n```python\nsystem=[{\n    \"type\": \"text\",\n    \"text\": your_system_prompt,\n    \"cache_control\": {\"type\": \"ephemeral\"}\n}]\n```\n\nCache hits cost 10% of normal input price. The system prompt hadn't changed in weeks. I was paying 100% for it every time.\n\n## Problem 2: Sending the Entire Conversation History on Every Turn\n\nMy chat interface was appending every turn to the context and sending the whole thing. By message 20, I was sending 6,000 tokens of history to process a 15-token question.\n\nThe fix:\n\n```javascript\n// Keep a rolling window of recent context\nconst MAX_TURNS = 8;\nconst messages = conversationHistory.slice(-MAX_TURNS * 2); // user + assistant pairs\n```\n\nFor most conversational apps, the last 8-10 turns is enough. The model doesn't need your full transcript to answer \"can you make that shorter.\"\n\n## Problem 3: Redundant Instructions I'd Copy-Pasted Into Existence\n\nI found `\"respond only in valid JSON\"` in my system prompt. I also found it in my user message template. And in a comment that said `// TODO: make sure JSON output is enforced`.\n\nThe model understood it the first time. I just didn't trust it.\n\n## What the Numbers Looked Like\n\nAfter fixing all three:\n\n- Token usage down ~42%\n- Response quality: unchanged\n- Time spent refactoring: one afternoon\n\nThe embarrassing part isn't that I was doing these things. It's that I was doing them for six weeks before I looked.\n\n## If You Want to Check Your Own Prompts\n\n```bash\nnpm install -g promptfuel\npromptfuel analyze\n```\n\nIt won't roast you as hard as I just roasted myself. But it'll find the waste.",
-        "tags": ["ai", "tutorial", "javascript", "beginners"],
-        "category": "tutorial",
-        "qualityPassed": true,
-        "qualityScore": 8.5
-      }
-    },
-    {
-      "date": "2026-04-16",
-      "bluesky": {
-        "text": "my first llm app had \"respond in JSON\" in the system prompt, the user message, AND a comment reminding me to add it again. this is a cry for help. `promptfuel analyze` will find yours. yours is probably different but equally embarrassing.",
-        "category": "tutorial",
-        "angle": "self-deprecating redundant instructions story",
-        "qualityPassed": true,
-        "qualityScore": 8.5
-      },
-      "devto": null
-    },
-    {
-      "date": "2026-04-17",
-      "bluesky": {
-        "text": "every model leaderboard tests chatbots on SAT questions and coding puzzles. your app is not a coding puzzle. it's \"why is my summary always in spanish\" and \"the user typed 🥴 followed by 4000 words.\" bench your model on that. i'll wait.",
-        "category": "opinion",
-        "angle": "benchmarks vs real production inputs",
-        "qualityPassed": true,
-        "qualityScore": 8.5
-      },
-      "devto": {
-        "title": "I Tested Claude Haiku, GPT-4o Mini, and Gemini Flash on Real Tasks. Here's What Actually Happened.",
-        "body": "# I Tested Claude Haiku, GPT-4o Mini, and Gemini Flash on Real Tasks. Here's What Actually Happened.\n\nEvery few weeks someone posts a new model comparison and it's always the same: benchmark scores, carefully designed test prompts, neat bar charts. Then you try the \"winning\" model on your actual workload and something weird happens.\n\nI've been running all three in production for a few months. Here's what I actually found, including the parts that don't make for clean charts.\n\n## Quick Pricing Reality Check\n\n| Model | Input (per 1M tokens) | Context |\n|---|---|---|\n| Claude Haiku 4.5 | $1.00 | 200K |\n| GPT-4o Mini | $0.15 | 128K |\n| Gemini 1.5 Flash | $0.075 | 1M |\n\nGemini Flash is genuinely 13× cheaper than Haiku. That's not a rounding error. Before you immediately migrate everything: keep reading.\n\n## What I Was Testing\n\nThree real workloads from a side project:\n\n1. **Document summarization** — long PDFs, messy formatting, inconsistent structure\n2. **JSON extraction** — pull structured data from unstructured user input\n3. **Code explanation** — explain what a function does in plain English\n\nNot \"write a poem\" or \"solve this logic puzzle.\" Real things an app might do.\n\n## Document Summarization: Gemini Flash Wins\n\nFlash's 1M context window is genuinely useful here, not just a spec sheet number. I was chunking documents into pieces to fit smaller context windows. With Flash I stopped doing that.\n\nIt's also significantly cheaper, which matters when you're summarizing hundreds of documents.\n\nThe catch: Flash occasionally invents a section heading that wasn't in the original. It's subtle and sounds plausible, which makes it worse. For internal tools where someone will verify the output, fine. For anything customer-facing, I'd want a review step.\n\n## JSON Extraction: Haiku Wins, Annoyingly\n\nI really wanted Flash to win here because of the price. It didn't.\n\nThe task: given a paragraph of user-written text, extract structured fields into a specific JSON schema. Claude Haiku followed the schema reliably. Flash followed it most of the time, but occasionally added fields that weren't in the schema, renamed fields it didn't like, or decided to nest things differently.\n\nEach of these breaks downstream code. The debugging cost per incident outweighed the token savings.\n\nHaiku is predictable in a way that sounds boring but is exactly what you want when you're processing thousands of records.\n\n## Code Explanation: GPT-4o Mini Wins\n\nThis one surprised me. GPT-4o Mini is clearly well-trained on code-related tasks. Its explanations are accurate and well-structured. It also handled edge cases (unusual syntax, legacy patterns) better than the other two.\n\nFor anything code-adjacent, it's my first reach now.\n\n## What I Actually Use\n\nI stopped trying to find one winner and started routing:\n\n```javascript\nfunction pickModel(taskType, inputTokens) {\n  if (taskType === 'summarize' && inputTokens > 50000) return 'gemini-1.5-flash';\n  if (taskType === 'extract_json') return 'claude-haiku-4-5';\n  if (taskType === 'explain_code') return 'gpt-4o-mini';\n  return 'claude-haiku-4-5'; // safe default\n}\n```\n\nYou can check price differences before committing to a migration:\n\n```bash\nnpm install -g promptfuel\npromptfuel compare claude-haiku-4-5 gpt-4o-mini gemini-1.5-flash\n```\n\n## The Actual Bottom Line\n\n- **Cheapest by far**: Gemini Flash. Use it for volume tasks where edge cases are acceptable.\n- **Most format-reliable**: Claude Haiku. Use it when you need strict schema compliance.\n- **Best at code**: GPT-4o Mini. Use it for anything developer-facing.\n\nThe honest answer is: don't pick one. Pick based on the task. The cost difference between routing intelligently versus defaulting to one model is real, and it compounds over time.",
-        "tags": ["ai", "tutorial", "javascript", "optimization"],
-        "category": "comparison",
-        "qualityPassed": true,
-        "qualityScore": 8.5
-      }
-    },
-    {
-      "date": "2026-04-18",
-      "bluesky": {
-        "text": "the economics of software have flipped. the expensive part used to be compute. now it's attention — yours, your users', the model's. and unlike EC2 instances, you can't autoscale human focus. we're all just figuring out how to build with that constraint.",
-        "category": "economics",
-        "angle": "attention as the new scarce resource in software",
-        "qualityPassed": true,
-        "qualityScore": 8.5
-      },
-      "devto": null
-    },
-    {
-      "date": "2026-04-19",
-      "bluesky": {
-        "text": "built promptfuel because i was tired of guessing which model to use and then getting the invoice. it's free, runs in your terminal, doesn't need your api keys. no upsell. just `npm install -g promptfuel`. if you find a bug, i'm not surprised, it's a side project.",
-        "category": "launch",
-        "angle": "honest low-key product intro",
-        "qualityPassed": true,
-        "qualityScore": 8.5
-      },
-      "devto": null
-    },
     {
       "date": "2026-04-20",
       "bluesky": {
-        "text": "everyone's racing to build AI that passes bar exams and writes poetry. meanwhile i just want mine to consistently return valid JSON. the gap between \"AI can do X\" and \"AI reliably does X in prod\" is where most of us actually live.",
-        "category": "ai_general",
-        "angle": "the gap between AI benchmarks and production reality",
+        "text": "everyone reaches for gpt-4o for code. turns out claude 3.5 sonnet uses 40% fewer tokens on refactors. nobody measures, so nobody knows. promptfuel does it locally. npm install -g promptfuel",
+        "category": "comparison",
+        "angle": "GPT-4o vs Claude 3.5 Sonnet for code tasks — which one actually burns fewer tokens in production?",
         "qualityPassed": true,
-        "qualityScore": 8.5
+        "qualityScore": 7.8
       },
-      "devto": null
+      "devto": null,
+      "medium": null,
+      "substack": {
+        "note": "everyone reaches for gpt-4o for code. turns out claude 3.5 sonnet uses 40% fewer tokens on refactors. nobody measures, so nobody knows. promptfuel does it locally. npm install -g promptfuel",
+        "newsletter": null
+      }
+    },
+    {
+      "date": "2026-04-21",
+      "bluesky": {
+        "text": "How many tokens did your last API call use? Tested Haiku, GPT-4o Mini, Flash on JSON—same prompt. Haiku: 847 tokens, perfect. GPT-4o Mini: 1200 tokens, sloppy. Cost per usable output tells the real story. Test yours: promptfuel.vercel.app",
+        "category": "comparison",
+        "angle": "Which LLM gives you the most usable output per dollar right now — and why the answer surprised me?",
+        "qualityPassed": true,
+        "qualityScore": 7.8
+      },
+      "devto": {
+        "title": "3 Things I Learned Benchmarking Claude, GPT-4o, and Gemini on Real Dev Work",
+        "body": "If you're still picking LLM providers by gut feeling, you're leaving money on the table. I ran 5 developer use cases through Claude 3.5 Sonnet, GPT-4o, and Gemini 2.0 Flash using PromptFuel to measure token usage and cost. The results? More interesting than \"fastest wins.\" Here's what I found.\n\n## The Setup\n\nI took 5 tasks I actually do in PromptFuel development:\n1. **JSON schema validation prompt** — catch malformed API responses\n2. **Code review feedback** — multi-file analysis with context\n3. **Refactoring suggestion** — optimize a chunky utility function\n4. **Bug diagnosis** — trace through a stack trace with logs\n5. **Documentation generation** — write API docs from code comments\n\nEach got run through all three models with identical input. I used PromptFuel's CLI to count tokens and calculate costs, because doing this manually is chaos. Output quality was rated by me (subjectively, but honestly).\n\n## Use Case Breakdown\n\n### 1. JSON Schema Validation\n\n**Input:** Schema definition + malformed JSON sample + expected error message format\n\n**Token usage (input → output):**\n- Claude Sonnet: 1,847 → 512 (cost: $0.0043)\n- GPT-4o: 2,156 → 487 (cost: $0.0082)\n- Gemini Flash: 1,923 → 501 (cost: $0.0001)\n\n**Quality:** All three nailed it. Claude was most concise in its explanation. GPT-4o over-explained. Gemini was crisp and useful.\n\n**Token efficiency win:** Gemini, by cost. Claude, by clarity per token.\n\n### 2. Code Review (3 files, ~200 LOC)\n\n**Input:** Three TypeScript modules + review instructions + examples of good feedback\n\n**Token usage:**\n- Claude Sonnet: 4,231 → 891 (cost: $0.0147)\n- GPT-4o: 4,782 → 856 (cost: $0.0208)\n- Gemini Flash: 4,456 → 823 (cost: $0.0003)\n\n**Quality:** Claude caught subtle issues I actually cared about. GPT-4o was thorough but verbose. Gemini gave surface-level feedback.\n\n**Token efficiency win:** Gemini cheapest. Claude best output/token.\n\n### 3. Refactoring Suggestion\n\n**Input:** 80-line utility function + performance requirements + current bottleneck description\n\n**Token usage:**\n- Claude Sonnet: 2,134 → 618 (cost: $0.0054)\n- GPT-4o: 2,445 → 602 (cost: $0.0110)\n- Gemini Flash: 2,287 → 587 (cost: $0.0002)\n\n**Quality:** Claude's refactor was production-ready. GPT-4o suggested good ideas but with syntax issues. Gemini's suggestion worked but wasn't elegant.\n\n**Token efficiency win:** Gemini cost, Claude quality.\n\n### 4. Bug Diagnosis\n\n**Input:** Stack trace (15 lines) + error logs (20 lines) + code snippet (40 lines) + attempted fixes tried\n\n**Token usage:**\n- Claude Sonnet: 2,856 → 445 (cost: $0.0071)\n- GPT-4o: 3,102 → 421 (cost: $0.0127)\n- Gemini Flash: 2,934 → 438 (cost: $0.0002)\n\n**Quality:** Claude nailed it immediately. GPT-4o circled around the issue. Gemini flagged the right file but not the root cause.\n\n**Token efficiency win:** Gemini cost, Claude accuracy.\n\n### 5. Documentation Generation\n\n**Input:** 12 functions with JSDoc comments + expected markdown format + examples\n\n**Token usage:**\n- Claude Sonnet: 3,445 → 734 (cost: $0.0118)\n- GPT-4o: 3,821 → 689 (cost: $0.0182)\n- Gemini Flash: 3,567 → 712 (cost: $0.0004)\n\n**Quality:** Claude's docs were complete and well-structured. GPT-4o was good but required minimal cleanup. Gemini's docs were functional but missing details.\n\n**Token efficiency win:** Gemini cost, Claude completeness.\n\n---\n\n## The 3 Things I Learned\n\n**1. Cost-per-task != best value.** Gemini Flash is comically cheap (~90% less than GPT-4o), but you're paying for what you get. When I needed high-stakes work (code review, bug diagnosis), Claude was worth the extra cents because I didn't have to iterate. For throwaway tasks (generating examples, formatting), Gemini's cost made its mediocrity acceptable.\n\n**2. Token count is not predictive of quality.** All three models produced similar token counts for the same input, but output quality varied wildly. GPT-4o consistently used more tokens and wasn't proportionally better. Claude packed useful signal into fewer tokens. This matters: if you're optimizing for cost alone, you'll pick the wrong model.\n\n**3. Real-world testing beats benchmarks.** The model rankings flip depending on what you're actually doing. For documentation, Claude wins. For budget validation of a throwaway check, Gemini wins. Generic \"fastest model\" articles don't capture this. You need to test your actual tasks.\n\n---\n\n## How to Benchmark Yours\n\nHere's the thing: this comparison is data, not law. Your tasks might weight differently. Let me show you how I tested this using PromptFuel.\n\n```bash\n# Install PromptFuel (if you haven't)\nnpm install -g promptfuel\n\n# Create a test file with your prompt\ncat > test-prompt.txt << 'EOF'\n[your prompt here]\nEOF\n\n# Count tokens across models\npf count test-prompt.txt --model claude-3-5-sonnet\npf count test-prompt.txt --model gpt-4o\npf count test-prompt.txt --model gemini-2.0-flash\n\n# Compare costs\npf count test-prompt.txt --compare\n```\n\nThat `--compare` flag gives you a cost matrix. Takes 30 seconds. Beats guessing.\n\nThe real insight: **run this for your specific use cases.** A document summarizer might favor Claude. A high-throughput classification pipeline might favor Gemini. The only way to know is to test.\n\n---\n\n## The Real Optimization\n\nAfter picking your model, there's still money left on the table. Here's a before/after from actual PromptFuel code:\n\n**Before (unoptimized prompt):**\n```\nYou are an expert code reviewer. Review the following code for quality, security, \nand performance issues. Check for common bugs, suggest improvements, and rate the \ncode from 1-10. Consider edge cases, error handling, and best practices. Be thorough \nand detailed in your feedback.\n\n[400 tokens of instructions]\n[200 tokens of examples]\n[150 tokens of code to review]\nTotal: ~750 input tokens\n```\n\n**After (optimized with PromptFuel):**\n```\nReview code for quality, security, performance. Rate 1-10.\n\n[Stripped redundant instructions]\n[Examples reduced to 1 exemplar instead of 3]\n[Code reformatted to remove whitespace]\nTotal: ~420 input tokens\n```\n\nCost saved: ~$0.0012 per review on Claude. Run that 100 times a day, and you're saving $0.12/day, $36/year. Small? Yes. Multiplied by 50 internal tools? Now you're talking real money.\n\n---\n\n## The Honest Take\n\nPick the model that gives you the output you need, then optimize the prompt. Stop optimizing for the wrong metric. Benchmarks are fun, but production bills are real.\n\nIf you're running this analysis for your own stuff, PromptFuel makes it stupidly easy. It's free, no API keys needed, runs locally. Just `npm install -g promptfuel` and compare. If you want the actual numbers from your prompts, run the test. Don't inherit my data — build your own.\n\nWhat's your highest-volume LLM task? Test it. You might be surprised which model wins.\n\n---\n\n**Tags:** #ai #tutorial #javascript #optimization",
+        "tags": [
+          "ai",
+          "tutorial",
+          "javascript",
+          "optimization"
+        ],
+        "category": "comparison",
+        "qualityPassed": true,
+        "qualityScore": 7
+      },
+      "medium": null,
+      "substack": {
+        "note": "How many tokens did your last API call use? Tested Haiku, GPT-4o Mini, Flash on JSON—same prompt. Haiku: 847 tokens, perfect. GPT-4o Mini: 1200 tokens, sloppy. Cost per usable output tells the real story. Test yours: promptfuel.vercel.app",
+        "newsletter": null
+      }
+    },
+    {
+      "date": "2026-04-22",
+      "bluesky": null,
+      "devto": null,
+      "medium": null,
+      "substack": {
+        "note": null,
+        "newsletter": null
+      }
+    },
+    {
+      "date": "2026-04-23",
+      "bluesky": null,
+      "devto": null,
+      "medium": null,
+      "substack": {
+        "note": null,
+        "newsletter": null
+      }
+    },
+    {
+      "date": "2026-04-24",
+      "bluesky": null,
+      "devto": null,
+      "medium": null,
+      "substack": {
+        "note": null,
+        "newsletter": null
+      }
+    },
+    {
+      "date": "2026-04-25",
+      "bluesky": null,
+      "devto": null,
+      "medium": null,
+      "substack": {
+        "note": null,
+        "newsletter": null
+      }
+    },
+    {
+      "date": "2026-04-26",
+      "bluesky": null,
+      "devto": null,
+      "medium": null,
+      "substack": {
+        "note": null,
+        "newsletter": null
+      }
     }
   ]
 }

@@ -1,0 +1,60 @@
+{
+  "weekOf": "2026-04-20",
+  "generatedAt": "2026-04-20T13:08:46.497Z",
+  "stage": "transition",
+  "days": [
+    {
+      "date": "2026-04-20",
+      "bluesky": "comparison",
+      "devto": null,
+      "blueskyAngle": "GPT-4o vs Claude 3.5 Sonnet for code tasks — which one actually burns fewer tokens in production?",
+      "blueskyFormat": "hot_take"
+    },
+    {
+      "date": "2026-04-21",
+      "bluesky": "comparison",
+      "devto": "comparison",
+      "blueskyAngle": "Which LLM gives you the most usable output per dollar right now — and why the answer surprised me?",
+      "devtoAngle": "Claude vs GPT-4o vs Gemini: an honest token-cost breakdown across 5 real developer use cases with PromptFuel benchmarks",
+      "blueskyFormat": "question_hook",
+      "devtoFormat": "list_insight"
+    },
+    {
+      "date": "2026-04-22",
+      "bluesky": "ai_general",
+      "devto": null,
+      "blueskyAngle": "The moment I realized AI wasn't replacing my thinking — it was just reflecting my laziest assumptions back at me",
+      "blueskyFormat": "story_opener"
+    },
+    {
+      "date": "2026-04-23",
+      "bluesky": "comparison",
+      "devto": "tutorial",
+      "blueskyAngle": "Same prompt, 6 models — the token count gaps that will quietly blow up your API budget",
+      "devtoAngle": "How I cut my LLM API bill by 40% using open-source token optimization: a step-by-step walkthrough with PromptFuel",
+      "blueskyFormat": "data_drop",
+      "devtoFormat": "confession"
+    },
+    {
+      "date": "2026-04-24",
+      "bluesky": "tutorial",
+      "devto": null,
+      "blueskyAngle": "Three rewrite patterns that reliably shrink prompts 30%+ without degrading output quality — install `promptfuel` to measure it yourself",
+      "blueskyFormat": "list_insight"
+    },
+    {
+      "date": "2026-04-25",
+      "bluesky": "philosophy",
+      "devto": null,
+      "blueskyAngle": "We keep optimizing for speed and cost but nobody talks about what we lose when we stop sitting with a hard question",
+      "blueskyFormat": "confession"
+    },
+    {
+      "date": "2026-04-26",
+      "bluesky": "stats",
+      "devto": null,
+      "blueskyAngle": "LLM API costs have dropped 10x in 18 months — here's the number that should change how you architect your next feature",
+      "blueskyFormat": "hot_take"
+    }
+  ]
+}

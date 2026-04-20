@@ -1,7 +1,33 @@
 /**
  * Environment variable loader + validation.
- * All secrets come from GitHub Actions secrets (or .env for local testing).
+ * All secrets come from GitHub Actions secrets (or .env for local runs).
+ *
+ * Local .env lookup: checks (in order) `packages/max/.env`, then repo root
+ * `.env`. First match wins. No-ops silently if none found — CI relies on
+ * real environment variables set by the workflow.
  */
+
+import { existsSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+(() => {
+  if (typeof process.loadEnvFile !== 'function') return; // Node < 20.12
+  try {
+    const here = dirname(fileURLToPath(import.meta.url));
+    // After tsup bundle, this module lives at packages/max/dist/index.js,
+    // so ../.env → packages/max/.env and ../../../.env → repo root /.env.
+    const candidates = [join(here, '../.env'), join(here, '../../../.env')];
+    for (const path of candidates) {
+      if (existsSync(path)) {
+        process.loadEnvFile(path);
+        break;
+      }
+    }
+  } catch {
+    // Loader failures must never block — CI has no .env and that's fine.
+  }
+})();
 
 export interface MaxConfig {
   // GitHub
@@ -81,6 +107,11 @@ export function loadConfig(): MaxConfig {
 
     devtoApiKey: requireEnv('DEVTO_API_KEY'),
 
-    dataDir: optionalEnv('MAX_DATA_DIR', new URL('../../data', import.meta.url).pathname),
+    // Default data dir: packages/max/data. After tsup bundle, this module
+    // ships inside packages/max/dist/index.js, so `../data` resolves to
+    // packages/max/data. fileURLToPath() decodes %20 etc. (the source-path
+    // module lives at packages/max/src/config.ts, so `../../data` WAS
+    // correct pre-bundle — the bundle flattened it by one level).
+    dataDir: optionalEnv('MAX_DATA_DIR', fileURLToPath(new URL('../data', import.meta.url))),
   };
 }

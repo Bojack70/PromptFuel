@@ -68,5 +68,223 @@
     "responseChars": 168,
     "ms": 41598,
     "ok": true
+  },
+  {
+    "ts": "2026-04-20T13:07:19.602Z",
+    "date": "2026-04-20",
+    "mode": "cli",
+    "model": "claude-sonnet-4-6",
+    "promptChars": 2029,
+    "responseChars": 827,
+    "ms": 10846,
+    "ok": true
+  },
+  {
+    "ts": "2026-04-20T13:07:28.261Z",
+    "date": "2026-04-20",
+    "mode": "cli",
+    "model": "claude-sonnet-4-6",
+    "promptChars": 1934,
+    "responseChars": 779,
+    "ms": 8656,
+    "ok": true
+  },
+  {
+    "ts": "2026-04-20T13:07:46.577Z",
+    "date": "2026-04-20",
+    "mode": "cli",
+    "model": "claude-haiku-4-5",
+    "promptChars": 862,
+    "responseChars": 2166,
+    "ms": 13145,
+    "ok": true
+  },
+  {
+    "ts": "2026-04-20T13:07:57.830Z",
+    "date": "2026-04-20",
+    "mode": "cli",
+    "model": "claude-haiku-4-5",
+    "promptChars": 886,
+    "responseChars": 1472,
+    "ms": 10618,
+    "ok": true
+  },
+  {
+    "ts": "2026-04-20T13:08:08.184Z",
+    "date": "2026-04-20",
+    "mode": "cli",
+    "model": "claude-haiku-4-5",
+    "promptChars": 994,
+    "responseChars": 1533,
+    "ms": 10353,
+    "ok": true
+  },
+  {
+    "ts": "2026-04-20T13:08:46.496Z",
+    "date": "2026-04-20",
+    "mode": "cli",
+    "model": "claude-sonnet-4-6",
+    "promptChars": 3720,
+    "responseChars": 2033,
+    "ms": 37478,
+    "ok": true
+  },
+  {
+    "ts": "2026-04-20T13:09:15.100Z",
+    "date": "2026-04-20",
+    "mode": "cli",
+    "model": "claude-haiku-4-5",
+    "promptChars": 2142,
+    "responseChars": 189,
+    "ms": 28600,
+    "ok": true
+  },
+  {
+    "ts": "2026-04-20T13:09:35.657Z",
+    "date": "2026-04-20",
+    "mode": "cli",
+    "model": "claude-haiku-4-5",
+    "promptChars": 1066,
+    "responseChars": 220,
+    "ms": 20556,
+    "ok": true
+  },
+  {
+    "ts": "2026-04-20T13:10:36.058Z",
+    "date": "2026-04-20",
+    "mode": "cli",
+    "model": "claude-haiku-4-5",
+    "promptChars": 2151,
+    "responseChars": 238,
+    "ms": 60399,
+    "ok": true
+  },
+  {
+    "ts": "2026-04-20T13:10:59.150Z",
+    "date": "2026-04-20",
+    "mode": "cli",
+    "model": "claude-haiku-4-5",
+    "promptChars": 1115,
+    "responseChars": 199,
+    "ms": 23091,
+    "ok": true
+  },
+  {
+    "ts": "2026-04-20T13:11:25.284Z",
+    "date": "2026-04-20",
+    "mode": "cli",
+    "model": "claude-haiku-4-5",
+    "promptChars": 2237,
+    "responseChars": 6921,
+    "ms": 26133,
+    "ok": true
+  },
+  {
+    "ts": "2026-04-20T13:11:30.473Z",
+    "date": "2026-04-20",
+    "mode": "cli",
+    "model": "claude-sonnet-4-6",
+    "promptChars": 2494,
+    "responseChars": 251,
+    "ms": 5188,
+    "ok": true
+  },
+  {
+    "ts": "2026-04-20T13:11:55.933Z",
+    "date": "2026-04-20",
+    "mode": "cli",
+    "model": "claude-opus-4-7",
+    "promptChars": 2533,
+    "responseChars": 3427,
+    "ms": 25459,
+    "ok": true
+  },
+  {
+    "ts": "2026-04-20T13:11:59.168Z",
+    "date": "2026-04-20",
+    "mode": "cli",
+    "model": "claude-sonnet-4-6",
+    "promptChars": 2519,
+    "responseChars": 0,
+    "ms": 3234,
+    "ok": false,
+    "error": "claude CLI exit 1: You've hit your limit · resets 9:30pm (Asia/Calcutta)"
+  },
+  {
+    "ts": "2026-04-20T13:12:01.710Z",
+    "date": "2026-04-20",
+    "mode": "cli",
+    "model": "claude-haiku-4-5",
+    "promptChars": 2151,
+    "responseChars": 0,
+    "ms": 2541,
+    "ok": false,
+    "error": "claude CLI exit 1: You've hit your limit · resets 9:30pm (Asia/Calcutta)"
+  },
+  {
+    "ts": "2026-04-20T13:12:04.369Z",
+    "date": "2026-04-20",
+    "mode": "cli",
+    "model": "claude-haiku-4-5",
+    "promptChars": 2102,
+    "responseChars": 0,
+    "ms": 2658,
+    "ok": false,
+    "error": "claude CLI exit 1: You've hit your limit · resets 9:30pm (Asia/Calcutta)"
+  },
+  {
+    "ts": "2026-04-20T13:12:06.861Z",
+    "date": "2026-04-20",
+    "mode": "cli",
+    "model": "claude-haiku-4-5",
+    "promptChars": 2297,
+    "responseChars": 0,
+    "ms": 2491,
+    "ok": false,
+    "error": "claude CLI exit 1: You've hit your limit · resets 9:30pm (Asia/Calcutta)"
+  },
+  {
+    "ts": "2026-04-20T13:12:09.460Z",
+    "date": "2026-04-20",
+    "mode": "cli",
+    "model": "claude-opus-4-7",
+    "promptChars": 2594,
+    "responseChars": 0,
+    "ms": 2598,
+    "ok": false,
+    "error": "claude CLI exit 1: You've hit your limit · resets 9:30pm (Asia/Calcutta)"
+  },
+  {
+    "ts": "2026-04-20T13:12:12.099Z",
+    "date": "2026-04-20",
+    "mode": "cli",
+    "model": "claude-haiku-4-5",
+    "promptChars": 2116,
+    "responseChars": 0,
+    "ms": 2638,
+    "ok": false,
+    "error": "claude CLI exit 1: You've hit your limit · resets 9:30pm (Asia/Calcutta)"
+  },
+  {
+    "ts": "2026-04-20T13:12:14.629Z",
+    "date": "2026-04-20",
+    "mode": "cli",
+    "model": "claude-haiku-4-5",
+    "promptChars": 2118,
+    "responseChars": 0,
+    "ms": 2529,
+    "ok": false,
+    "error": "claude CLI exit 1: You've hit your limit · resets 9:30pm (Asia/Calcutta)"
+  },
+  {
+    "ts": "2026-04-20T13:12:19.117Z",
+    "date": "2026-04-20",
+    "mode": "cli",
+    "model": "claude-haiku-4-5",
+    "promptChars": 2211,
+    "responseChars": 0,
+    "ms": 4486,
+    "ok": false,
+    "error": "claude CLI exit 1: You've hit your limit · resets 9:30pm (Asia/Calcutta)"
   }
 ]
