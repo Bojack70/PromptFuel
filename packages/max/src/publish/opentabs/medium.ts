@@ -89,7 +89,7 @@ export async function postToMedium(post: MediumPost): Promise<MediumResult> {
   if (!post.title?.trim()) throw new Error('Medium post title cannot be empty');
   if (!post.body?.trim()) throw new Error('Medium post body cannot be empty');
 
-  const waitForHuman = post.waitForHuman !== false; // default true
+  const waitForHuman = post.waitForHuman ?? false; // default false — Medium has no captcha
   const humanTimeoutMs = post.humanTimeoutMs ?? 5 * 60_000;
 
   console.log(`[Max] Medium: opening new story editor...`);
@@ -134,39 +134,46 @@ export async function postToMedium(post: MediumPost): Promise<MediumResult> {
   await sleep(600);
 
   // --- Move focus to body ---
-  // Medium's editor already has an empty body paragraph on load.
-  // We find it directly (p[data-contents="true"]) and click+focus it.
-  // Dispatching keyboard events (Enter) is unreliable with Slate.js because
-  // Slate ignores raw KeyboardEvents and only responds to InputEvents.
-  const bodyFocused = await executeScript<boolean>(
+  // Medium uses a single contenteditable div containing both h3 (title) and p (body).
+  // We place the cursor AFTER the h3 node using Selection API — no separate body element needed.
+  // Top-level return required (no IIFE) per OpenTabs executeScript contract.
+  const bodyFocusResult = await executeScript<string>(
     tab.id,
-    `(function() {
-      // Body paragraph: p[data-contents="true"] — distinct from title h3[data-contents="true"]
-      var body = document.querySelector('p[data-contents="true"]');
-      if (!body) {
-        // Fallback: any contenteditable that is NOT the title element
-        var title = document.querySelector(${JSON.stringify(titleSel)});
-        var all = Array.from(document.querySelectorAll('[contenteditable="true"]'));
-        body = all.find(function(el) { return el !== title; }) || null;
-      }
-      if (!body) return false;
-      body.click();
-      body.focus();
-      // Place caret at end
+    `var editor = document.querySelector('[contenteditable="true"]');
+    if (!editor) return 'no-editor';
+    var h3 = editor.querySelector('h3');
+    if (h3) {
       var range = document.createRange();
-      range.selectNodeContents(body);
-      range.collapse(false);
+      range.setStartAfter(h3);
+      range.collapse(true);
       var sel = window.getSelection();
       sel.removeAllRanges();
       sel.addRange(range);
-      return true;
-    })();`,
+      editor.focus();
+      return 'after-h3';
+    }
+    editor.focus();
+    var r2 = document.createRange();
+    r2.selectNodeContents(editor);
+    r2.collapse(false);
+    window.getSelection().removeAllRanges();
+    window.getSelection().addRange(r2);
+    return 'end-of-editor';`,
   );
+  console.log(`[Max] Medium: body focus result — ${bodyFocusResult}`);
 
-  if (!bodyFocused) {
+  if (!bodyFocusResult || bodyFocusResult === 'no-editor') {
+    // Dump DOM using top-level return (not IIFE)
+    const domDump = await executeScript<string>(
+      tab.id,
+      `var results = [];
+      Array.from(document.querySelectorAll('[contenteditable]')).slice(0, 8).forEach(function(el) {
+        results.push('<' + el.tagName.toLowerCase() + '> ce=' + el.getAttribute('contenteditable') + ' slate=' + el.getAttribute('data-slate-editor'));
+      });
+      return results.join(' | ') || 'none';`,
+    ).catch(() => '(dump failed)');
     throw new Error(
-      'Medium: could not find body paragraph element. ' +
-      'The editor may not have loaded fully — try again or run --dry-run to inspect.',
+      'Medium: could not find contenteditable editor.\nDOM dump: ' + domDump,
     );
   }
   await sleep(600);
@@ -220,18 +227,15 @@ export async function postToMedium(post: MediumPost): Promise<MediumResult> {
   console.log(`[Max] Medium: clicking Publish button...`);
   const publishBtnFound = await executeScript<string | null>(
     tab.id,
-    `(function() {
-      // Try data-action first, then fall back to button text
-      var btn = document.querySelector('button[data-action="show-prepublish"]');
-      if (!btn) {
-        btn = Array.from(document.querySelectorAll('button')).find(function(b) {
-          var t = b.textContent.trim();
-          return t === 'Publish' || t === 'Publish story';
-        }) || null;
-      }
-      if (btn) { btn.click(); return btn.textContent.trim(); }
-      return null;
-    })();`,
+    `var btn = document.querySelector('button[data-action="show-prepublish"]');
+    if (!btn) {
+      btn = Array.from(document.querySelectorAll('button')).find(function(b) {
+        var t = b.textContent.trim();
+        return t === 'Publish' || t === 'Publish story';
+      }) || null;
+    }
+    if (btn) { btn.click(); return btn.textContent.trim(); }
+    return null;`,
   );
 
   if (!publishBtnFound) {
@@ -249,14 +253,12 @@ export async function postToMedium(post: MediumPost): Promise<MediumResult> {
   console.log(`[Max] Medium: clicking "Publish now" in dialog...`);
   const publishNowFound = await executeScript<string | null>(
     tab.id,
-    `(function() {
-      var btn = Array.from(document.querySelectorAll('button')).find(function(b) {
-        var t = b.textContent.trim();
-        return t === 'Publish now' || t === 'Publish' || t === 'Publish story';
-      });
-      if (btn) { btn.click(); return btn.textContent.trim(); }
-      return null;
-    })();`,
+    `var btn = Array.from(document.querySelectorAll('button')).find(function(b) {
+      var t = b.textContent.trim();
+      return t === 'Publish now' || t === 'Publish' || t === 'Publish story';
+    }) || null;
+    if (btn) { btn.click(); return btn.textContent.trim(); }
+    return null;`,
   );
 
   if (!publishNowFound) {
