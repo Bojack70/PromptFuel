@@ -163,7 +163,7 @@ function buildWeekCalendar(dataDir: string): string {
   if (!existsSync(calFile)) return '';
 
   type CalendarDay = { date: string; bluesky?: string; devto?: string | null; blueskyAngle?: string; devtoAngle?: string };
-  type PrePost = { date: string; bluesky?: { text: string }; devto?: { title: string }; medium?: { title: string }; substack?: { note: string } };
+  type PrePost = { date: string; bluesky?: { text: string }; twitter?: { text: string; category: string }; devto?: { title: string }; medium?: { title: string }; substack?: { note: string } };
 
   const cal = JSON.parse(readFileSync(calFile, 'utf-8')) as { days: CalendarDay[] };
   const pre: { posts: PrePost[] } = existsSync(preFile)
@@ -180,8 +180,9 @@ function buildWeekCalendar(dataDir: string): string {
     const p = preMap[day.date];
     const isToday = day.date === todayStr;
     const isPast = day.date < todayStr;
-    const isDevtoDay = DEVTO_DAYS[stage].includes(utcDay);
-    const isSubstackDay = SUBSTACK_DAYS[stage].includes(utcDay);
+    // Calendar entry overrides stage-based day rules (e.g. weekly plan may put Dev.to on Monday)
+    const isDevtoDay = DEVTO_DAYS[stage].includes(utcDay) || !!day.devto;
+    const isSubstackDay = SUBSTACK_DAYS[stage].includes(utcDay) || !!day.devto;
     const isEngageDay = MEDIUM_ENGAGE_DAYS.includes(utcDay);
     const dayName = DAY_NAMES[utcDay];
     const bg = isToday ? '#1e3a5f' : isPast ? '#0f172a' : '#1e293b';
@@ -197,9 +198,14 @@ function buildWeekCalendar(dataDir: string): string {
       items.push(`<div style="margin:3px 0"><span style="background:#166534;color:#fff;font-size:10px;padding:1px 5px;border-radius:3px">AUTO</span> <strong>Dev.to</strong>${p?.devto ? ` <span style="color:#94a3b8;font-size:11px">— ${p.devto.title.slice(0, 60)}…</span>` : ''}</div>`);
     }
 
-    // Medium — same days as Dev.to, MANUAL
+    // Twitter + Medium — same days as Dev.to, MANUAL (same command runs both)
+    // Twitter gets the short bluesky-style text; Medium gets its own long-form article.
     if (isDevtoDay) {
-      items.push(`<div style="margin:3px 0"><span style="background:#f59e0b;color:#fff;font-size:10px;padding:1px 5px;border-radius:3px">MANUAL</span> <strong>Medium</strong>${p?.medium ? ` <span style="color:#94a3b8;font-size:11px">— ${p.medium.title.slice(0, 60)}…</span>` : ''}<br><code style="font-size:10px;color:#94a3b8">--mode social-post --medium</code></div>`);
+      const twitterText = p?.twitter?.text ?? p?.bluesky?.text ?? '';
+      const twitterCat = p?.twitter?.category ?? '';
+      const twitterPreview = twitterText ? `<div style="color:#94a3b8;font-size:11px;margin-top:2px">🐦 <span style="color:#60a5fa;font-size:10px">[${twitterCat}]</span> ${twitterText.slice(0, 60)}…</div>` : '';
+      const mediumPreview = p?.medium ? `<div style="color:#94a3b8;font-size:11px;margin-top:2px">📝 ${p.medium.title.slice(0, 60)}…</div>` : '';
+      items.push(`<div style="margin:3px 0"><span style="background:#f59e0b;color:#fff;font-size:10px;padding:1px 5px;border-radius:3px">MANUAL</span> <strong>Twitter + Medium</strong>${twitterPreview}${mediumPreview}<code style="font-size:10px;color:#94a3b8;margin-top:3px;display:block">--mode social-post --medium</code></div>`);
     }
 
     // Substack Note — same days as Dev.to, MANUAL

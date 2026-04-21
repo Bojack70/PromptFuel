@@ -27,6 +27,18 @@ jobs:
       - name: Build Max
         run: pnpm --filter @promptfuel/max build
 
+      - name: Run daily reader (fetch articles to corpus)
+        env:
+          MAX_DATA_DIR: packages/max/data
+        run: node packages/max/dist/index.js --mode read-daily
+        continue-on-error: true
+
+      - name: Fetch daily trends (HN top stories)
+        env:
+          MAX_DATA_DIR: packages/max/data
+        run: node packages/max/dist/index.js --mode fetch-trends
+        continue-on-error: true
+
       - name: Run daily collection + content
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

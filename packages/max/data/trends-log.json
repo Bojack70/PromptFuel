@@ -1,0 +1,94 @@
+{
+  "entries": [
+    {
+      "date": "2026-04-21",
+      "source": "hn",
+      "title": "Laws of Software Engineering",
+      "url": "https://lawsofsoftwareengineering.com",
+      "score": 301,
+      "comments": 131,
+      "itemId": 47847179
+    },
+    {
+      "date": "2026-04-21",
+      "source": "hn",
+      "title": "Show HN: VidStudio, a browser based video editor that doesn't upload your files",
+      "url": "https://vidstudio.app/video-editor",
+      "score": 99,
+      "comments": 45,
+      "itemId": 47847558
+    },
+    {
+      "date": "2026-04-21",
+      "source": "hn",
+      "title": "John Ternus to become Apple CEO",
+      "url": "https://www.apple.com/newsroom/2026/04/tim-cook-to-become-apple-executive-chairman-john-ternus-to-become-apple-ceo/",
+      "score": 2034,
+      "comments": 1144,
+      "itemId": 47840219
+    },
+    {
+      "date": "2026-04-21",
+      "source": "hn",
+      "title": "Tim Cook's Impeccable Timing",
+      "url": "https://stratechery.com/2026/tim-cooks-impeccable-timing/",
+      "score": 57,
+      "comments": 70,
+      "itemId": 47847324
+    },
+    {
+      "date": "2026-04-21",
+      "source": "hn",
+      "title": "A type-safe, realtime collaborative Graph Database in a CRDT",
+      "url": "https://codemix.com/graph",
+      "score": 71,
+      "comments": 24,
+      "itemId": 47846946
+    },
+    {
+      "date": "2026-04-21",
+      "source": "hn",
+      "title": "Running a Minecraft Server and More on a 1960s Univac Computer",
+      "url": "https://farlow.dev/2026/04/17/running-a-minecraft-server-and-more-on-a-1960s-univac-computer",
+      "score": 57,
+      "comments": 11,
+      "itemId": 47815462
+    },
+    {
+      "date": "2026-04-21",
+      "source": "hn",
+      "title": "Tindie store under \"scheduled maintenance\" for days",
+      "url": "https://www.tindie.com/",
+      "score": 42,
+      "comments": 9,
+      "itemId": 47848195
+    },
+    {
+      "date": "2026-04-21",
+      "source": "hn",
+      "title": "Anthropic says OpenClaw-style Claude CLI usage is allowed again",
+      "url": "https://docs.openclaw.ai/providers/anthropic",
+      "score": 327,
+      "comments": 193,
+      "itemId": 47844269
+    },
+    {
+      "date": "2026-04-21",
+      "source": "hn",
+      "title": "MNT Reform is an open hardware laptop, designed and assembled in Germany",
+      "url": "http://mnt.stanleylieber.com/reform/",
+      "score": 144,
+      "comments": 57,
+      "itemId": 47834689
+    },
+    {
+      "date": "2026-04-21",
+      "source": "hn",
+      "title": "Anthropic takes $5B from Amazon and pledges $100B in cloud spending in return",
+      "url": "https://techcrunch.com/2026/04/20/anthropic-takes-5b-from-amazon-and-pledges-100b-in-cloud-spending-in-return/",
+      "score": 60,
+      "comments": 58,
+      "itemId": 47848276
+    }
+  ]
+}

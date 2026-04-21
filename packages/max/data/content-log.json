@@ -76,5 +76,25 @@
     "content": "If you're still picking LLM providers by gut feeling, you're leaving money on the table. I ran 5 developer use cases through Claude 3.5 Sonnet, GPT-4o, and Gemini 2.0 Flash using PromptFuel to measure",
     "postId": "3530584",
     "postUrl": "https://dev.to/natevoss/3-things-i-learned-benchmarking-claude-gpt-4o-and-gemini-on-real-dev-work-4cp5"
+  },
+  {
+    "date": "2026-04-21",
+    "timestamp": "2026-04-21T12:07:05.994Z",
+    "platform": "devto",
+    "category": "comparison",
+    "title": "3 Things I Learned Benchmarking Claude, GPT-4o, and Gemini on Real Dev Work",
+    "content": "If you're still picking LLM providers by gut feeling, you're leaving money on the table. I ran 5 developer use cases through Claude 3.5 Sonnet, GPT-4o, and Gemini 2.0 Flash using PromptFuel to measure",
+    "postId": "3531861",
+    "postUrl": "https://dev.to/natevoss/3-things-i-learned-benchmarking-claude-gpt-4o-and-gemini-on-real-dev-work-38fl"
+  },
+  {
+    "date": "2026-04-21",
+    "timestamp": "2026-04-21T14:18:54.479Z",
+    "platform": "devto",
+    "category": "comparison",
+    "title": "3 Things I Learned Benchmarking Claude, GPT-4o, and Gemini on Real Dev Work",
+    "content": "If you're still picking LLM providers by gut feeling, you're leaving money on the table. I ran 5 developer use cases through Claude 3.5 Sonnet, GPT-4o, and Gemini 2.0 Flash using PromptFuel to measure",
+    "postId": "3532390",
+    "postUrl": "https://dev.to/natevoss/3-things-i-learned-benchmarking-claude-gpt-4o-and-gemini-on-real-dev-work-5340"
   }
 ]

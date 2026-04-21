@@ -97,15 +97,17 @@ export async function runSocialPost(config: SocialPostConfig): Promise<SocialPos
     .map(([k]) => k)
     .join('+');
 
-  console.log(`[Max] Social post: ${new Date().toISOString().split('T')[0]} | category=${todayPost.bluesky.category} | platforms=${platforms}`);
-  console.log(`[Max] Social post: "${todayPost.bluesky.text.slice(0, 80)}..."`);
+  // Use dedicated Twitter content if available; fall back to Bluesky text trimmed to 280
+  const twitterText = (todayPost.twitter?.text ?? todayPost.bluesky.text).trim().slice(0, 280);
+  const twitterCategory = todayPost.twitter?.category ?? todayPost.bluesky.category;
+
+  console.log(`[Max] Social post: ${new Date().toISOString().split('T')[0]} | bluesky=${todayPost.bluesky.category} twitter=${twitterCategory} | platforms=${platforms}`);
+  console.log(`[Max] Twitter content (${twitterCategory}): "${twitterText.slice(0, 80)}..."`);
 
   // --- Twitter ---
   if (config.platforms.twitter) {
-    // Use bluesky text, trim to 280 chars for Twitter's limit
-    const tweet = todayPost.bluesky.text.trim().slice(0, 280);
-
-    console.log(`[Max] Twitter: ${tweet.length} chars — "${tweet.slice(0, 60)}..."`);
+    console.log(`[Max] Twitter: ${twitterText.length} chars — "${twitterText.slice(0, 60)}..."`);
+    const tweet = twitterText;
 
     if (config.dryRun) {
       console.log(`[Max] Twitter: DRY RUN — would post this tweet`);

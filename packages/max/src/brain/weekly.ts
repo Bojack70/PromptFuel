@@ -31,6 +31,9 @@ import {
 } from './strategy.js';
 import { fetchInfluencerPosts } from '../analytics/influencer.js';
 import { researchFormats, loadFormatInsights, type FormatInsights } from './format-research.js';
+import { synthesizeReadingInsights, loadReadingInsights, type ReadingInsights } from './reading-insights.js';
+import { appendEntries as appendNotebookEntries, extractSurprises } from './notebook.js';
+import { synthesizeTrends, loadTrendInsights, type TrendInsights } from './trend-insights.js';
 
 function getMonday(date: Date): string {
   const d = new Date(date);
@@ -653,6 +656,73 @@ export async function weeklyReflection(config: MaxConfig): Promise<void> {
     formatInsights = loadFormatInsights(config.dataDir) ?? undefined;
   }
 
+  // 10b. Reading-corpus synthesis — distil patterns from the week's daily reading
+  let readingInsights: ReadingInsights | undefined;
+  try {
+    console.log('[Max] Synthesising reading insights from daily corpus...');
+    if (config.claudeApiKey) {
+      readingInsights = (await synthesizeReadingInsights(config.claudeApiKey, config.dataDir)) ?? undefined;
+    }
+    if (!readingInsights) {
+      readingInsights = loadReadingInsights(config.dataDir) ?? undefined;
+      if (readingInsights) console.log('[Max] Using cached reading insights');
+    }
+  } catch (err) {
+    console.warn('[Max] Reading-insight synthesis failed (non-fatal):', (err as Error).message);
+    readingInsights = loadReadingInsights(config.dataDir) ?? undefined;
+  }
+
+  // 10b-ii. Trend synthesis — distil hot themes from the week's HN headlines
+  let trendInsights: TrendInsights | undefined;
+  try {
+    console.log('[Max] Synthesising trend insights from HN headlines...');
+    if (config.claudeApiKey) {
+      trendInsights = (await synthesizeTrends(config.claudeApiKey, config.dataDir)) ?? undefined;
+    }
+    if (!trendInsights) {
+      trendInsights = loadTrendInsights(config.dataDir) ?? undefined;
+      if (trendInsights) console.log('[Max] Using cached trend insights');
+    }
+  } catch (err) {
+    console.warn('[Max] Trend synthesis failed (non-fatal):', (err as Error).message);
+    trendInsights = loadTrendInsights(config.dataDir) ?? undefined;
+  }
+
+  // 10c. Extract surprises from the week's data → append to Nate's notebook
+  try {
+    if (config.claudeApiKey) {
+      console.log("[Max] Extracting this week's surprises for notebook...");
+      const surpriseCtx = {
+        weekOf: prevMonday,
+        summary: [
+          `stars: ${summary.stars.current} (${summary.stars.delta >= 0 ? '+' : ''}${summary.stars.delta})`,
+          `npm week: ${summary.npmDownloadsWeek} (prev: ${summary.prevNpmDownloadsWeek})`,
+          `views: ${summary.views.total} (${summary.views.uniques} unique)`,
+          `growth status: ${goalEval.status}`,
+        ].join(' | '),
+        evaluation: [
+          `top category: ${evaluation.topCategory ?? 'n/a'}`,
+          `weak category: ${evaluation.weakCategory ?? 'n/a'}`,
+          ...evaluation.results.map((r) => `${r.name}: ${r.verdict} — ${r.summary}`),
+          ...(evaluation.correlations?.insights ?? []),
+        ].join('\n'),
+        correlations: evaluation.correlations?.insights.join('\n'),
+        readingInsights: readingInsights
+          ? `cross-cutting: ${readingInsights.crossCuttingPatterns}\nanti-patterns: ${readingInsights.antiPatterns}`
+          : undefined,
+        strategyOutcomes: strategyMemory.recentDecisions
+          .slice(0, 3)
+          .map((d) => `${d.decision} → ${d.outcome ? `${d.outcome.verdict}: ${d.outcome.summary}` : 'pending'}`)
+          .join('\n'),
+      };
+      const surprises = await extractSurprises(config.claudeApiKey, surpriseCtx);
+      const added = appendNotebookEntries(config.dataDir, surprises);
+      console.log(`[Max] Notebook: +${added} new observation(s) from ${surprises.length} extracted`);
+    }
+  } catch (err) {
+    console.warn('[Max] Surprise extraction failed (non-fatal):', (err as Error).message);
+  }
+
   // 11. Generate Reddit/HN/LinkedIn drafts (before email so drafts appear in digest)
   console.log('[Max] Generating platform drafts...');
   const latest = snapshots[snapshots.length - 1];
@@ -725,7 +795,7 @@ export async function weeklyReflection(config: MaxConfig): Promise<void> {
           e.platform === 'bluesky' ? e.content : (e.title ?? e.content.slice(0, 80)),
         ),
       };
-      await pregenerateWeek(config.claudeApiKey, calendar, promptCtx, config.dataDir, formatInsights);
+      await pregenerateWeek(config.claudeApiKey, calendar, promptCtx, config.dataDir, formatInsights, readingInsights, trendInsights);
     }
   } catch (err) {
     console.warn('[Max] Content pre-generation failed (non-fatal):', (err as Error).message);

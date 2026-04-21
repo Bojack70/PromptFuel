@@ -1,0 +1,48 @@
+{
+  "_comment": "Daily reading sources for Max. Each bucket maps to content categories Max writes in. Add Substack publications as { substackHandle: 'example' } to any bucket to fetch https://example.substack.com/feed. Add specific authors/publications to the 'picks' array (future: individual URL fetch).",
+  "_updated": "2026-04-21",
+  "buckets": {
+    "tech-ai": {
+      "description": "Feeds tip, comparison, tutorial, stats, opinion, tw_tech",
+      "mediumTags": ["programming", "artificial-intelligence", "software-engineering"],
+      "substackHandles": [],
+      "picks": []
+    },
+    "life-reflection": {
+      "description": "Feeds tw_reflection, tw_life, letter, field_notes",
+      "mediumTags": ["life", "life-lessons"],
+      "substackHandles": [],
+      "picks": []
+    },
+    "philosophy-psychology": {
+      "description": "Feeds philosophy, tw_philosophy, essay_long",
+      "mediumTags": ["philosophy", "psychology"],
+      "substackHandles": [],
+      "picks": []
+    },
+    "relationships": {
+      "description": "Feeds tw_life, character_dark, short_story (human connection angle)",
+      "mediumTags": ["relationships", "mental-health"],
+      "substackHandles": [],
+      "picks": []
+    },
+    "work-economics": {
+      "description": "Feeds economics, field_notes, tw_reflection (work/money angle)",
+      "mediumTags": ["productivity", "startup"],
+      "substackHandles": [],
+      "picks": []
+    },
+    "humor-satire": {
+      "description": "Feeds tw_satire, contrarian, character_dark",
+      "mediumTags": ["humor", "satire"],
+      "substackHandles": [],
+      "picks": []
+    },
+    "creative-writing": {
+      "description": "Feeds short_story, character_dark, thread_story, mystery_interactive",
+      "mediumTags": ["writing", "creativity"],
+      "substackHandles": [],
+      "picks": []
+    }
+  }
+}

@@ -1,16 +1,16 @@
 {
-  "lastDailyRun": "2026-04-21T07:45:21.458Z",
+  "lastDailyRun": "2026-04-21T14:25:33.644Z",
   "lastWeeklyRun": "2026-04-20T13:12:19.118Z",
   "lastSnapshotDate": "2026-04-21",
-  "totalSnapshots": 13,
+  "totalSnapshots": 17,
   "accountStatus": {
     "bluesky": "transition",
     "devto": "transition"
   },
   "warmupStartDate": "2026-03-24",
-  "lastContentRun": "2026-04-21T07:45:23.162Z",
+  "lastContentRun": "2026-04-21T14:25:40.928Z",
   "growthStatus": "stalled",
-  "stalledWeeks": 2,
+  "stalledWeeks": 3,
   "lastGoalEval": {
     "week": "2026-04-13",
     "status": "stalled",
@@ -21,7 +21,7 @@
       "views"
     ]
   },
-  "lastEngagementRun": "2026-04-21T07:30:05.383Z",
-  "lastCorrelationRun": "2026-04-21T07:30:05.383Z",
-  "lastWeeklyDataRun": "2026-04-21T07:30:05.383Z"
+  "lastEngagementRun": "2026-04-21T11:43:37.037Z",
+  "lastCorrelationRun": "2026-04-21T11:43:37.037Z",
+  "lastWeeklyDataRun": "2026-04-21T11:43:37.037Z"
 }

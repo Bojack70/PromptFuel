@@ -128,6 +128,14 @@ async function daily() {
   const state = loadState(config.dataDir);
   const history = loadHistory(config.dataDir);
 
+  // Guard against duplicate posts when the daily flow runs more than once in a day
+  // (e.g. CI re-run, manual trigger, local test). Every pre-gen publish path goes
+  // through appendHistory(), so a same-platform same-date entry means we already posted.
+  const todayStr = today();
+  const todayEntries = history.filter((e) => e.date === todayStr);
+  const alreadyPostedBluesky = todayEntries.some((e) => e.platform === 'bluesky');
+  const alreadyPostedDevto = todayEntries.some((e) => e.platform === 'devto');
+
   // Load weekly content calendar
   const calendar = loadCalendar(config.dataDir);
   const calendarDay = calendar && isCalendarCurrent(calendar) ? getTodayFromCalendar(calendar) : null;
@@ -160,7 +168,10 @@ async function daily() {
   }
 
   // ── Bluesky ──
-  if (plan.bluesky) {
+  if (plan.bluesky && alreadyPostedBluesky) {
+    console.log('[Max] Bluesky: already posted today — skipping to avoid duplicate');
+  }
+  if (plan.bluesky && !alreadyPostedBluesky) {
     try {
       // Use pre-generated content if available and passed quality gate
       if (todayPregen?.bluesky?.qualityPassed) {
@@ -237,7 +248,10 @@ async function daily() {
   }
 
   // ── Dev.to ──
-  if (plan.devto) {
+  if (plan.devto && alreadyPostedDevto) {
+    console.log('[Max] Dev.to: already posted today — skipping to avoid duplicate');
+  }
+  if (plan.devto && !alreadyPostedDevto) {
     try {
       // Use pre-generated article if available and passed quality gate
       if (todayPregen?.devto?.qualityPassed) {
@@ -372,6 +386,8 @@ async function weeklyData() {
   } catch (err) {
     console.warn('[Max] Weekly data-only pass failed (non-fatal):', (err as Error).message);
   }
+  // Always regenerate dashboard after data pass so the HTML is never stale
+  generateDashboard(config.dataDir);
 }
 
 async function dashboard() {
@@ -379,6 +395,35 @@ async function dashboard() {
   console.log('[Max] Generating dashboard...');
   generateDashboard(config.dataDir);
   console.log('[Max] Dashboard complete.');
+}
+
+/**
+ * Daily reader — fetches 1 article per topic bucket from Medium (and optionally
+ * Substack publications listed in data/reader-sources.json), appending to
+ * data/reading-log.json. Pure fetch, zero LLM calls, CI-safe.
+ *
+ * Runs daily alongside analytics collection. Weekly brain later synthesises
+ * patterns from the corpus.
+ */
+async function readDaily() {
+  const { fetchDailyReading } = await import('./analytics/reader.js');
+  const dataDir = process.env.MAX_DATA_DIR ?? fileURLToPath(new URL('../data', import.meta.url));
+  console.log('[Max] Starting daily reader...');
+  const result = await fetchDailyReading(dataDir);
+  console.log(`[Max] Reader done: +${result.added} added, ${result.skipped} skipped`);
+}
+
+/**
+ * Daily trend fetcher — pulls top HN stories to the running trend log.
+ * Pure fetch, zero LLM, CI-safe. Weekly brain synthesises themes from the
+ * accumulated headlines.
+ */
+async function fetchTrends() {
+  const { fetchDailyTrends } = await import('./analytics/trends.js');
+  const dataDir = process.env.MAX_DATA_DIR ?? fileURLToPath(new URL('../data', import.meta.url));
+  console.log('[Max] Starting daily trend fetcher...');
+  const result = await fetchDailyTrends(dataDir);
+  console.log(`[Max] Trends done: +${result.added} added, ${result.skipped} skipped`);
 }
 
 /**
@@ -742,6 +787,12 @@ async function main() {
       case 'dashboard':
         await dashboard();
         break;
+      case 'read-daily':
+        await readDaily();
+        break;
+      case 'fetch-trends':
+        await fetchTrends();
+        break;
       case 'post':
         await postBlueskyManual();
         break;
@@ -779,7 +830,7 @@ async function main() {
         await mediumEngage();
         break;
       default:
-        console.error(`Unknown mode: ${mode}. Use --mode daily|weekly|weekly-data|dashboard|post|generate-week|social-test-hn|social-test-reddit|social-test-twitter|social-post|social-engage|medium-engage|social-test-medium|social-test-substack|publish-substack`);
+        console.error(`Unknown mode: ${mode}. Use --mode daily|weekly|weekly-data|dashboard|read-daily|fetch-trends|post|generate-week|social-test-hn|social-test-reddit|social-test-twitter|social-post|social-engage|medium-engage|social-test-medium|social-test-substack|publish-substack`);
         process.exit(1);
     }
   } catch (err) {

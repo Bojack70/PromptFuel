@@ -10,7 +10,7 @@ interface DigestInput {
   snapshot: DaySnapshot;
   stage: WarmupStage;
   todaysPosts: ContentLogEntry[];
-  pregeneratedToday?: { bluesky?: { text: string }; devto?: { title: string }; medium?: { title: string }; substack?: { note: string } } | null;
+  pregeneratedToday?: { bluesky?: { text: string }; twitter?: { text: string; category: string }; devto?: { title: string }; medium?: { title: string }; substack?: { note: string } } | null;
 }
 
 function fmt(n: number): string {
@@ -25,8 +25,9 @@ function delta(n: number): string {
 
 function buildTodaysChecklist(stage: WarmupStage, date: string, pre: DigestInput['pregeneratedToday']): string {
   const utcDay = new Date(date + 'T12:00:00Z').getUTCDay();
-  const isDevtoDay = DEVTO_DAYS[stage].includes(utcDay);
-  const isSubstackDay = SUBSTACK_DAYS[stage].includes(utcDay);
+  // Calendar can override stage-based day rules — if pre has devto/substack content, treat as that day
+  const isDevtoDay = DEVTO_DAYS[stage].includes(utcDay) || !!pre?.devto;
+  const isSubstackDay = SUBSTACK_DAYS[stage].includes(utcDay) || !!pre?.substack;
   const isEngageDay = MEDIUM_ENGAGE_DAYS.includes(utcDay);
   const dayName = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][utcDay];
 
@@ -41,9 +42,11 @@ function buildTodaysChecklist(stage: WarmupStage, date: string, pre: DigestInput
 
   // MANUAL
   if (isDevtoDay && pre?.medium) {
+    const twitterPreview = pre.twitter?.text ?? pre.bluesky?.text ?? '';
+    const twitterCat = pre.twitter?.category ?? '';
     manualItems.push({
-      label: 'Medium',
-      preview: pre.medium.title,
+      label: 'Twitter + Medium',
+      preview: `🐦${twitterCat ? ` [${twitterCat}]` : ''} ${twitterPreview.slice(0, 55)}… | 📝 ${pre.medium.title.slice(0, 55)}…`,
       cmd: 'cd packages/max &amp;&amp; node dist/index.js --mode social-post --medium',
     });
   }

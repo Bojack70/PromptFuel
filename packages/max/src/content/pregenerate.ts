@@ -12,11 +12,16 @@
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { generateContent } from './claude.js';
-import { blueskyPrompt, devtoPrompt, mediumPrompt, tagsForCategory, type ContentCategory, type PromptContext } from './templates.js';
+import { blueskyPrompt, devtoPrompt, mediumPrompt, tagsForCategory, twitterStandalonePrompt, TWITTER_ROTATION, type ContentCategory, type TwitterCategory, type PromptContext } from './templates.js';
 import type { FormatInsights } from '../brain/format-research.js';
 import { reviewBlueskyPost, reviewArticle } from './quality.js';
 import { parseArticle } from '../publish/devto.js';
 import type { WeeklyCalendar } from './calendar.js';
+import { readingInsightForPrompt, bucketForCategory, type ReadingInsights } from '../brain/reading-insights.js';
+import { opinionsForPrompt } from './opinions.js';
+import { notebookForPrompt } from '../brain/notebook.js';
+import { trendsForPrompt, type TrendInsights } from '../brain/trend-insights.js';
+import { antiPolish } from './anti-polish.js';
 
 const FILE = 'pregenerated-content.json';
 
@@ -41,6 +46,13 @@ export interface PregeneratedPost {
     title: string;
     body: string;
     category: ContentCategory;
+    qualityPassed: boolean;
+    qualityScore: number;
+  } | null;
+  /** Twitter — dedicated human-first content, independent of Bluesky. */
+  twitter: {
+    text: string;
+    category: TwitterCategory;
     qualityPassed: boolean;
     qualityScore: number;
   } | null;
@@ -105,6 +117,8 @@ export async function pregenerateWeek(
   ctx: PromptContext,
   dataDir: string,
   formatInsights?: FormatInsights,
+  readingInsights?: ReadingInsights,
+  trendInsights?: TrendInsights,
 ): Promise<PregeneratedWeek> {
   console.log('[Max] Pre-generating week of content with Claude...');
 
@@ -125,11 +139,15 @@ export async function pregenerateWeek(
 
   for (const day of calendar.days) {
     const prior = existingByDate.get(day.date);
+    const dayIndex = calendar.days.indexOf(day);
+    const twitterCategory: TwitterCategory = TWITTER_ROTATION[dayIndex % TWITTER_ROTATION.length];
+
     const post: PregeneratedPost = {
       date: day.date,
       bluesky: prior?.bluesky ?? null,
       devto: prior?.devto ?? null,
       medium: prior?.medium ?? null,
+      twitter: prior?.twitter ?? null,
       substack: prior?.substack ?? null,
     };
 
@@ -138,9 +156,17 @@ export async function pregenerateWeek(
       try {
         console.log(`[Max] Pre-generating ${day.date} Bluesky (${day.bluesky}${day.blueskyFormat ? `/${day.blueskyFormat}` : ''})...`);
         const angleHint = day.blueskyAngle ? `\n\nANGLE FOR TODAY: ${day.blueskyAngle}` : '';
-        const prompt = blueskyPrompt(day.bluesky, { ...ctx, postFormat: day.blueskyFormat }) + angleHint;
+        const bucket = bucketForCategory(day.bluesky);
+        const readingHint = readingInsightForPrompt(readingInsights ?? null, bucket);
+        const opinionsHint = opinionsForPrompt(dataDir, bucket);
+        const notebookHint = notebookForPrompt(dataDir);
+        const trendHint = trendsForPrompt(trendInsights ?? null, bucket);
+        const prompt = blueskyPrompt(day.bluesky, { ...ctx, postFormat: day.blueskyFormat }) + angleHint + readingHint + opinionsHint + notebookHint + trendHint;
 
         let text = await generateBlueskyText(claudeApiKey, prompt);
+        const polished1 = antiPolish(text, 'bluesky');
+        if (polished1.changes.length > 0) console.log(`[Max]   anti-polish (bluesky): ${polished1.changes.join(', ')}`);
+        text = polished1.text;
         let quality = await reviewBlueskyPost(text, claudeApiKey);
 
         if (!quality.passed) {
@@ -148,6 +174,9 @@ export async function pregenerateWeek(
             claudeApiKey,
             `${prompt}\n\nIMPORTANT FEEDBACK: ${quality.score.feedback}. Address this.`,
           );
+          const polished2 = antiPolish(text, 'bluesky');
+          if (polished2.changes.length > 0) console.log(`[Max]   anti-polish retry (bluesky): ${polished2.changes.join(', ')}`);
+          text = polished2.text;
           quality = await reviewBlueskyPost(text, claudeApiKey);
         }
 
@@ -169,7 +198,12 @@ export async function pregenerateWeek(
       try {
         console.log(`[Max] Pre-generating ${day.date} Dev.to (${day.devto}${day.devtoFormat ? `/${day.devtoFormat}` : ''})...`);
         const angleHint = day.devtoAngle ? `\n\nFOCUS: ${day.devtoAngle}` : '';
-        const prompt = devtoPrompt(day.devto, { ...ctx, postFormat: day.devtoFormat }) + angleHint;
+        const bucket = bucketForCategory(day.devto);
+        const readingHint = readingInsightForPrompt(readingInsights ?? null, bucket);
+        const opinionsHint = opinionsForPrompt(dataDir, bucket);
+        const notebookHint = notebookForPrompt(dataDir);
+        const trendHint = trendsForPrompt(trendInsights ?? null, bucket);
+        const prompt = devtoPrompt(day.devto, { ...ctx, postFormat: day.devtoFormat }) + angleHint + readingHint + opinionsHint + notebookHint + trendHint;
 
         let markdown = await generateContent(claudeApiKey, prompt, {
           temperature: 0.8,
@@ -178,6 +212,9 @@ export async function pregenerateWeek(
         });
         let { title, body } = parseArticle(markdown);
         const tags = tagsForCategory(day.devto);
+        const polishedDev1 = antiPolish(body, 'devto');
+        if (polishedDev1.changes.length > 0) console.log(`[Max]   anti-polish (devto): ${polishedDev1.changes.join(', ')}`);
+        body = polishedDev1.text;
 
         let quality = await reviewArticle(title, body, claudeApiKey);
 
@@ -188,6 +225,9 @@ export async function pregenerateWeek(
             { temperature: 0.8, maxTokens: 4096, model: 'claude-haiku-4-5' },
           );
           ({ title, body } = parseArticle(markdown));
+          const polishedDev2 = antiPolish(body, 'devto');
+          if (polishedDev2.changes.length > 0) console.log(`[Max]   anti-polish retry (devto): ${polishedDev2.changes.join(', ')}`);
+          body = polishedDev2.text;
           quality = await reviewArticle(title, body, claudeApiKey);
         }
 
@@ -217,7 +257,12 @@ export async function pregenerateWeek(
         const mediumStyleHint = formatInsights?.mediumSummary
           ? `\n\nMEDIUM STYLE LEARNINGS (from trending articles this week — learn from these patterns, don't copy):\n${formatInsights.mediumSummary}`
           : '';
-        const prompt = mediumPrompt(mediumCategory, { ...ctx, postFormat: day.devtoFormat }) + angleHint + mediumStyleHint;
+        const bucket = bucketForCategory(mediumCategory);
+        const readingHint = readingInsightForPrompt(readingInsights ?? null, bucket);
+        const opinionsHint = opinionsForPrompt(dataDir, bucket);
+        const notebookHint = notebookForPrompt(dataDir);
+        const trendHint = trendsForPrompt(trendInsights ?? null, bucket);
+        const prompt = mediumPrompt(mediumCategory, { ...ctx, postFormat: day.devtoFormat }) + angleHint + mediumStyleHint + readingHint + opinionsHint + notebookHint + trendHint;
 
         let markdown = await generateContent(claudeApiKey, prompt, {
           temperature: 0.9,
@@ -225,6 +270,9 @@ export async function pregenerateWeek(
           model: 'claude-opus-4-7',
         });
         let { title, body } = parseArticle(markdown);
+        const polishedMed1 = antiPolish(body, 'medium');
+        if (polishedMed1.changes.length > 0) console.log(`[Max]   anti-polish (medium): ${polishedMed1.changes.join(', ')}`);
+        body = polishedMed1.text;
 
         let quality = await reviewArticle(title, body, claudeApiKey);
 
@@ -235,6 +283,9 @@ export async function pregenerateWeek(
             { temperature: 0.9, maxTokens: 4096, model: 'claude-opus-4-7' },
           );
           ({ title, body } = parseArticle(markdown));
+          const polishedMed2 = antiPolish(body, 'medium');
+          if (polishedMed2.changes.length > 0) console.log(`[Max]   anti-polish retry (medium): ${polishedMed2.changes.join(', ')}`);
+          body = polishedMed2.text;
           quality = await reviewArticle(title, body, claudeApiKey);
         }
 
@@ -248,6 +299,34 @@ export async function pregenerateWeek(
         console.log(`[Max]   Medium ${day.date}: ${quality.score.average}/10 (${quality.passed ? 'pass' : 'fail'})`);
       } catch (err) {
         console.warn(`[Max]   Medium pre-gen failed for ${day.date}:`, (err as Error).message);
+      }
+    }
+
+    // Generate Twitter post (every day, own category rotation, independent of Bluesky)
+    if (!post.twitter) {
+      try {
+        console.log(`[Max] Pre-generating ${day.date} Twitter (${twitterCategory})...`);
+        const bucket = bucketForCategory(twitterCategory);
+        const readingHint = readingInsightForPrompt(readingInsights ?? null, bucket);
+        const opinionsHint = opinionsForPrompt(dataDir, bucket);
+        const notebookHint = notebookForPrompt(dataDir);
+        const trendHint = trendsForPrompt(trendInsights ?? null, bucket);
+        const prompt = twitterStandalonePrompt(twitterCategory, ctx) + readingHint + opinionsHint + notebookHint + trendHint;
+        let text = await generateTwitterText(claudeApiKey, prompt);
+        const polishedTw = antiPolish(text, 'twitter');
+        if (polishedTw.changes.length > 0) console.log(`[Max]   anti-polish (twitter): ${polishedTw.changes.join(', ')}`);
+        text = polishedTw.text;
+        const quality = await reviewBlueskyPost(text, claudeApiKey); // reuse short-post reviewer
+
+        post.twitter = {
+          text,
+          category: twitterCategory,
+          qualityPassed: quality.passed,
+          qualityScore: quality.score.average,
+        };
+        console.log(`[Max]   Twitter ${day.date} (${twitterCategory}): ${quality.score.average}/10`);
+      } catch (err) {
+        console.warn(`[Max]   Twitter pre-gen failed for ${day.date}:`, (err as Error).message);
       }
     }
 
@@ -282,6 +361,29 @@ export async function pregenerateWeek(
   console.log(`[Max] Pre-generation complete: ${passed}/${posts.length} days with passing content`);
 
   return week;
+}
+
+async function generateTwitterText(apiKey: string, prompt: string): Promise<string> {
+  let text = await generateContent(apiKey, prompt, {
+    temperature: 0.92,
+    maxTokens: 150,
+    model: 'claude-haiku-4-5',
+  });
+
+  for (let attempt = 1; attempt <= 3 && text.length > 280; attempt++) {
+    text = await generateContent(
+      apiKey,
+      `${prompt}\n\nIMPORTANT: Previous attempt was ${text.length} chars. ABSOLUTE MAX is 280 chars. Be more concise.`,
+      { temperature: 0.7, maxTokens: 100, model: 'claude-haiku-4-5' },
+    );
+  }
+
+  if (text.length > 280) {
+    const truncated = text.slice(0, 277);
+    text = truncated.slice(0, truncated.lastIndexOf(' ')) + '...';
+  }
+
+  return text.trim();
 }
 
 async function generateBlueskyText(apiKey: string, prompt: string): Promise<string> {
