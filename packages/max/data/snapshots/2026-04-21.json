@@ -1,6 +1,6 @@
 {
   "date": "2026-04-21",
-  "collectedAt": "2026-04-21T07:44:47.193Z",
+  "collectedAt": "2026-04-21T07:45:21.458Z",
   "github": {
     "stars": 0,
     "forks": 0,
@@ -18,6 +18,11 @@
   },
   "npm": {
     "packages": {
+      "@promptfuel/mcp": {
+        "downloadsLastDay": 0,
+        "downloadsLastWeek": 7,
+        "downloadsLastMonth": 52
+      },
       "@promptfuel/sdk": {
         "downloadsLastDay": 0,
         "downloadsLastWeek": 2,
@@ -27,11 +32,6 @@
         "downloadsLastDay": 27,
         "downloadsLastWeek": 79,
         "downloadsLastMonth": 2376
-      },
-      "@promptfuel/mcp": {
-        "downloadsLastDay": 0,
-        "downloadsLastWeek": 7,
-        "downloadsLastMonth": 52
       },
       "@promptfuel/core": {
         "downloadsLastDay": 0,
