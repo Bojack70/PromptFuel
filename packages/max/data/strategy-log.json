@@ -20,6 +20,23 @@
       }
     },
     "id": "2026-W17-category_shift",
-    "status": "active"
+    "status": "evaluated",
+    "outcome": {
+      "evaluatedAt": "2026-04-21T07:30:05.382Z",
+      "metricsBefore": {
+        "starsDelta": 0,
+        "npmDownloadsWeek": 0,
+        "uniqueViews": 0,
+        "avgEngagement": 0
+      },
+      "metricsAfter": {
+        "starsDelta": 0,
+        "npmDownloadsWeek": 75,
+        "uniqueViews": 0,
+        "avgEngagement": 0.48
+      },
+      "verdict": "neutral",
+      "summary": "neutral: npm +75"
+    }
   }
 ]

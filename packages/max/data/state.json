@@ -10,7 +10,7 @@
   "warmupStartDate": "2026-03-24",
   "lastContentRun": "2026-04-20T08:01:48.158Z",
   "growthStatus": "stalled",
-  "stalledWeeks": 1,
+  "stalledWeeks": 2,
   "lastGoalEval": {
     "week": "2026-04-13",
     "status": "stalled",
@@ -21,6 +21,7 @@
       "views"
     ]
   },
-  "lastEngagementRun": "2026-04-20T13:12:19.118Z",
-  "lastCorrelationRun": "2026-04-20T13:12:19.118Z"
+  "lastEngagementRun": "2026-04-21T07:30:05.383Z",
+  "lastCorrelationRun": "2026-04-21T07:30:05.383Z",
+  "lastWeeklyDataRun": "2026-04-21T07:30:05.383Z"
 }
