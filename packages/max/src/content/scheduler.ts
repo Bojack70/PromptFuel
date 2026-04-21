@@ -32,13 +32,15 @@ const ALL_CATEGORIES: ContentCategory[] = [
   'mystery_interactive', 'character_dark',
   // Substack-native categories — also scheduled for Bluesky/Dev.to (they have prompts for both)
   'letter', 'field_notes', 'essay_long', 'contrarian', 'thread_story',
+  // Signature narrative style — low cadence (Medium only, ~1x/month)
+  'window_seat',
 ];
 const WARMUP_CATEGORIES: ContentCategory[] = ['tip', 'comparison', 'tutorial', 'opinion', 'launch'];
 
 // Hard-promo categories: explicitly sell PromptFuel. Cap at 2/week.
 export const PROMO_CATEGORIES: ContentCategory[] = ['launch', 'stats'];
 // Pure audience-building: no product mention. Ensure at least 2/week.
-export const AUDIENCE_CATEGORIES: ContentCategory[] = ['ai_general', 'economics', 'philosophy', 'short_story', 'mystery_interactive', 'character_dark'];
+export const AUDIENCE_CATEGORIES: ContentCategory[] = ['ai_general', 'economics', 'philosophy', 'short_story', 'mystery_interactive', 'character_dark', 'window_seat'];
 
 // Dev.to posting days by stage (0=Sun, 1=Mon, ... 6=Sat)
 export const DEVTO_DAYS: Record<WarmupStage, number[]> = {

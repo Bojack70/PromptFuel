@@ -13,6 +13,13 @@ import { loadEngagement, type EngagementSnapshot, type BlueskyEngagement, type D
 import { loadCorrelationReport, type CorrelationReport } from '../brain/correlation.js';
 import { loadStrategyLog, type StrategyDecision } from '../brain/strategy.js';
 import { getStage, DEVTO_DAYS, SUBSTACK_DAYS, MEDIUM_ENGAGE_DAYS } from '../content/scheduler.js';
+import { loadReadingLog } from '../analytics/reader.js';
+import { loadReadingInsights } from '../brain/reading-insights.js';
+import { loadTrendInsights } from '../brain/trend-insights.js';
+import { loadTrendsLog } from '../analytics/trends.js';
+import { loadNotebook } from '../brain/notebook.js';
+import { loadOpinions } from '../content/opinions.js';
+import { loadLocalEngagement } from '../analytics/engagement-local.js';
 
 function loadAllSnapshots(dataDir: string): DaySnapshot[] {
   const dir = join(dataDir, 'snapshots');
@@ -157,6 +164,167 @@ function buildStrategySection(dataDir: string): string {
 </div>`;
 }
 
+/**
+ * Content Intelligence — visibility into what feeds each content prompt:
+ * reader corpus, trend themes, notebook entries, opinion coverage.
+ * Each block renders whatever data is available; missing data just skips.
+ */
+function buildContentIntelligenceSection(dataDir: string): string {
+  const readingLog = loadReadingLog(dataDir);
+  const readingInsights = loadReadingInsights(dataDir);
+  const trendsLog = loadTrendsLog(dataDir);
+  const trendInsights = loadTrendInsights(dataDir);
+  const notebook = loadNotebook(dataDir);
+  const opinions = loadOpinions(dataDir);
+
+  // All empty? render nothing.
+  if (
+    readingLog.entries.length === 0
+    && trendsLog.entries.length === 0
+    && notebook.entries.length === 0
+    && opinions.length === 0
+  ) return '';
+
+  const cutoff = new Date();
+  cutoff.setUTCDate(cutoff.getUTCDate() - 7);
+  const cutoffStr = cutoff.toISOString().split('T')[0];
+
+  // Reader corpus: entries per bucket (last 7 days + total)
+  const bucketCounts: Record<string, { recent: number; total: number }> = {};
+  for (const e of readingLog.entries) {
+    const b = bucketCounts[e.bucket] ?? { recent: 0, total: 0 };
+    b.total++;
+    if (e.date >= cutoffStr) b.recent++;
+    bucketCounts[e.bucket] = b;
+  }
+  const readerCards = Object.entries(bucketCounts)
+    .sort((a, b) => b[1].total - a[1].total)
+    .map(([bucket, { recent, total }]) =>
+      `<div style="background:#0f172a;border:1px solid #334155;border-radius:8px;padding:10px 14px">
+        <div style="font-size:12px;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">${bucket}</div>
+        <div style="font-size:18px;font-weight:700">${fmt(recent)} <span style="font-size:12px;color:#6b7280;font-weight:400">/ ${fmt(total)} total</span></div>
+      </div>`,
+    ).join('');
+
+  // Trends: hot themes + avoid list
+  const themesHtml = trendInsights && trendInsights.hotThemes.length > 0
+    ? `<div>
+        <div style="font-size:12px;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Hot Themes (${trendInsights.weekOf}, ${trendInsights.headlinesAnalysed} headlines)</div>
+        ${trendInsights.hotThemes.map((t) => `<span style="display:inline-block;background:#312e81;color:#c7d2fe;border-radius:999px;padding:4px 10px;margin:3px 4px 3px 0;font-size:12px">${t}</span>`).join('')}
+        ${trendInsights.avoidList.length > 0 ? `<div style="margin-top:10px"><div style="font-size:12px;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Over-saturated — avoid</div>${trendInsights.avoidList.map((t) => `<span style="display:inline-block;background:#7f1d1d;color:#fecaca;border-radius:999px;padding:4px 10px;margin:3px 4px 3px 0;font-size:12px">${t}</span>`).join('')}</div>` : ''}
+      </div>`
+    : `<div style="color:#6b7280;font-size:13px">No trend synthesis yet (runs weekly — will appear after first Monday pregen with ≥10 HN headlines). Raw log: ${trendsLog.entries.length} headlines captured.</div>`;
+
+  // Notebook: last 5 entries
+  const recentNotebook = notebook.entries.slice(-5).reverse();
+  const notebookHtml = recentNotebook.length > 0
+    ? recentNotebook.map((n) =>
+        `<div style="background:#0f172a;border-left:3px solid #60a5fa;border-radius:4px;padding:10px 14px;margin-bottom:8px">
+          <div style="font-size:14px;color:#e2e8f0;line-height:1.4">${n.observation}</div>
+          <div style="font-size:11px;color:#6b7280;margin-top:4px">${n.date} · ${n.source}${n.weekOf ? ` · week of ${n.weekOf}` : ''}</div>
+        </div>`,
+      ).join('')
+    : `<div style="color:#6b7280;font-size:13px">Notebook empty — first entries arrive on the next weekly brain run.</div>`;
+
+  // Opinions: heat coverage by bucket
+  const opinionCoverage: Record<string, { moderate: number; spicy: number }> = {};
+  for (const o of opinions) {
+    for (const b of o.buckets) {
+      const cov = opinionCoverage[b] ?? { moderate: 0, spicy: 0 };
+      if (o.heat === 'spicy') cov.spicy++;
+      else cov.moderate++;
+      opinionCoverage[b] = cov;
+    }
+  }
+  const opinionRows = Object.entries(opinionCoverage)
+    .sort((a, b) => (b[1].moderate + b[1].spicy) - (a[1].moderate + a[1].spicy))
+    .map(([bucket, { moderate, spicy }]) =>
+      `<tr>
+        <td>${bucket}</td>
+        <td style="text-align:right">${moderate}</td>
+        <td style="text-align:right;color:#fb923c">${spicy}</td>
+        <td style="text-align:right;font-weight:700">${moderate + spicy}</td>
+      </tr>`,
+    ).join('');
+
+  return `
+<div class="chart-card" style="margin-top:24px">
+  <h2>Content Intelligence</h2>
+  <p style="color:#94a3b8;font-size:13px;margin-bottom:16px">What feeds each content prompt: accumulated reading corpus, this week's hot themes, recent notebook observations, Nate's worldview coverage.</p>
+
+  <div style="margin-bottom:20px">
+    <h3 style="font-size:14px;color:#e2e8f0;margin-bottom:10px">Reader Corpus <span style="font-size:12px;color:#6b7280;font-weight:400">— last 7 days / total</span></h3>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px">${readerCards || '<div style="color:#6b7280;font-size:13px">No articles read yet — --mode read-daily kicks off in next CI run.</div>'}</div>
+  </div>
+
+  <div style="margin-bottom:20px">
+    <h3 style="font-size:14px;color:#e2e8f0;margin-bottom:10px">Trend Themes</h3>
+    ${themesHtml}
+  </div>
+
+  <div style="margin-bottom:20px">
+    <h3 style="font-size:14px;color:#e2e8f0;margin-bottom:10px">Notebook — recent observations</h3>
+    ${notebookHtml}
+  </div>
+
+  <div>
+    <h3 style="font-size:14px;color:#e2e8f0;margin-bottom:10px">Nate's Opinions — ${opinions.length} stances, coverage by bucket</h3>
+    <table>
+      <tr><th>Bucket</th><th style="text-align:right">Moderate</th><th style="text-align:right;color:#fb923c">Spicy</th><th style="text-align:right">Total</th></tr>
+      ${opinionRows || '<tr><td colspan="4" style="color:#6b7280">No opinions loaded.</td></tr>'}
+    </table>
+  </div>
+</div>`;
+}
+
+/**
+ * Local engagement — Medium/Substack/Twitter numbers from the OpenTabs scrapers.
+ * Renders the latest snapshot; falls back to an explainer if the corpus is empty.
+ */
+function buildLocalEngagementSection(dataDir: string): string {
+  const log = loadLocalEngagement(dataDir);
+  if (log.snapshots.length === 0) {
+    return `
+<div class="chart-card" style="margin-top:24px">
+  <h2>Cross-Platform Engagement (Medium / Substack / Twitter)</h2>
+  <p style="color:#94a3b8;font-size:13px">Not collected yet. Runs locally (needs OpenTabs + logged-in Brave) during the Monday <code>--mode weekly</code> pass, or via <code>--mode collect-engagement-local</code>.</p>
+  <p style="color:#6b7280;font-size:12px;margin-top:8px">Bluesky + Dev.to are tracked via API in CI daily — see Engagement section above. Medium/Substack/Twitter have no public metrics APIs, so they need the browser-automation pass.</p>
+</div>`;
+  }
+
+  const latest = log.snapshots[log.snapshots.length - 1];
+  const cards: string[] = [];
+
+  if (latest.medium) {
+    cards.push(`<div style="background:#0f172a;border:1px solid #334155;border-radius:10px;padding:14px">
+      <div style="font-size:12px;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Medium</div>
+      <div style="font-size:22px;font-weight:700">${latest.medium.followers !== null ? fmt(latest.medium.followers) : '?'}<span style="font-size:12px;color:#6b7280;font-weight:400;margin-left:6px">followers</span></div>
+      <div style="font-size:13px;color:#94a3b8;margin-top:4px">${latest.medium.articles.length} articles${latest.medium.totalViews !== null ? ` · ${fmt(latest.medium.totalViews)} views` : ''}${latest.medium.totalReads !== null ? ` · ${fmt(latest.medium.totalReads)} reads` : ''}</div>
+    </div>`);
+  }
+  if (latest.substack) {
+    cards.push(`<div style="background:#0f172a;border:1px solid #334155;border-radius:10px;padding:14px">
+      <div style="font-size:12px;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Substack</div>
+      <div style="font-size:22px;font-weight:700">${latest.substack.subscribers !== null ? fmt(latest.substack.subscribers) : '?'}<span style="font-size:12px;color:#6b7280;font-weight:400;margin-left:6px">subscribers</span></div>
+      <div style="font-size:13px;color:#94a3b8;margin-top:4px">${latest.substack.posts.length} posts · ${latest.substack.notes.length} notes tracked</div>
+    </div>`);
+  }
+  if (latest.twitter) {
+    cards.push(`<div style="background:#0f172a;border:1px solid #334155;border-radius:10px;padding:14px">
+      <div style="font-size:12px;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Twitter / X</div>
+      <div style="font-size:22px;font-weight:700">${latest.twitter.followers !== null ? fmt(latest.twitter.followers) : '?'}<span style="font-size:12px;color:#6b7280;font-weight:400;margin-left:6px">followers</span></div>
+      <div style="font-size:13px;color:#94a3b8;margin-top:4px">${latest.twitter.tweets.length} recent tweets tracked</div>
+    </div>`);
+  }
+
+  return `
+<div class="chart-card" style="margin-top:24px">
+  <h2>Cross-Platform Engagement (Medium / Substack / Twitter)</h2>
+  <p style="color:#94a3b8;font-size:12px;margin-bottom:12px">Latest snapshot: ${latest.collectedAt}. Collected locally via OpenTabs scrapers — selectors may need periodic calibration.</p>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px">${cards.join('')}</div>
+</div>`;
+}
+
 function buildWeekCalendar(dataDir: string): string {
   const calFile = join(dataDir, 'calendar.json');
   const preFile = join(dataDir, 'pregenerated-content.json');
@@ -275,6 +443,8 @@ export function generateDashboard(dataDir: string): void {
   const engagementCards = buildEngagementSection(dataDir);
   const correlationSection = buildCorrelationSection(dataDir);
   const strategySection = buildStrategySection(dataDir);
+  const contentIntelligenceSection = buildContentIntelligenceSection(dataDir);
+  const localEngagementSection = buildLocalEngagementSection(dataDir);
 
   const html = `<!DOCTYPE html>
 <html lang="en">
@@ -405,6 +575,8 @@ ${categoryAvgs.length > 0 ? `
 
 ${correlationSection}
 ${strategySection}
+${contentIntelligenceSection}
+${localEngagementSection}
 
 <script>
 const dates = ${JSON.stringify(dates)};

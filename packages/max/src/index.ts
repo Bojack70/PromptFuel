@@ -414,6 +414,38 @@ async function readDaily() {
 }
 
 /**
+ * Local cross-platform engagement collector — scrapes Medium/Substack/Twitter
+ * via OpenTabs (needs logged-in Brave session). Cannot run in CI.
+ *
+ * Usage:
+ *   node dist/index.js --mode collect-engagement-local                (all 3)
+ *   node dist/index.js --mode collect-engagement-local --dry-run      (dumps DOM, saves nothing)
+ *   node dist/index.js --mode collect-engagement-local --only medium
+ */
+async function collectEngagementLocal() {
+  const { collectLocalEngagement } = await import('./analytics/engagement-local.js');
+  const dataDir = process.env.MAX_DATA_DIR ?? fileURLToPath(new URL('../data', import.meta.url));
+  const onlyIdx = args.indexOf('--only');
+  const only = onlyIdx !== -1 ? args[onlyIdx + 1] as 'medium' | 'substack' | 'twitter' : undefined;
+  const dryRun = args.includes('--dry-run');
+
+  const handles = {
+    medium: process.env.MEDIUM_HANDLE ?? 'natevoss.dev',
+    substack: process.env.SUBSTACK_HANDLE ?? 'natevoss',
+    twitter: process.env.TWITTER_HANDLE ?? 'natevoss',
+  };
+
+  console.log(`[Max] Collecting local engagement (medium=${handles.medium}, substack=${handles.substack}, twitter=${handles.twitter})${dryRun ? ' [dry-run]' : ''}${only ? ` [only=${only}]` : ''}`);
+  const snapshot = await collectLocalEngagement({ dataDir, handles, dryRun, only });
+
+  console.log('[Max] Local engagement complete:');
+  if (snapshot.medium) console.log(`  Medium: articles=${snapshot.medium.articles.length} followers=${snapshot.medium.followers ?? '?'}`);
+  if (snapshot.substack) console.log(`  Substack: subs=${snapshot.substack.subscribers ?? '?'} posts=${snapshot.substack.posts.length} notes=${snapshot.substack.notes.length}`);
+  if (snapshot.twitter) console.log(`  Twitter: followers=${snapshot.twitter.followers ?? '?'} tweets=${snapshot.twitter.tweets.length}`);
+  if (dryRun) console.log('  (dry-run — no data saved; check data/dom-dumps/ for HTML dumps)');
+}
+
+/**
  * Daily trend fetcher — pulls top HN stories to the running trend log.
  * Pure fetch, zero LLM, CI-safe. Weekly brain synthesises themes from the
  * accumulated headlines.
@@ -793,6 +825,9 @@ async function main() {
       case 'fetch-trends':
         await fetchTrends();
         break;
+      case 'collect-engagement-local':
+        await collectEngagementLocal();
+        break;
       case 'post':
         await postBlueskyManual();
         break;
@@ -830,7 +865,7 @@ async function main() {
         await mediumEngage();
         break;
       default:
-        console.error(`Unknown mode: ${mode}. Use --mode daily|weekly|weekly-data|dashboard|read-daily|fetch-trends|post|generate-week|social-test-hn|social-test-reddit|social-test-twitter|social-post|social-engage|medium-engage|social-test-medium|social-test-substack|publish-substack`);
+        console.error(`Unknown mode: ${mode}. Use --mode daily|weekly|weekly-data|dashboard|read-daily|fetch-trends|collect-engagement-local|post|generate-week|social-test-hn|social-test-reddit|social-test-twitter|social-post|social-engage|medium-engage|social-test-medium|social-test-substack|publish-substack`);
         process.exit(1);
     }
   } catch (err) {

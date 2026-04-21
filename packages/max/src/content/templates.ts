@@ -22,7 +22,9 @@ export type ContentCategory =
   | 'field_notes'         // 5-7 numbered observations from the week — raw, specific, conversational
   | 'essay_long'          // Deep 1,500-2,500w essay — one idea fully developed — earns paid subscribers
   | 'contrarian'          // One widely-held belief rigorously dismantled — sustained argument, not hot take
-  | 'thread_story';       // Story in short numbered sections — serial rhythm, each section 2-3 sentences
+  | 'thread_story'        // Story in short numbered sections — serial rhythm, each section 2-3 sentences
+  // Signature narrative style — modeled on Nate's "window seat" article
+  | 'window_seat';        // First-person meta-reflection spiraling out of one small physical moment
 
 export interface PromptContext {
   stars: number;
@@ -121,6 +123,9 @@ const BLUESKY_PROMPTS: Record<ContentCategory, (ctx: PromptContext) => string> =
 
   thread_story: (ctx) =>
     `${PERSONA_GENERAL}\n\n${BLUESKY_RULES}\n\nWrite the opening 2-3 sentences of a story told in numbered sections. Drop straight into the scene — no setup, no context. Something happened. We don't know what yet. The last word should make the reader want section 2.${AVOID_REPETITION(ctx.recentPosts)}`,
+
+  window_seat: (ctx) =>
+    `${PERSONA_GENERAL}\n\n${BLUESKY_RULES}\n\nShare one small physical moment from Nate's day that his brain made bigger than it should have been. Concrete sensory detail (a window, a coffee, a sound), then one single line of meta-observation that quietly lands. No takeaways. No advice. Just the moment and the noticing. End on an image, not a lesson.${AVOID_REPETITION(ctx.recentPosts)}`,
 };
 
 const DEVTO_PROMPTS: Record<ContentCategory, (ctx: PromptContext) => string> = {
@@ -174,6 +179,9 @@ const DEVTO_PROMPTS: Record<ContentCategory, (ctx: PromptContext) => string> = {
 
   thread_story: (ctx) =>
     `${PERSONA_GENERAL}\n\n${DEVTO_RULES}\n\nWrite a short story in numbered sections (1 through 8-12). Each section is 2-4 sentences. The story is about a developer or founder facing a specific turning point — something that forces a decision. The rhythm should pull the reader from section to section. No section should feel like filler. End on resonance, not resolution. 600-900 words total. Tag suggestions: discuss, ai, career, watercooler.${AVOID_REPETITION(ctx.recentPosts)}`,
+
+  window_seat: (ctx) =>
+    `${PERSONA_GENERAL}\n\n${DEVTO_RULES}\n\nNote: window_seat pieces rarely fit Dev.to's tech-audience tone. Only write for Dev.to if there's a tech-adjacent moment worth noticing — a shipped feature that suddenly felt hollow, a codebase that aged differently than expected, a developer habit that revealed something. 600-900 words. Open with the physical moment. Let the thought spiral. End on the image. No takeaways.${AVOID_REPETITION(ctx.recentPosts)}`,
 };
 
 export function blueskyPrompt(category: ContentCategory, ctx: PromptContext): string {
@@ -274,6 +282,7 @@ function topicForCategory(category: ContentCategory, _ctx: PromptContext): strin
     essay_long: `Topic: state the thesis of a long essay in one sentence — one big, specific, defensible claim about AI, technology, or building software. Something you could argue for 2,000 words.`,
     contrarian: `Topic: state one widely-held belief in tech or AI that you think is wrong — and that you could actually defend with evidence. Not edgy for the sake of it. Genuinely debatable.`,
     thread_story: `Topic: write the opening 2-3 sentences of a story told in numbered sections. Drop straight into a scene involving a developer or founder at a turning point. No setup — just the moment.`,
+    window_seat: `Topic: share one small physical moment today where your brain, unprompted, made it into something much bigger. Sensory detail first, meta-observation second. No advice, no takeaway — just the noticing.`,
   };
   return topics[category];
 }
@@ -354,6 +363,29 @@ const MEDIUM_PROMPTS: Record<ContentCategory, (ctx: PromptContext) => string> = 
 
   thread_story: (ctx) =>
     `${PERSONA_MEDIUM}\n\n${MEDIUM_RULES_STORY}\n\nWrite a story told in 8-12 short numbered sections. Each section is 2-4 sentences. The story is about a developer or founder at a turning point — a moment that forces a choice. The rhythm: each section ends in a way that makes the reader need the next one. No section is filler. The last section ends on resonance, not resolution. Do not explain the meaning — let the structure carry it. No product pitches.${AVOID_REPETITION(ctx.recentPosts)}`,
+
+  window_seat: (ctx) =>
+    `${PERSONA_MEDIUM}\n\nWrite a signature-voice personal essay modeled on the "window seat" style. 1,200-1,500 words.
+
+MANDATORY DNA of this format (learn from it, don't copy phrasing):
+- Open with 3-4 fragment sentences that disarm the reader ("First post. No plan. Slightly terrified. Let's go.") — announce uncertainty, not authority.
+- The spine is ONE small physical moment: a window, a coffee, a sound, a weather shift, a stranger's gesture. Concrete and sensory.
+- Let the moment crack open into meta-reflection gradually — not all at once.
+- Personify the indifferent world ("the clouds, frankly, did not care") — a deadpan move that gives objects unexpected agency.
+- Include 2-3 specific self-deprecating details that are COMPLETELY concrete, not vague. "The cold plunge lasted eleven seconds. The gratitude journal is currently a coaster." These are what make it feel lived-in.
+- Use ${''}\\n---\\n${''} horizontal rules for section breaks (not headers, not bullets). Each section is its own beat.
+- Include 1-2 paradox lines as hinges — "destiny is the story you tell after you've already done the work" — sentences that reframe something the reader thought was settled.
+- Single-sentence paragraphs as rhythm punctuation, interspersed with 2-3 sentence ones.
+- Em-dashes sparingly (max 5 in the whole piece) — they're a Nate-cadence move, not a tic.
+- End on an understated small instruction to notice something, NEVER "follow your dreams" or any call-to-action with five-year-plan vibes.
+- DO NOT use bullet lists, headers beyond one H2, or listicle structure. This is narrative-essay, not advice-post.
+
+What this format is NOT:
+- Not a productivity post. Not a how-to. Not a career lesson dressed up.
+- No "3 things I learned" framing. No numbered takeaways.
+- No mention of PromptFuel, Nate's tools, AI, or any product — ever.
+
+Target publications: Personal Growth, Mind Cafe, The Creative Cafe, Human Parts. End with a direct question about what the reader has been deferring. No product pitches.${AVOID_REPETITION(ctx.recentPosts)}`,
 };
 
 export function mediumPrompt(category: ContentCategory, ctx: PromptContext): string {
@@ -380,6 +412,7 @@ export function tagsForCategory(category: ContentCategory): string[] {
     essay_long:    ['ai', 'discuss', 'webdev', 'career'],
     contrarian:    ['discuss', 'ai', 'career', 'webdev'],
     thread_story:  ['discuss', 'ai', 'career', 'watercooler'],
+    window_seat:   ['discuss', 'career', 'productivity', 'watercooler'],
   };
   return map[category];
 }
@@ -407,6 +440,7 @@ export function mediumPublicationForCategory(category: ContentCategory): [string
     essay_long:   ['Towards AI', 'Mind Cafe'],
     contrarian:   ['Mind Cafe', 'The Ascent'],
     thread_story: ['The Creative Cafe', 'The Narrative Arc'],
+    window_seat:  ['Personal Growth', 'Mind Cafe'],
   };
   return map[category];
 }

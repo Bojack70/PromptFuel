@@ -168,7 +168,7 @@ const GENERATION_PROMPT = (stage: WarmupStage, mondayDate: string, ctx?: Calenda
 
 Current warmup stage: ${stage}
 
-Content categories available: tip, comparison, tutorial, stats, launch, opinion, ai_general, economics, philosophy, short_story, mystery_interactive, character_dark
+Content categories available: tip, comparison, tutorial, stats, launch, opinion, ai_general, economics, philosophy, short_story, mystery_interactive, character_dark, window_seat
 ${stage === 'warmup' ? 'NOTE: During warmup, do NOT use the "stats" category — the account is too new for metrics-bragging to look authentic.' : ''}
 
 Post formats available (assign one per day):
@@ -189,6 +189,7 @@ Rules:
 - Promo ratio: use "launch" or "stats" (hard-promo) at most 2 times across the full week
 - Audience-building: include at least 2 posts from "ai_general", "economics", "philosophy", "short_story", "mystery_interactive", or "character_dark" — these build Nate's personal brand without mentioning PromptFuel
 - Use "short_story" at most once per week, "mystery_interactive" at most once per week, "character_dark" at most once per week — these are Medium-first formats, don't overuse them on Bluesky
+- Use "window_seat" at most ONCE per MONTH (roughly 1 week in 4). This is Nate's signature personal-essay format — scarce on purpose. If using this week, use it only for Medium (devto) and only on a Thursday or Friday slot. Do NOT use on Bluesky.
 - Assign blueskyFormat based on what's working this week (from format insights above)
 
 Respond in EXACTLY this JSON format, nothing else:

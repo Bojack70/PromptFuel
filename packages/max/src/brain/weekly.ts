@@ -672,6 +672,27 @@ export async function weeklyReflection(config: MaxConfig): Promise<void> {
     readingInsights = loadReadingInsights(config.dataDir) ?? undefined;
   }
 
+  // 10b-i. Cross-platform engagement (Medium/Substack/Twitter via OpenTabs)
+  // Local-only — CI has no browser. Non-fatal: if OpenTabs isn't running or
+  // scrapers find no data, the weekly flow still completes. Data is stored
+  // in data/engagement-local.json for dashboard + future strategy inputs.
+  try {
+    const { collectLocalEngagement } = await import('../analytics/engagement-local.js');
+    const handles = {
+      medium: process.env.MEDIUM_HANDLE ?? 'natevoss.dev',
+      substack: process.env.SUBSTACK_HANDLE ?? 'natevoss',
+      twitter: process.env.TWITTER_HANDLE ?? 'natevoss',
+    };
+    console.log('[Max] Collecting local (OpenTabs) engagement from Medium/Substack/Twitter...');
+    const snap = await collectLocalEngagement({ dataDir: config.dataDir, handles });
+    console.log(`[Max]   Medium: ${snap.medium?.articles.length ?? 0} articles, followers=${snap.medium?.followers ?? '?'}`);
+    console.log(`[Max]   Substack: subs=${snap.substack?.subscribers ?? '?'}, posts=${snap.substack?.posts.length ?? 0}`);
+    console.log(`[Max]   Twitter: followers=${snap.twitter?.followers ?? '?'}, tweets=${snap.twitter?.tweets.length ?? 0}`);
+  } catch (err) {
+    console.warn('[Max] Local engagement collection skipped (non-fatal):', (err as Error).message);
+    console.warn('[Max]   (OpenTabs likely not running — start with `opentabs start` and re-run if you want these numbers)');
+  }
+
   // 10b-ii. Trend synthesis — distil hot themes from the week's HN headlines
   let trendInsights: TrendInsights | undefined;
   try {

@@ -193,7 +193,7 @@ export function bucketForCategory(category: string): string {
   if (category === 'philosophy' || category === 'essay_long') return 'philosophy-psychology';
   if (category === 'short_story' || category === 'mystery_interactive' || category === 'thread_story'
     || category === 'character_dark') return 'creative-writing';
-  if (category === 'letter' || category === 'field_notes') return 'life-reflection';
+  if (category === 'letter' || category === 'field_notes' || category === 'window_seat') return 'life-reflection';
   if (category === 'contrarian') return 'humor-satire';
 
   return 'life-reflection';
