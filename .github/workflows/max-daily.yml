@@ -56,6 +56,15 @@ jobs:
           MAX_DATA_DIR: packages/max/data
         run: node packages/max/dist/index.js --mode daily
 
+      # Refresh dashboard HTML so the Today's Actions card reflects today's
+      # state (which manual items to run, which commands, current day).
+      # Otherwise the dashboard would only regenerate on Monday's weekly pass.
+      - name: Regenerate dashboard
+        env:
+          MAX_DATA_DIR: packages/max/data
+        run: node packages/max/dist/index.js --mode dashboard
+        continue-on-error: true
+
       - name: Commit snapshots
         run: |
           git config user.name "Max Agent"
