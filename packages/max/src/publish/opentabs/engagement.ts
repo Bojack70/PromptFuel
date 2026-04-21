@@ -100,15 +100,26 @@ export async function engageTwitter(dryRun: boolean): Promise<{ liked: number }>
 
 // ─── Reddit ─────────────────────────────────────────────────────────────────
 
-// Short, generic developer-appropriate comments that fit most tech threads.
-// These are intentionally neutral so they work across topics.
-const REDDIT_COMMENTS = [
-  'Good write-up, thanks for sharing.',
-  'Interesting perspective. I ran into something similar a few months back.',
-  'Appreciate the detail here — saved me some digging.',
-  'This is a useful breakdown. Bookmarking it.',
-  'Solid post. The point about trade-offs especially resonates.',
-];
+/**
+ * REWRITE BEFORE ENABLING — see src/publish/opentabs/medium-engage.ts
+ * generateComment() for the voice-aware pattern that should replace this.
+ *
+ * The previous implementation was 5 hardcoded generic strings ("Good write-up,
+ * thanks for sharing." / "Interesting perspective, I ran into something..."
+ * / "Solid post, the point about trade-offs especially resonates.") — exactly
+ * the AI-cliché list every other voice-aware prompt in this codebase tries
+ * to avoid. They'd have shipped to Reddit the moment the karma gate flipped.
+ *
+ * This stub THROWS to make sure that can't happen silently. When Reddit
+ * commenting is unlocked (karma ≥ 50 AND Responsible Builder Policy cleared),
+ * replace this with a Claude-generated comment using the medium-engage
+ * pattern: PERSONA_GENERAL + 1 bucket-matched opinion + anti-polish pass.
+ */
+function generateRedditComment(_postTitle?: string, _postText?: string): string {
+  throw new Error(
+    '[Max] Reddit comment generator not implemented. Rewrite using the medium-engage pattern before enabling. See src/publish/opentabs/medium-engage.ts#generateComment.',
+  );
+}
 
 /**
  * Upvote 1-2 posts on r/programming or r/webdev and optionally leave a comment.
@@ -188,7 +199,7 @@ export async function engageReddit(dryRun: boolean): Promise<{ upvoted: number; 
     if (postUrl) {
       console.log(`[Max] Engage Reddit: navigating to post to comment...`);
       await jitter(3000, 6000);
-      const comment = REDDIT_COMMENTS[Math.floor(Math.random() * REDDIT_COMMENTS.length)];
+      const comment = generateRedditComment(); // throws until reimplemented — see function above
 
       if (dryRun) {
         console.log(`[Max] Engage Reddit: DRY RUN — would comment: "${comment}"`);

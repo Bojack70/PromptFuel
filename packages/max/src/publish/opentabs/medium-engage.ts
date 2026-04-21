@@ -25,6 +25,8 @@
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { generateContent } from '../../content/claude.js';
+import { opinionsForPrompt } from '../../content/opinions.js';
+import { antiPolish } from '../../content/anti-polish.js';
 import {
   openTab,
   closeTab,
@@ -35,6 +37,21 @@ import {
   jitter,
   sleep,
 } from './client.js';
+
+/**
+ * Map a Medium topic tag to a reader bucket so comments can pull a relevant
+ * Nate opinion. Tech-ai is the default since medium-engage is dev-focused;
+ * other buckets activate when the topic explicitly maps there.
+ */
+function topicToBucket(topic: string): string {
+  const t = topic.toLowerCase();
+  if (t.includes('life') || t.includes('mindful') || t.includes('self-improvement') || t.includes('relationships')) return 'life-reflection';
+  if (t.includes('philosophy') || t.includes('psychology')) return 'philosophy-psychology';
+  if (t.includes('humor') || t.includes('satire')) return 'humor-satire';
+  if (t.includes('writing') || t.includes('creativity') || t.includes('fiction')) return 'creative-writing';
+  if (t.includes('productivity') || t.includes('startup') || t.includes('business') || t.includes('economics')) return 'work-economics';
+  return 'tech-ai';
+}
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -375,33 +392,63 @@ async function clapArticle(tabId: number, dryRun: boolean): Promise<number> {
 
 // ─── Comment generation ────────────────────────────────────────────────────
 
-const COMMENT_PROMPT = (title: string, excerpt: string) => `
-You're reading a Medium article as a thoughtful developer / writer. Write a short reply to leave in the Responses section.
+/**
+ * Build the comment prompt with Nate's voice stack injected:
+ *   • PERSONA line so it's a specific person, not "a thoughtful developer"
+ *   • 1 relevant opinion from data/nate-opinions.json (bucket-matched to topic)
+ *   • Existing hard rules (anti-AI-cliché, length, no em-dashes, imperfection)
+ *
+ * Keeps the prompt focused for a short reply — NOT the full post-generation
+ * stack (no reading-insights, no notebook, no trends — those are wrong shape
+ * for a 280-char response to someone else's article).
+ */
+const COMMENT_PROMPT = (title: string, excerpt: string, opinionsHint: string) => `
+You are Nate Voss — an indie developer who writes with dry humor and genuine observation, not corporate helpfulness. Write a short reply to leave in the Responses section of this Medium article.
 
 Article title: ${title}
 Article excerpt: ${excerpt}
+${opinionsHint}
 
 Hard rules — breaking any = failure:
 1. Reference a specific claim, example, or line from the article. No generic "great post" / "interesting read" / "well written".
 2. 1-3 sentences, under 280 characters total.
 3. No em-dashes (—). Use commas or periods instead.
-4. No "As an AI". No "Great insights". No "This resonated with me". No "Thanks for sharing".
+4. No "As an AI". No "Great insights". No "This resonated with me". No "Thanks for sharing". No "Solid post".
 5. Lowercase start is fine. Conversational register, not formal.
 6. Do NOT start with the word "I" more than once across the whole reply.
 7. Don't use hashtags, emojis, or exclamation marks.
 8. Add one tiny imperfection: a mid-sentence thought shift, a casual aside, or a hesitation word like "kind of", "honestly", "not sure but".
+9. The worldview stances above should SHAPE what you react to or how you frame it — do NOT quote them. If none of them fit this article cleanly, ignore them rather than forcing a fit.
 
 Write ONLY the response text. No quotes, no preamble, no sign-off.
 `.trim();
 
-async function generateComment(apiKey: string, title: string, excerpt: string): Promise<string> {
-  let text = await generateContent(apiKey, COMMENT_PROMPT(title, excerpt), {
+async function generateComment(
+  apiKey: string,
+  title: string,
+  excerpt: string,
+  dataDir: string,
+  topic: string,
+): Promise<string> {
+  // 1-opinion injection (count=1 — comments are short, 2 stances would dominate)
+  const bucket = topicToBucket(topic);
+  const opinionsHint = opinionsForPrompt(dataDir, bucket, 1);
+
+  let text = await generateContent(apiKey, COMMENT_PROMPT(title, excerpt, opinionsHint), {
     model: 'claude-haiku-4-5',
     temperature: 0.9,
     maxTokens: 120,
   });
   text = text.trim().replace(/^["']|["']$/g, '');
-  // Hard-strip em-dashes in case model ignored the rule
+
+  // Anti-polish pass — strips corpspeak ("leverage"→"use"), transition spam,
+  // hedge phrases, conclusion markers, remaining em-dashes. Platform='twitter'
+  // is tightest (bullets stripped, em-dash max 1) — right for short replies.
+  const polished = antiPolish(text, 'twitter');
+  if (polished.changes.length > 0) console.log(`[Max] medium-engage: anti-polish fired: ${polished.changes.join(', ')}`);
+  text = polished.text;
+
+  // Belt-and-suspenders: hard-strip any surviving em-dashes
   text = text.replace(/—/g, ', ').replace(/\s{2,}/g, ' ');
   if (text.length > 280) text = text.slice(0, 277).trimEnd() + '...';
   return text;
@@ -950,7 +997,7 @@ export async function engageMedium(config: MediumEngageConfig): Promise<MediumEn
         if (excerpt.length < 300) {
           console.log(`[Max] medium-engage: excerpt too short (${excerpt.length} chars), skipping comment`);
         } else {
-          const comment = await generateComment(config.claudeApiKey, title || article.title, excerpt);
+          const comment = await generateComment(config.claudeApiKey, title || article.title, excerpt, config.dataDir, topic);
           console.log(`[Max] medium-engage: generated comment — "${comment.slice(0, 80)}${comment.length > 80 ? '...' : ''}"`);
 
           const { posted, humanAssisted } = await postResponse(tab.id, comment, config.dryRun);
