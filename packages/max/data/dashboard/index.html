@@ -85,6 +85,13 @@
              
            </li>
        </ul>
+  
+<h3 style="font-size:13px;color:#93c5fd;margin:18px 0 8px 0;text-transform:uppercase;letter-spacing:0.5px">On demand — when breaking news happens</h3>
+<p style="color:#94a3b8;font-size:12px;margin-bottom:8px">React to a specific event with a genuine take (required: --topic). Respects the honest-take rule — no quality/performance claims without firsthand testing. Outputs to stdout + <code>data/reactive-posts.json</code>; you review before publishing.</p>
+<div style="background:#172554;border-left:3px solid #60a5fa;padding:10px 12px;border-radius:6px;font-size:12px">
+  <code style="display:block;background:#1e293b;color:#e2e8f0;padding:6px 10px;border-radius:4px;margin-bottom:4px">cd packages/max &amp;&amp; node dist/index.js --mode react --topic "your topic" --angle "your genuine take" --platform twitter</code>
+  <div style="color:#94a3b8">--angle is optional but recommended. --platform: twitter (default) | bluesky | medium.</div>
+</div>
 </div>
 
 <div style="margin-bottom:24px">
@@ -442,7 +449,7 @@
 
 <div class="chart-card" style="margin-top:24px">
   <h2>Content Intelligence</h2>
-  <p style="color:#94a3b8;font-size:13px;margin-bottom:16px">What feeds each content prompt: accumulated reading corpus, this week's hot themes, recent notebook observations, Nate's worldview coverage.</p>
+  <p style="color:#94a3b8;font-size:13px;margin-bottom:16px">What feeds each content prompt: accumulated reading corpus, this week's hot themes, news events Nate can honestly react to, recent notebook observations, Nate's worldview coverage.</p>
 
   <div style="margin-bottom:20px">
     <h3 style="font-size:14px;color:#e2e8f0;margin-bottom:10px">Reader Corpus <span style="font-size:12px;color:#6b7280;font-weight:400">— last 7 days / total</span></h3>
@@ -468,6 +475,11 @@
         <div style="font-size:12px;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">creative-writing</div>
         <div style="font-size:18px;font-weight:700">1 <span style="font-size:12px;color:#6b7280;font-weight:400">/ 1 total</span></div>
       </div></div>
+  </div>
+
+  <div style="margin-bottom:20px">
+    <h3 style="font-size:14px;color:#e2e8f0;margin-bottom:10px">Breaking News — eligible angles <span style="font-size:12px;color:#6b7280;font-weight:400">— what Nate can honestly post about</span></h3>
+    <div style="color:#6b7280;font-size:13px">58 news entries collected (hn:9 · techcrunch:15 · ars:12 · producthunt:12 · verge:10). Triage runs Monday in weekly brain.</div>
   </div>
 
   <div style="margin-bottom:20px">

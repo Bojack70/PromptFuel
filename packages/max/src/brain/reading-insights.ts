@@ -195,6 +195,7 @@ export function bucketForCategory(category: string): string {
     || category === 'character_dark') return 'creative-writing';
   if (category === 'letter' || category === 'field_notes' || category === 'window_seat') return 'life-reflection';
   if (category === 'contrarian') return 'humor-satire';
+  if (category === 'current_event') return 'tech-ai';
 
   return 'life-reflection';
 }

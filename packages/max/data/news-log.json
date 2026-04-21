@@ -1,0 +1,526 @@
+{
+  "entries": [
+    {
+      "date": "2026-04-21",
+      "source": "hn",
+      "title": "Laws of Software Engineering",
+      "url": "https://lawsofsoftwareengineering.com",
+      "excerpt": "",
+      "score": 573,
+      "id": "hn:47847179"
+    },
+    {
+      "date": "2026-04-21",
+      "source": "hn",
+      "title": "The Vercel breach: OAuth attack exposes risk in platform environment variables",
+      "url": "https://www.trendmicro.com/en_us/research/26/d/vercel-breach-oauth-supply-chain.html",
+      "excerpt": "",
+      "score": 18,
+      "id": "hn:47851634"
+    },
+    {
+      "date": "2026-04-21",
+      "source": "hn",
+      "title": "Show HN: GoModel – an open-source AI gateway in Go",
+      "url": "https://github.com/ENTERPILOT/GOModel/",
+      "excerpt": "",
+      "score": 88,
+      "id": "hn:47849097"
+    },
+    {
+      "date": "2026-04-21",
+      "source": "hn",
+      "title": "Fusion Power Plant Simulator",
+      "url": "https://www.fusionenergybase.com/fusion-power-plant-simulator",
+      "excerpt": "",
+      "score": 75,
+      "id": "hn:47849315"
+    },
+    {
+      "date": "2026-04-21",
+      "source": "hn",
+      "title": "Show HN: VidStudio, a browser based video editor that doesn't upload your files",
+      "url": "https://vidstudio.app/video-editor",
+      "excerpt": "",
+      "score": 189,
+      "id": "hn:47847558"
+    },
+    {
+      "date": "2026-04-21",
+      "source": "hn",
+      "title": "A Periodic Map of Cheese",
+      "url": "https://cheesemap.netlify.app/",
+      "excerpt": "",
+      "score": 12,
+      "id": "hn:47851077"
+    },
+    {
+      "date": "2026-04-21",
+      "source": "hn",
+      "title": "Kasane: New drop-in Kakoune front end with GPU rendering and WASM Plugins",
+      "url": "https://github.com/Yus314/kasane",
+      "excerpt": "",
+      "score": 20,
+      "id": "hn:47850542"
+    },
+    {
+      "date": "2026-04-21",
+      "source": "hn",
+      "title": "Running a Minecraft Server and More on a 1960s Univac Computer",
+      "url": "https://farlow.dev/2026/04/17/running-a-minecraft-server-and-more-on-a-1960s-univac-computer",
+      "excerpt": "",
+      "score": 116,
+      "id": "hn:47815462"
+    },
+    {
+      "date": "2026-04-21",
+      "source": "hn",
+      "title": "Tindie store under \"scheduled maintenance\" for days",
+      "url": "https://www.tindie.com/",
+      "excerpt": "",
+      "score": 84,
+      "id": "hn:47848195"
+    },
+    {
+      "date": "2026-04-21",
+      "source": "techcrunch",
+      "title": "A look at Tim Cook&#8217;s 15-year legacy as CEO of Apple",
+      "url": "https://techcrunch.com/2026/04/21/apple-tim-cook-ceo-15-year-legacy-timeline/",
+      "excerpt": "Cook, who joined Apple in 1998, succeeded Steve Jobs as CEO in 2011 and went on to transform Apple into a $4 trillion powerhouse.",
+      "pubDate": "Tue, 21 Apr 2026 17:40:20 +0000",
+      "id": "techcrunch:https://techcrunch.com/2026/04/21/apple-tim-cook-ceo-15-year-legacy-timeline/"
+    },
+    {
+      "date": "2026-04-21",
+      "source": "techcrunch",
+      "title": "Clarifai deletes 3 million photos that OkCupid provided to train facial recognition AI, report says",
+      "url": "https://techcrunch.com/2026/04/21/clarifai-okcupid-facial-recognition-ai-ftc-settlement/",
+      "excerpt": "The photo deletion comes after an FTC settlement with Clarifai. The company had asked OkCupid — whose executives had invested in Clarifai — to share data in 2014, according to court documents.",
+      "pubDate": "Tue, 21 Apr 2026 17:11:01 +0000",
+      "id": "techcrunch:https://techcrunch.com/2026/04/21/clarifai-okcupid-facial-recognition-ai-ftc-settlement/"
+    },
+    {
+      "date": "2026-04-21",
+      "source": "techcrunch",
+      "title": "Former Pinterest team redesigns email with Extra — and it’s actually good",
+      "url": "https://techcrunch.com/2026/04/21/former-pinterest-team-redesigns-email-with-extra-and-its-actually-good/",
+      "excerpt": "Extra, from a team of former Pinterest designers and engineers, reimagines email around your life instead of the traditional inbox.",
+      "pubDate": "Tue, 21 Apr 2026 16:00:00 +0000",
+      "id": "techcrunch:https://techcrunch.com/2026/04/21/former-pinterest-team-redesigns-email-with-extra-and-its-actually-good/"
+    },
+    {
+      "date": "2026-04-21",
+      "source": "techcrunch",
+      "title": "AI Dungeon maker Latitude unveils Voyage, a platform for creating AI-powered RPGs",
+      "url": "https://techcrunch.com/2026/04/21/voyage-is-an-ai-rpg-platform-for-creating-custom-gaming-worlds-with-ai-generated-npc-interactions/",
+      "excerpt": "Latitude's new AI-native platform, Voyage, aims to help gamers create their very own role-playing game.",
+      "pubDate": "Tue, 21 Apr 2026 16:00:00 +0000",
+      "id": "techcrunch:https://techcrunch.com/2026/04/21/voyage-is-an-ai-rpg-platform-for-creating-custom-gaming-worlds-with-ai-generated-npc-interactions/"
+    },
+    {
+      "date": "2026-04-21",
+      "source": "techcrunch",
+      "title": "Ransomware negotiator pleads guilty to helping ransomware gang",
+      "url": "https://techcrunch.com/2026/04/21/ransomware-negotiator-pleads-guilty-to-helping-ransomware-gang/",
+      "excerpt": "A former employee of a cybersecurity firm pleaded guilty to aiding ransomware criminals to maximize their profits, with the goal of taking a cut of the ransom.",
+      "pubDate": "Tue, 21 Apr 2026 15:56:53 +0000",
+      "id": "techcrunch:https://techcrunch.com/2026/04/21/ransomware-negotiator-pleads-guilty-to-helping-ransomware-gang/"
+    },
+    {
+      "date": "2026-04-21",
+      "source": "techcrunch",
+      "title": "Bond, a new social media platform, wants to use AI to help you kick your doomscrolling habit",
+      "url": "https://techcrunch.com/2026/04/21/bond-social-media-platform-ai-memories-kick-doomscrolling-habit/",
+      "excerpt": "Bond wants you to get off the couch and get back into the real world, its creator says. The new platform's AI system is designed to motivate users to do things away from the app.",
+      "pubDate": "Tue, 21 Apr 2026 15:24:29 +0000",
+      "id": "techcrunch:https://techcrunch.com/2026/04/21/bond-social-media-platform-ai-memories-kick-doomscrolling-habit/"
+    },
+    {
+      "date": "2026-04-21",
+      "source": "techcrunch",
+      "title": "YouTube expands its AI likeness detection technology to celebrities",
+      "url": "https://techcrunch.com/2026/04/21/youtube-expands-its-ai-likeness-detection-technology-to-celebrities/",
+      "excerpt": "YouTube is expanding its AI likeness detection tool to celebrities, giving talent and their reps a way to find and remove deepfakes.",
+      "pubDate": "Tue, 21 Apr 2026 15:02:06 +0000",
+      "id": "techcrunch:https://techcrunch.com/2026/04/21/youtube-expands-its-ai-likeness-detection-technology-to-celebrities/"
+    },
+    {
+      "date": "2026-04-21",
+      "source": "techcrunch",
+      "title": "Amazon taps Sweden&#8217;s Einride for its electric big rigs",
+      "url": "https://techcrunch.com/2026/04/21/amazon-taps-swedens-einride-for-its-electric-big-rigs/",
+      "excerpt": "The agreement comes just as Einride is finalizing a merger with blank-check company Legato Merger Corp. to go public.",
+      "pubDate": "Tue, 21 Apr 2026 14:09:43 +0000",
+      "id": "techcrunch:https://techcrunch.com/2026/04/21/amazon-taps-swedens-einride-for-its-electric-big-rigs/"
+    },
+    {
+      "date": "2026-04-21",
+      "source": "techcrunch",
+      "title": "Revolut eyes valuation of up to $200B in eventual IPO",
+      "url": "https://techcrunch.com/2026/04/21/revolut-eyes-valuation-of-up-to-200b-in-eventual-ipo/",
+      "excerpt": "Fintech giant Revolut, which secured a full banking license in the U.K. in March after years of waiting, was most recently valued at $75 billion in a secondary share sale.",
+      "pubDate": "Tue, 21 Apr 2026 13:41:44 +0000",
+      "id": "techcrunch:https://techcrunch.com/2026/04/21/revolut-eyes-valuation-of-up-to-200b-in-eventual-ipo/"
+    },
+    {
+      "date": "2026-04-21",
+      "source": "techcrunch",
+      "title": "With US spy laws set to expire, lawmakers are split over protecting Americans from warrantless surveillance",
+      "url": "https://techcrunch.com/2026/04/21/with-us-spy-laws-set-to-expire-lawmakers-are-split-over-protecting-americans-from-warrantless-surveillance/",
+      "excerpt": "Some lawmakers are calling for widespread reforms following years of surveillance scandals and abuses across successive U.S. administrations. But even if the spy law known as Section 702 expires on April 30, the government's spy powers will not automatically lapse.",
+      "pubDate": "Tue, 21 Apr 2026 13:00:00 +0000",
+      "id": "techcrunch:https://techcrunch.com/2026/04/21/with-us-spy-laws-set-to-expire-lawmakers-are-split-over-protecting-americans-from-warrantless-surveillance/"
+    },
+    {
+      "date": "2026-04-21",
+      "source": "techcrunch",
+      "title": "What’s the key to better vegan cheese? Microbreweries, one startup says.",
+      "url": "https://techcrunch.com/2026/04/21/whats-the-key-to-better-vegan-cheese-microbreweries-one-startup-says/",
+      "excerpt": "AuX Labs says it has found a better way to make vegan cheese that tastes and feels like the real thing — and costs the same.",
+      "pubDate": "Tue, 21 Apr 2026 13:00:00 +0000",
+      "id": "techcrunch:https://techcrunch.com/2026/04/21/whats-the-key-to-better-vegan-cheese-microbreweries-one-startup-says/"
+    },
+    {
+      "date": "2026-04-21",
+      "source": "techcrunch",
+      "title": "Cash App is targeting a new kind of customer: 6- to 12-year-olds",
+      "url": "https://techcrunch.com/2026/04/21/cash-app-is-targeting-a-new-kind-of-customer-6-12-year-olds/",
+      "excerpt": "The company is expanding its youth-focused services in an effort to build a relationship with Gen Alpha and the upcoming generation of adolescents in the U.S.",
+      "pubDate": "Tue, 21 Apr 2026 13:00:00 +0000",
+      "id": "techcrunch:https://techcrunch.com/2026/04/21/cash-app-is-targeting-a-new-kind-of-customer-6-12-year-olds/"
+    },
+    {
+      "date": "2026-04-21",
+      "source": "techcrunch",
+      "title": "GRAI believes AI can make music more social, not replace artists",
+      "url": "https://techcrunch.com/2026/04/21/grai-believes-ai-can-make-music-more-social-not-replace-artists/",
+      "excerpt": "AI music startup GRAI says fans want to remix tracks, not generate songs from scratch.",
+      "pubDate": "Tue, 21 Apr 2026 13:00:00 +0000",
+      "id": "techcrunch:https://techcrunch.com/2026/04/21/grai-believes-ai-can-make-music-more-social-not-replace-artists/"
+    },
+    {
+      "date": "2026-04-21",
+      "source": "techcrunch",
+      "title": "Yelp&#8217;s updated AI assistant can answer questions and book a restaurant or service in one conversation",
+      "url": "https://techcrunch.com/2026/04/21/yelps-updated-ai-assistant-can-answer-questions-and-book-a-restaurant-or-service-in-one-conversation/",
+      "excerpt": "With its latest update, Yelp is letting people ask questions, get restaurant reservations, order food delivery, and book service professionals, all through its updated AI assistant.",
+      "pubDate": "Tue, 21 Apr 2026 11:00:00 +0000",
+      "id": "techcrunch:https://techcrunch.com/2026/04/21/yelps-updated-ai-assistant-can-answer-questions-and-book-a-restaurant-or-service-in-one-conversation/"
+    },
+    {
+      "date": "2026-04-21",
+      "source": "techcrunch",
+      "title": "Blue Energy raises $380M to build grid-scale nuclear reactors in shipyards",
+      "url": "https://techcrunch.com/2026/04/21/blue-energy-raises-380m-to-build-grid-scale-nuclear-reactors-in-shipyards/",
+      "excerpt": "By building reactors in shipyards, Blue Energy says it will tame nuclear power's cost problems, giving it access to cheaper financing.",
+      "pubDate": "Tue, 21 Apr 2026 10:00:00 +0000",
+      "id": "techcrunch:https://techcrunch.com/2026/04/21/blue-energy-raises-380m-to-build-grid-scale-nuclear-reactors-in-shipyards/"
+    },
+    {
+      "date": "2026-04-21",
+      "source": "ars",
+      "title": "Anthropic gets $5B investment from Amazon, will use it to buy Amazon chips",
+      "url": "https://arstechnica.com/ai/2026/04/anthropic-gets-5b-investment-from-amazon-will-use-it-to-buy-amazon-chips/",
+      "excerpt": "",
+      "pubDate": "Tue, 21 Apr 2026 17:00:04 +0000",
+      "id": "ars:https://arstechnica.com/ai/2026/04/anthropic-gets-5b-investment-from-amazon-will-use-it-to-buy-amazon-chips/"
+    },
+    {
+      "date": "2026-04-21",
+      "source": "ars",
+      "title": "CATL's new LFP battery can charge from 10 to 98% in less than 7 minutes",
+      "url": "https://arstechnica.com/cars/2026/04/catls-new-lfp-battery-can-charge-from-10-to-98-in-less-than-7-minutes/",
+      "excerpt": "",
+      "pubDate": "Tue, 21 Apr 2026 15:01:43 +0000",
+      "id": "ars:https://arstechnica.com/cars/2026/04/catls-new-lfp-battery-can-charge-from-10-to-98-in-less-than-7-minutes/"
+    },
+    {
+      "date": "2026-04-21",
+      "source": "ars",
+      "title": "AMD Ryzen 9 9950X3D2 Dual Edition review: Tons of cache for tons of dollars",
+      "url": "https://arstechnica.com/gadgets/2026/04/amd-ryzen-9-9950x3d2-dual-edition-review-tons-of-cache-for-tons-of-dollars/",
+      "excerpt": "",
+      "pubDate": "Tue, 21 Apr 2026 14:45:36 +0000",
+      "id": "ars:https://arstechnica.com/gadgets/2026/04/amd-ryzen-9-9950x3d2-dual-edition-review-tons-of-cache-for-tons-of-dollars/"
+    },
+    {
+      "date": "2026-04-21",
+      "source": "ars",
+      "title": "What's the deal with spacesuits for the Moon? Will they be ready in time?",
+      "url": "https://arstechnica.com/space/2026/04/whats-the-deal-with-spacesuits-for-the-moon-will-they-be-ready-in-time/",
+      "excerpt": "",
+      "pubDate": "Tue, 21 Apr 2026 14:24:09 +0000",
+      "id": "ars:https://arstechnica.com/space/2026/04/whats-the-deal-with-spacesuits-for-the-moon-will-they-be-ready-in-time/"
+    },
+    {
+      "date": "2026-04-21",
+      "source": "ars",
+      "title": "Loneliness in older adults can often lead to memory impairment",
+      "url": "https://arstechnica.com/health/2026/04/loneliness-in-older-adults-can-often-lead-to-memory-impairment/",
+      "excerpt": "",
+      "pubDate": "Tue, 21 Apr 2026 14:23:24 +0000",
+      "id": "ars:https://arstechnica.com/health/2026/04/loneliness-in-older-adults-can-often-lead-to-memory-impairment/"
+    },
+    {
+      "date": "2026-04-21",
+      "source": "ars",
+      "title": "Contrary to popular superstition, AES 128 is just fine in a post-quantum world",
+      "url": "https://arstechnica.com/security/2026/04/contrary-to-popular-superstition-aes-128-is-just-fine-in-a-post-quantum-world/",
+      "excerpt": "",
+      "pubDate": "Tue, 21 Apr 2026 12:35:20 +0000",
+      "id": "ars:https://arstechnica.com/security/2026/04/contrary-to-popular-superstition-aes-128-is-just-fine-in-a-post-quantum-world/"
+    },
+    {
+      "date": "2026-04-21",
+      "source": "ars",
+      "title": "Global growth in solar \"the largest ever observed for any source\"",
+      "url": "https://arstechnica.com/science/2026/04/global-growth-in-solar-the-largest-ever-observed-for-any-source/",
+      "excerpt": "",
+      "pubDate": "Tue, 21 Apr 2026 11:00:16 +0000",
+      "id": "ars:https://arstechnica.com/science/2026/04/global-growth-in-solar-the-largest-ever-observed-for-any-source/"
+    },
+    {
+      "date": "2026-04-21",
+      "source": "ars",
+      "title": "Pentagon pulls the plug on one of the military's most troubled space programs",
+      "url": "https://arstechnica.com/space/2026/04/pentagon-pulls-the-plug-on-one-of-the-militarys-most-troubled-space-programs/",
+      "excerpt": "",
+      "pubDate": "Tue, 21 Apr 2026 02:27:52 +0000",
+      "id": "ars:https://arstechnica.com/space/2026/04/pentagon-pulls-the-plug-on-one-of-the-militarys-most-troubled-space-programs/"
+    },
+    {
+      "date": "2026-04-21",
+      "source": "ars",
+      "title": "John Ternus will replace Tim Cook as Apple CEO",
+      "url": "https://arstechnica.com/apple/2026/04/john-ternus-will-replace-tim-cook-as-apple-ceo/",
+      "excerpt": "",
+      "pubDate": "Mon, 20 Apr 2026 21:05:35 +0000",
+      "id": "ars:https://arstechnica.com/apple/2026/04/john-ternus-will-replace-tim-cook-as-apple-ceo/"
+    },
+    {
+      "date": "2026-04-21",
+      "source": "ars",
+      "title": "Absurd study suggests eating fruits and vegetables leads to cancer",
+      "url": "https://arstechnica.com/health/2026/04/absurdly-bad-study-spurs-headlines-linking-healthy-diet-to-lung-cancer/",
+      "excerpt": "",
+      "pubDate": "Mon, 20 Apr 2026 20:53:04 +0000",
+      "id": "ars:https://arstechnica.com/health/2026/04/absurdly-bad-study-spurs-headlines-linking-healthy-diet-to-lung-cancer/"
+    },
+    {
+      "date": "2026-04-21",
+      "source": "ars",
+      "title": "US opens refund portal to start paying back Trump's illegal tariffs",
+      "url": "https://arstechnica.com/tech-policy/2026/04/us-opens-refund-portal-to-start-paying-back-trumps-illegal-tariffs/",
+      "excerpt": "",
+      "pubDate": "Mon, 20 Apr 2026 18:53:21 +0000",
+      "id": "ars:https://arstechnica.com/tech-policy/2026/04/us-opens-refund-portal-to-start-paying-back-trumps-illegal-tariffs/"
+    },
+    {
+      "date": "2026-04-21",
+      "source": "ars",
+      "title": "Here's how F1 is tweaking its hybrid systems to try to save the show",
+      "url": "https://arstechnica.com/cars/2026/04/f1-new-hybrid-rules-will-come-into-effect-at-the-miami-grand-prix-in-may/",
+      "excerpt": "",
+      "pubDate": "Mon, 20 Apr 2026 18:15:50 +0000",
+      "id": "ars:https://arstechnica.com/cars/2026/04/f1-new-hybrid-rules-will-come-into-effect-at-the-miami-grand-prix-in-may/"
+    },
+    {
+      "date": "2026-04-21",
+      "source": "producthunt",
+      "title": "Magic Lane",
+      "url": "https://www.producthunt.com/products/magic-lane",
+      "excerpt": "p Sovereign navigation infrastructure for Europe /p p a href=\"https://www.producthunt.com/products/magic-lane?utm_campaign=producthunt-atom-posts-feed amp;utm_medium=rss-feed amp;utm_source=producthunt-atom-posts-feed\" Discussion /a | a href=\"https://www.producthunt.com/r/p/1124837?app_id=339\" Link ",
+      "pubDate": "2026-04-15T17:42:40-07:00",
+      "id": "producthunt:https://www.producthunt.com/products/magic-lane"
+    },
+    {
+      "date": "2026-04-21",
+      "source": "producthunt",
+      "title": "Spectrum",
+      "url": "https://www.producthunt.com/products/spectrum-5",
+      "excerpt": "p Bring agents to all the interfaces people already use /p p a href=\"https://www.producthunt.com/products/spectrum-5?utm_campaign=producthunt-atom-posts-feed amp;utm_medium=rss-feed amp;utm_source=producthunt-atom-posts-feed\" Discussion /a | a href=\"https://www.producthunt.com/r/p/1123275?app_id=339",
+      "pubDate": "2026-04-14T00:11:51-07:00",
+      "id": "producthunt:https://www.producthunt.com/products/spectrum-5"
+    },
+    {
+      "date": "2026-04-21",
+      "source": "producthunt",
+      "title": "RankAI",
+      "url": "https://www.producthunt.com/products/rankai-2",
+      "excerpt": "p RankAI autonomously gets you buyers from Google AI Search /p p a href=\"https://www.producthunt.com/products/rankai-2?utm_campaign=producthunt-atom-posts-feed amp;utm_medium=rss-feed amp;utm_source=producthunt-atom-posts-feed\" Discussion /a | a href=\"https://www.producthunt.com/r/p/1122928?app_id=3",
+      "pubDate": "2026-04-13T11:26:52-07:00",
+      "id": "producthunt:https://www.producthunt.com/products/rankai-2"
+    },
+    {
+      "date": "2026-04-21",
+      "source": "producthunt",
+      "title": "Devaito",
+      "url": "https://www.producthunt.com/products/devaito",
+      "excerpt": "p Build, launch, and grow your business on autopilot /p p a href=\"https://www.producthunt.com/products/devaito?utm_campaign=producthunt-atom-posts-feed amp;utm_medium=rss-feed amp;utm_source=producthunt-atom-posts-feed\" Discussion /a | a href=\"https://www.producthunt.com/r/p/1122954?app_id=339\" Link",
+      "pubDate": "2026-04-13T12:03:59-07:00",
+      "id": "producthunt:https://www.producthunt.com/products/devaito"
+    },
+    {
+      "date": "2026-04-21",
+      "source": "producthunt",
+      "title": "Twenty 2.0",
+      "url": "https://www.producthunt.com/products/twenty-crm",
+      "excerpt": "p Build your Enterprise CRM at AI Speed /p p a href=\"https://www.producthunt.com/products/twenty-crm?utm_campaign=producthunt-atom-posts-feed amp;utm_medium=rss-feed amp;utm_source=producthunt-atom-posts-feed\" Discussion /a | a href=\"https://www.producthunt.com/r/p/1127858?app_id=339\" Link /a /p",
+      "pubDate": "2026-04-20T01:38:21-07:00",
+      "id": "producthunt:https://www.producthunt.com/products/twenty-crm"
+    },
+    {
+      "date": "2026-04-21",
+      "source": "producthunt",
+      "title": "SHIFTLY",
+      "url": "https://www.producthunt.com/products/shiftly-2",
+      "excerpt": "p AI-powered growth strategist for builders and small teams /p p a href=\"https://www.producthunt.com/products/shiftly-2?utm_campaign=producthunt-atom-posts-feed amp;utm_medium=rss-feed amp;utm_source=producthunt-atom-posts-feed\" Discussion /a | a href=\"https://www.producthunt.com/r/p/1127902?app_id=",
+      "pubDate": "2026-04-20T02:25:34-07:00",
+      "id": "producthunt:https://www.producthunt.com/products/shiftly-2"
+    },
+    {
+      "date": "2026-04-21",
+      "source": "producthunt",
+      "title": "Dageno AI",
+      "url": "https://www.producthunt.com/products/agent-powered-geo-by-dageno",
+      "excerpt": "p Become the most recommended brand across 7+ major LLMs /p p a href=\"https://www.producthunt.com/products/agent-powered-geo-by-dageno?utm_campaign=producthunt-atom-posts-feed amp;utm_medium=rss-feed amp;utm_source=producthunt-atom-posts-feed\" Discussion /a | a href=\"https://www.producthunt.com/r/p/",
+      "pubDate": "2026-04-14T09:44:54-07:00",
+      "id": "producthunt:https://www.producthunt.com/products/agent-powered-geo-by-dageno"
+    },
+    {
+      "date": "2026-04-21",
+      "source": "producthunt",
+      "title": "Gauge Sentiment",
+      "url": "https://www.producthunt.com/products/gauge",
+      "excerpt": "p How is your brand perceived by AI? /p p a href=\"https://www.producthunt.com/products/gauge?utm_campaign=producthunt-atom-posts-feed amp;utm_medium=rss-feed amp;utm_source=producthunt-atom-posts-feed\" Discussion /a | a href=\"https://www.producthunt.com/r/p/1128566?app_id=339\" Link /a /p",
+      "pubDate": "2026-04-20T21:10:50-07:00",
+      "id": "producthunt:https://www.producthunt.com/products/gauge"
+    },
+    {
+      "date": "2026-04-21",
+      "source": "producthunt",
+      "title": "My Race Tracker",
+      "url": "https://www.producthunt.com/products/my-race-tracker",
+      "excerpt": "p Track your races. Not your ego. /p p a href=\"https://www.producthunt.com/products/my-race-tracker?utm_campaign=producthunt-atom-posts-feed amp;utm_medium=rss-feed amp;utm_source=producthunt-atom-posts-feed\" Discussion /a | a href=\"https://www.producthunt.com/r/p/1127873?app_id=339\" Link /a /p",
+      "pubDate": "2026-04-20T01:56:45-07:00",
+      "id": "producthunt:https://www.producthunt.com/products/my-race-tracker"
+    },
+    {
+      "date": "2026-04-21",
+      "source": "producthunt",
+      "title": "Pagecorder",
+      "url": "https://www.producthunt.com/products/pagecorder",
+      "excerpt": "p Turn your web page into a hardware accelerated video via API /p p a href=\"https://www.producthunt.com/products/pagecorder?utm_campaign=producthunt-atom-posts-feed amp;utm_medium=rss-feed amp;utm_source=producthunt-atom-posts-feed\" Discussion /a | a href=\"https://www.producthunt.com/r/p/1126958?app",
+      "pubDate": "2026-04-18T12:57:22-07:00",
+      "id": "producthunt:https://www.producthunt.com/products/pagecorder"
+    },
+    {
+      "date": "2026-04-21",
+      "source": "producthunt",
+      "title": "illumi",
+      "url": "https://www.producthunt.com/products/illumi-one",
+      "excerpt": "p AI visual workspace that takes you from thinking to delivery /p p a href=\"https://www.producthunt.com/products/illumi-one?utm_campaign=producthunt-atom-posts-feed amp;utm_medium=rss-feed amp;utm_source=producthunt-atom-posts-feed\" Discussion /a | a href=\"https://www.producthunt.com/r/p/1122840?app",
+      "pubDate": "2026-04-13T09:24:13-07:00",
+      "id": "producthunt:https://www.producthunt.com/products/illumi-one"
+    },
+    {
+      "date": "2026-04-21",
+      "source": "producthunt",
+      "title": "X Island",
+      "url": "https://www.producthunt.com/products/x-isiand",
+      "excerpt": "p Dynamic Island for AI Coding Agents /p p a href=\"https://www.producthunt.com/products/x-isiand?utm_campaign=producthunt-atom-posts-feed amp;utm_medium=rss-feed amp;utm_source=producthunt-atom-posts-feed\" Discussion /a | a href=\"https://www.producthunt.com/r/p/1128516?app_id=339\" Link /a /p",
+      "pubDate": "2026-04-20T19:09:24-07:00",
+      "id": "producthunt:https://www.producthunt.com/products/x-isiand"
+    },
+    {
+      "date": "2026-04-21",
+      "source": "verge",
+      "title": "Celebrities will be able to find and request removal of AI deepfakes on YouTube",
+      "url": "https://www.theverge.com/ai-artificial-intelligence/915872/celebrities-will-be-able-to-find-and-request-removal-of-ai-deepfakes-on-youtube",
+      "excerpt": "YouTube is expanding its AI deepfake monitoring feature to Hollywood - meaning some celebrity AI videos could soon disappear. The platform's likeness detection feature searches YouTube for AI deepfake content and flags it for public figures enrolled in the program. Public figures can use it to keep ",
+      "pubDate": "2026-04-21T13:30:24-04:00",
+      "id": "verge:https://www.theverge.com/ai-artificial-intelligence/915872/celebrities-will-be-able-to-find-and-request-removal-of-ai-deepfakes-on-youtube"
+    },
+    {
+      "date": "2026-04-21",
+      "source": "verge",
+      "title": "Govee’s new rechargeable table lamp is less than half the price of Hue’s",
+      "url": "https://www.theverge.com/tech/915959/govee-table-smart-lamp-classic-battery-rechargeable-matter-pricing",
+      "excerpt": "The portable lamp can be synced with other Govee lighting products around your home. | Image: Govee Nearly four years after Philips Hue launched its Go portable table lamp, Govee has announced its own version for less than half the price. While the Hue Go is currently listed for $175.99 , the new Go",
+      "pubDate": "2026-04-21T13:26:27-04:00",
+      "id": "verge:https://www.theverge.com/tech/915959/govee-table-smart-lamp-classic-battery-rechargeable-matter-pricing"
+    },
+    {
+      "date": "2026-04-21",
+      "source": "verge",
+      "title": "The Mac is in good hands in Apple’s post-Cook era",
+      "url": "https://www.theverge.com/tech/915896/john-ternus-apple-ceo-tim-cook-johny-srouji-mac-future",
+      "excerpt": "The Mac reached a series of low points in the Tim Cook era: the fiasco of the butterfly keyboard , the clunky transition to USB-C , the underutilized potential of the Touch Bar , and the occasionally lackluster Intel chip performance . For a while, it seemed like Apple had shifted all of its attenti",
+      "pubDate": "2026-04-21T13:20:50-04:00",
+      "id": "verge:https://www.theverge.com/tech/915896/john-ternus-apple-ceo-tim-cook-johny-srouji-mac-future"
+    },
+    {
+      "date": "2026-04-21",
+      "source": "verge",
+      "title": "Wearable health tech might be Tim Cook’s greatest legacy",
+      "url": "https://www.theverge.com/tech/915976/tim-cook-john-ternus-apple-watch-health-tech-wearables",
+      "excerpt": "The Apple Watch was the first new product in the post-Jobs era. An apple a day keeps the doctor away. Granted, 19th-century proverb writers were talking about the fruit, but Tim Cook helped give new meaning to the adage with the release of the very first Apple Watch. In fact, I'd argue that when he ",
+      "pubDate": "2026-04-21T13:05:51-04:00",
+      "id": "verge:https://www.theverge.com/tech/915976/tim-cook-john-ternus-apple-watch-health-tech-wearables"
+    },
+    {
+      "date": "2026-04-21",
+      "source": "verge",
+      "title": "Oppo’s new phone has one camera too many",
+      "url": "https://www.theverge.com/gadgets/915686/oppo-find-x9-ultra-review-10x-telephoto-lens",
+      "excerpt": "The two-paneled design is my favorite of the year so far. Oppo's Find X9 Ultra offers something that no other new phone has for three long years: a 10x telephoto lens. In an attempt to win the photography front of the war between the various Ultra flagships, Oppo has turned to a trick last employed ",
+      "pubDate": "2026-04-21T13:00:00-04:00",
+      "id": "verge:https://www.theverge.com/gadgets/915686/oppo-find-x9-ultra-review-10x-telephoto-lens"
+    },
+    {
+      "date": "2026-04-21",
+      "source": "verge",
+      "title": "Ordering with the Starbucks ChatGPT app was a true coffee nightmare",
+      "url": "https://www.theverge.com/ai-artificial-intelligence/915821/starbucks-chatgpt-app-testing",
+      "excerpt": "You just cannot convince me this is how people order coffee. | Image: Starbucks Venti iced coffee, light skim milk. That's what I get at Starbucks. It is what I have gotten at Starbucks every time I've been to Starbucks for as long as I can remember, other than a brief love affair with the caffe mis",
+      "pubDate": "2026-04-21T12:19:40-04:00",
+      "id": "verge:https://www.theverge.com/ai-artificial-intelligence/915821/starbucks-chatgpt-app-testing"
+    },
+    {
+      "date": "2026-04-21",
+      "source": "verge",
+      "title": "Dyson’s newest floor scrubber is already on sale for 20 percent off",
+      "url": "https://www.theverge.com/gadgets/915137/dyson-clean-wash-hygiene-wet-cleaner-hades-2-deal-nintendo-sale",
+      "excerpt": "Dyson feels like it’s been on a tear as of late. The company recently introduced a handheld version of its iconic fan and a travel-friendly hair dryer , along with a mopping version of its ultra-thin PencilVac. And while none of them are currently discounted, you can save on the new Dyson Clean+Wash",
+      "pubDate": "2026-04-21T12:09:00-04:00",
+      "id": "verge:https://www.theverge.com/gadgets/915137/dyson-clean-wash-hygiene-wet-cleaner-hades-2-deal-nintendo-sale"
+    },
+    {
+      "date": "2026-04-21",
+      "source": "verge",
+      "title": "Xbox Game Pass Ultimate gets a price cut but loses new Call of Duty games",
+      "url": "https://www.theverge.com/news/915928/microsoft-xbox-game-pass-ultimate-price-drop",
+      "excerpt": "After Xbox CEO Asha Sharma admitted last week that \"Game Pass has become too expensive for players,\" Microsoft is dropping the price of Xbox Game Pass Ultimate and PC Game Pass. Starting today, Xbox Game Pass Ultimate drops from $29.99 to $22.99 a month, and PC Game Pass moves to $13.99, down from $",
+      "pubDate": "2026-04-21T12:03:27-04:00",
+      "id": "verge:https://www.theverge.com/news/915928/microsoft-xbox-game-pass-ultimate-price-drop"
+    },
+    {
+      "date": "2026-04-21",
+      "source": "verge",
+      "title": "The next evolution of The Verge’s homepage is here",
+      "url": "https://www.theverge.com/bulletin/914842/the-next-evolution-of-the-verges-homepage-is-here",
+      "excerpt": "When we updated our homepage in 2022, our primary goal was simple: The Verge should be fun to read, every time you visit . With that update, we introduced the homepage StoryStream and Quick Posts, and it was built to redesign the relationship we have with you, our audience. It’s been almost four yea",
+      "pubDate": "2026-04-21T11:48:04-04:00",
+      "id": "verge:https://www.theverge.com/bulletin/914842/the-next-evolution-of-the-verges-homepage-is-here"
+    },
+    {
+      "date": "2026-04-21",
+      "source": "verge",
+      "title": "New leaks reveal pricing and performance specs for DJI’s next beginner drones",
+      "url": "https://www.theverge.com/tech/915877/dji-leak-lito-1-x1-drones-amateur-beginner-pricing",
+      "excerpt": "The more expensive Lito X1 features a camera with a larger sensor. | Image: Dino Galiano DJI plans to debut two new drones later this week according to a recent teaser . But ahead of the official announcement, Italian electronics retailer Dino Galiano has shared listings for both the DJI Lito 1 and ",
+      "pubDate": "2026-04-21T11:36:52-04:00",
+      "id": "verge:https://www.theverge.com/tech/915877/dji-leak-lito-1-x1-drones-amateur-beginner-pricing"
+    }
+  ]
+}

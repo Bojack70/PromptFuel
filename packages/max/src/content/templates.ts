@@ -24,7 +24,9 @@ export type ContentCategory =
   | 'contrarian'          // One widely-held belief rigorously dismantled — sustained argument, not hot take
   | 'thread_story'        // Story in short numbered sections — serial rhythm, each section 2-3 sentences
   // Signature narrative style — modeled on Nate's "window seat" article
-  | 'window_seat';        // First-person meta-reflection spiraling out of one small physical moment
+  | 'window_seat'         // First-person meta-reflection spiraling out of one small physical moment
+  // Reactive current-events category — 1/week max, only when weekly triage finds an eligible angle
+  | 'current_event';      // Take on a specific recent event. Honest-take rule: observable/pricing/discourse/meta/pattern OK; quality/performance claims NOT OK without firsthand use.
 
 export interface PromptContext {
   stars: number;
@@ -126,6 +128,9 @@ const BLUESKY_PROMPTS: Record<ContentCategory, (ctx: PromptContext) => string> =
 
   window_seat: (ctx) =>
     `${PERSONA_GENERAL}\n\n${BLUESKY_RULES}\n\nShare one small physical moment from Nate's day that his brain made bigger than it should have been. Concrete sensory detail (a window, a coffee, a sound), then one single line of meta-observation that quietly lands. No takeaways. No advice. Just the moment and the noticing. End on an image, not a lesson.${AVOID_REPETITION(ctx.recentPosts)}`,
+
+  current_event: (ctx) =>
+    `${PERSONA_GENERAL}\n\n${BLUESKY_RULES}\n\nReact to a specific recent event (injected separately as context). HONEST-TAKE RULE — read carefully: you may comment on what's OBSERVABLE (second-order effects Nate can measure), PRICING/availability/policy shifts, DISCOURSE patterns (what the community is collectively saying), META-commentary on the reaction itself, or PATTERN recognition across similar past events. You may NOT opine on the quality, performance, or suitability of any product/model/tool Nate has not personally tested. If you catch yourself writing "X is impressive" or "Y is a game changer" — delete it. Specificity over heat. End on a question or a calm observation, not a take.${AVOID_REPETITION(ctx.recentPosts)}`,
 };
 
 const DEVTO_PROMPTS: Record<ContentCategory, (ctx: PromptContext) => string> = {
@@ -182,6 +187,9 @@ const DEVTO_PROMPTS: Record<ContentCategory, (ctx: PromptContext) => string> = {
 
   window_seat: (ctx) =>
     `${PERSONA_GENERAL}\n\n${DEVTO_RULES}\n\nNote: window_seat pieces rarely fit Dev.to's tech-audience tone. Only write for Dev.to if there's a tech-adjacent moment worth noticing — a shipped feature that suddenly felt hollow, a codebase that aged differently than expected, a developer habit that revealed something. 600-900 words. Open with the physical moment. Let the thought spiral. End on the image. No takeaways.${AVOID_REPETITION(ctx.recentPosts)}`,
+
+  current_event: (ctx) =>
+    `${PERSONA_GENERAL}\n\n${DEVTO_RULES}\n\nWrite a Dev.to article reacting to a specific recent event (injected separately as context). 700-1100 words. HONEST-TAKE RULE — STRICT: you may analyze OBSERVABLE second-order effects, PRICING/availability shifts, the shape of DISCOURSE around the event, META-commentary on how the community is reacting, or PATTERN recognition. You may NOT claim any product, model, framework, or tool is "good", "bad", "impressive", or "a game-changer" unless Nate has personally tested it and you reference the specific testing. If you start to drift toward quality/performance claims, pivot to "what's observable instead is X". End with a question inviting others' data, not a take. Tag suggestions: discuss, ai, webdev. IMPORTANT: Do not mention PromptFuel.${AVOID_REPETITION(ctx.recentPosts)}`,
 };
 
 export function blueskyPrompt(category: ContentCategory, ctx: PromptContext): string {
@@ -283,6 +291,7 @@ function topicForCategory(category: ContentCategory, _ctx: PromptContext): strin
     contrarian: `Topic: state one widely-held belief in tech or AI that you think is wrong — and that you could actually defend with evidence. Not edgy for the sake of it. Genuinely debatable.`,
     thread_story: `Topic: write the opening 2-3 sentences of a story told in numbered sections. Drop straight into a scene involving a developer or founder at a turning point. No setup — just the moment.`,
     window_seat: `Topic: share one small physical moment today where your brain, unprompted, made it into something much bigger. Sensory detail first, meta-observation second. No advice, no takeaway — just the noticing.`,
+    current_event: `Topic: react to a specific recent event (injected separately). Only comment on what's observable, what's happening with pricing/discourse, or the meta-reaction — never on quality or performance of products without firsthand testing.`,
   };
   return topics[category];
 }
@@ -364,6 +373,9 @@ const MEDIUM_PROMPTS: Record<ContentCategory, (ctx: PromptContext) => string> = 
   thread_story: (ctx) =>
     `${PERSONA_MEDIUM}\n\n${MEDIUM_RULES_STORY}\n\nWrite a story told in 8-12 short numbered sections. Each section is 2-4 sentences. The story is about a developer or founder at a turning point — a moment that forces a choice. The rhythm: each section ends in a way that makes the reader need the next one. No section is filler. The last section ends on resonance, not resolution. Do not explain the meaning — let the structure carry it. No product pitches.${AVOID_REPETITION(ctx.recentPosts)}`,
 
+  current_event: (ctx) =>
+    `${PERSONA_MEDIUM}\n\n${MEDIUM_RULES}\n\nReact to a specific recent event (injected separately as NEWS CONTEXT). 700-1200 words. HONEST-TAKE RULE — non-negotiable: you may analyze what's OBSERVABLE (measurable second-order effects), PRICING/availability/policy changes, the DISCOURSE (what the community is collectively saying and why), META-commentary on how people are reacting, or PATTERN recognition across past similar events. You may NOT make claims about product/model/tool quality or performance unless the context explicitly states Nate has tested it — if such a test exists, quote it specifically; if not, redirect to what IS observable. Open with a personal scene tying Nate to the event's peripheral impact (how he noticed, what prompted his thought), then develop the chosen angle. End with a direct question that invites the reader to share their own observations or data — never a declarative take.${AVOID_REPETITION(ctx.recentPosts)}`,
+
   window_seat: (ctx) =>
     `${PERSONA_MEDIUM}\n\nWrite a signature-voice personal essay modeled on the "window seat" style. 1,200-1,500 words.
 
@@ -413,6 +425,7 @@ export function tagsForCategory(category: ContentCategory): string[] {
     contrarian:    ['discuss', 'ai', 'career', 'webdev'],
     thread_story:  ['discuss', 'ai', 'career', 'watercooler'],
     window_seat:   ['discuss', 'career', 'productivity', 'watercooler'],
+    current_event: ['discuss', 'ai', 'webdev', 'news'],
   };
   return map[category];
 }
@@ -441,6 +454,7 @@ export function mediumPublicationForCategory(category: ContentCategory): [string
     contrarian:   ['Mind Cafe', 'The Ascent'],
     thread_story: ['The Creative Cafe', 'The Narrative Arc'],
     window_seat:  ['Personal Growth', 'Mind Cafe'],
+    current_event: ['The Startup', 'Towards AI'],
   };
   return map[category];
 }

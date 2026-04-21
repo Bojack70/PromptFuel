@@ -20,6 +20,8 @@ import { loadTrendsLog } from '../analytics/trends.js';
 import { loadNotebook } from '../brain/notebook.js';
 import { loadOpinions } from '../content/opinions.js';
 import { loadLocalEngagement } from '../analytics/engagement-local.js';
+import { loadNewsLog } from '../analytics/news.js';
+import { loadNewsAngles } from '../brain/news-triage.js';
 
 function loadAllSnapshots(dataDir: string): DaySnapshot[] {
   const dir = join(dataDir, 'snapshots');
@@ -176,6 +178,8 @@ function buildContentIntelligenceSection(dataDir: string): string {
   const trendInsights = loadTrendInsights(dataDir);
   const notebook = loadNotebook(dataDir);
   const opinions = loadOpinions(dataDir);
+  const newsLog = loadNewsLog(dataDir);
+  const newsAngles = loadNewsAngles(dataDir);
 
   // All empty? render nothing.
   if (
@@ -183,6 +187,7 @@ function buildContentIntelligenceSection(dataDir: string): string {
     && trendsLog.entries.length === 0
     && notebook.entries.length === 0
     && opinions.length === 0
+    && newsLog.entries.length === 0
   ) return '';
 
   const cutoff = new Date();
@@ -247,14 +252,49 @@ function buildContentIntelligenceSection(dataDir: string): string {
       </tr>`,
     ).join('');
 
+  // News: this week's eligible angles + ineligible events, plus corpus size
+  const cutoff7 = new Date();
+  cutoff7.setUTCDate(cutoff7.getUTCDate() - 7);
+  const cutoff7Str = cutoff7.toISOString().split('T')[0];
+  const newsRecent = newsLog.entries.filter((e) => e.date >= cutoff7Str).length;
+  const newsPerSource: Record<string, number> = {};
+  for (const e of newsLog.entries.filter((e) => e.date >= cutoff7Str)) {
+    newsPerSource[e.source] = (newsPerSource[e.source] ?? 0) + 1;
+  }
+  const newsHtml = newsAngles && newsAngles.eligibleAngles.length > 0
+    ? `<div>
+        <div style="font-size:12px;color:#94a3b8;margin-bottom:8px">
+          ${newsRecent} news entries last 7d (${Object.entries(newsPerSource).map(([s, n]) => `${s}:${n}`).join(' · ')}) · triaged ${newsAngles.generatedAt.split('T')[0]}
+        </div>
+        <div style="font-size:12px;color:#86efac;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Eligible angles this week</div>
+        ${newsAngles.eligibleAngles.slice(0, 5).map((a) =>
+          `<div style="background:#0f172a;border-left:3px solid #22c55e;padding:10px 12px;margin-bottom:8px;border-radius:4px">
+            <div style="font-size:13px;font-weight:600;margin-bottom:4px">${a.event}</div>
+            <div style="font-size:12px;color:#94a3b8"><span style="color:#86efac">${a.angle}</span> · ${a.salience} salience — ${a.hook}</div>
+          </div>`).join('')}
+        ${newsAngles.ineligible.length > 0 ? `
+          <div style="font-size:12px;color:#fca5a5;text-transform:uppercase;letter-spacing:0.5px;margin:12px 0 6px">Ineligible — skip (needs firsthand testing)</div>
+          ${newsAngles.ineligible.slice(0, 3).map((e) =>
+            `<div style="background:#0f172a;border-left:3px solid #ef4444;padding:8px 12px;margin-bottom:6px;border-radius:4px;font-size:12px">
+              <span style="color:#fca5a5">${e.event}</span> — <span style="color:#94a3b8">${e.reason}</span>
+            </div>`).join('')}
+        ` : ''}
+      </div>`
+    : `<div style="color:#6b7280;font-size:13px">${newsRecent > 0 ? `${newsRecent} news entries collected (${Object.entries(newsPerSource).map(([s, n]) => `${s}:${n}`).join(' · ')}). Triage runs Monday in weekly brain.` : 'No news collected yet — starts in next CI run via --mode fetch-news.'}</div>`;
+
   return `
 <div class="chart-card" style="margin-top:24px">
   <h2>Content Intelligence</h2>
-  <p style="color:#94a3b8;font-size:13px;margin-bottom:16px">What feeds each content prompt: accumulated reading corpus, this week's hot themes, recent notebook observations, Nate's worldview coverage.</p>
+  <p style="color:#94a3b8;font-size:13px;margin-bottom:16px">What feeds each content prompt: accumulated reading corpus, this week's hot themes, news events Nate can honestly react to, recent notebook observations, Nate's worldview coverage.</p>
 
   <div style="margin-bottom:20px">
     <h3 style="font-size:14px;color:#e2e8f0;margin-bottom:10px">Reader Corpus <span style="font-size:12px;color:#6b7280;font-weight:400">— last 7 days / total</span></h3>
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px">${readerCards || '<div style="color:#6b7280;font-size:13px">No articles read yet — --mode read-daily kicks off in next CI run.</div>'}</div>
+  </div>
+
+  <div style="margin-bottom:20px">
+    <h3 style="font-size:14px;color:#e2e8f0;margin-bottom:10px">Breaking News — eligible angles <span style="font-size:12px;color:#6b7280;font-weight:400">— what Nate can honestly post about</span></h3>
+    ${newsHtml}
   </div>
 
   <div style="margin-bottom:20px">
@@ -537,6 +577,15 @@ function buildTodayActionsSection(dataDir: string): string {
        </ul>`
     : '';
 
+  // --- ON DEMAND — always visible, no dependency on state ---
+  const onDemandHtml = `
+<h3 style="font-size:13px;color:#93c5fd;margin:18px 0 8px 0;text-transform:uppercase;letter-spacing:0.5px">On demand — when breaking news happens</h3>
+<p style="color:#94a3b8;font-size:12px;margin-bottom:8px">React to a specific event with a genuine take (required: --topic). Respects the honest-take rule — no quality/performance claims without firsthand testing. Outputs to stdout + <code>data/reactive-posts.json</code>; you review before publishing.</p>
+<div style="background:#172554;border-left:3px solid #60a5fa;padding:10px 12px;border-radius:6px;font-size:12px">
+  <code style="display:block;background:#1e293b;color:#e2e8f0;padding:6px 10px;border-radius:4px;margin-bottom:4px">cd packages/max &amp;&amp; node dist/index.js --mode react --topic "your topic" --angle "your genuine take" --platform twitter</code>
+  <div style="color:#94a3b8">--angle is optional but recommended. --platform: twitter (default) | bluesky | medium.</div>
+</div>`;
+
   return `
 <div style="background:linear-gradient(135deg,#1e293b 0%,#1e1b4b 100%);border-radius:14px;padding:22px 26px;margin-bottom:24px;border:1px solid #334155">
   <div style="display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;margin-bottom:14px">
@@ -552,6 +601,7 @@ function buildTodayActionsSection(dataDir: string): string {
 
   ${mondayHtml}
   ${firstRunHtml}
+  ${onDemandHtml}
 </div>`;
 }
 

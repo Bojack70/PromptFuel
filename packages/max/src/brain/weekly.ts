@@ -34,6 +34,7 @@ import { researchFormats, loadFormatInsights, type FormatInsights } from './form
 import { synthesizeReadingInsights, loadReadingInsights, type ReadingInsights } from './reading-insights.js';
 import { appendEntries as appendNotebookEntries, extractSurprises } from './notebook.js';
 import { synthesizeTrends, loadTrendInsights, type TrendInsights } from './trend-insights.js';
+import { triageNews, loadNewsAngles } from './news-triage.js';
 
 function getMonday(date: Date): string {
   const d = new Date(date);
@@ -707,6 +708,23 @@ export async function weeklyReflection(config: MaxConfig): Promise<void> {
   } catch (err) {
     console.warn('[Max] Trend synthesis failed (non-fatal):', (err as Error).message);
     trendInsights = loadTrendInsights(config.dataDir) ?? undefined;
+  }
+
+  // 10b-iii. News triage — classify week's news into eligible angles vs ineligible
+  // (quality/performance claims that require firsthand testing). Powers the
+  // current_event content category.
+  try {
+    if (config.claudeApiKey) {
+      console.log('[Max] Triaging news into eligible / ineligible angles...');
+      const angles = await triageNews(config.claudeApiKey, config.dataDir);
+      if (angles) {
+        console.log(`[Max]   Eligible: ${angles.eligibleAngles.length}, Ineligible: ${angles.ineligible.length}`);
+      }
+    }
+    // cache load for downstream (calendar prompt will pick this up via file)
+    loadNewsAngles(config.dataDir);
+  } catch (err) {
+    console.warn('[Max] News triage failed (non-fatal):', (err as Error).message);
   }
 
   // 10c. Extract surprises from the week's data → append to Nate's notebook

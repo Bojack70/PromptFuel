@@ -446,6 +446,157 @@ async function collectEngagementLocal() {
 }
 
 /**
+ * Daily news fetcher — pulls from 5 sources (HN + Product Hunt + TechCrunch
+ * + Ars Technica + The Verge) into rolling 30-day corpus in data/news-log.json.
+ * Pure fetch, zero LLM, CI-safe. Weekly brain triages into eligible angles.
+ */
+async function fetchNews() {
+  const { fetchDailyNews } = await import('./analytics/news.js');
+  const dataDir = process.env.MAX_DATA_DIR ?? fileURLToPath(new URL('../data', import.meta.url));
+  console.log('[Max] Starting daily news fetcher...');
+  const result = await fetchDailyNews(dataDir);
+  console.log(`[Max] News done: +${result.added} added`);
+}
+
+/**
+ * Reactive post generator — user-initiated when they want to react to
+ * breaking news with a genuine take.
+ *
+ * Usage:
+ *   node dist/index.js --mode react --topic "anthropic claude 4.7 release"
+ *   node dist/index.js --mode react --topic "apple ai event" --angle "their take on on-device privacy"
+ *   node dist/index.js --mode react --topic "..." --platform medium     (default: twitter)
+ *
+ * Flow:
+ *   1. Search HN Algolia + local corpus for articles matching topic
+ *   2. Generate post via Claude with guardrails (no quality claims without firsthand use)
+ *   3. Run anti-polish + quality review
+ *   4. Save to data/reactive-posts.json + print to stdout for review
+ *   5. User publishes via existing `--mode social-post` flows
+ */
+async function react() {
+  const topicIdx = args.indexOf('--topic');
+  if (topicIdx === -1 || !args[topicIdx + 1]) {
+    console.error('[Max] react requires --topic "your topic"');
+    console.error('[Max] optional: --angle "your genuine take" --platform twitter|bluesky|medium');
+    process.exit(1);
+  }
+  const topic = args[topicIdx + 1];
+  const angleIdx = args.indexOf('--angle');
+  const angle = angleIdx !== -1 ? args[angleIdx + 1] : undefined;
+  const platformIdx = args.indexOf('--platform');
+  const platform = (platformIdx !== -1 ? args[platformIdx + 1] : 'twitter') as 'twitter' | 'bluesky' | 'medium';
+
+  const mode = (process.env.MAX_LLM_MODE ?? 'cli').toLowerCase();
+  const apiKey = process.env.ANTHROPIC_API_KEY ?? '';
+  if (mode === 'api' && !apiKey) {
+    console.error('[Max] MAX_LLM_MODE=api but ANTHROPIC_API_KEY is not set.');
+    process.exit(1);
+  }
+
+  const dataDir = process.env.MAX_DATA_DIR ?? fileURLToPath(new URL('../data', import.meta.url));
+
+  const { searchNews } = await import('./analytics/news.js');
+  const { generateContent } = await import('./content/claude.js');
+  const { antiPolish } = await import('./content/anti-polish.js');
+  const { reviewBlueskyPost, reviewArticle } = await import('./content/quality.js');
+
+  console.log(`[Max][react] topic="${topic}" angle=${angle ? `"${angle}"` : '(none — will infer)'} platform=${platform}`);
+  console.log('[Max][react] Searching news (HN Algolia + local corpus)...');
+  const search = await searchNews(topic, dataDir, 7);
+  console.log(`[Max][react] Found ${search.all.length} matching articles (${search.fromSearch.length} from Algolia, ${search.fromCorpus.length} from local)`);
+
+  if (search.all.length === 0 && !angle) {
+    console.error('[Max][react] No matching articles found and no --angle provided.');
+    console.error('[Max][react] Either broaden the topic, or provide --angle "your genuine take" so I can still generate.');
+    process.exit(1);
+  }
+
+  const articlesBlock = search.all.slice(0, 5)
+    .map((a) => `- [${a.source}] "${a.title}" ${a.excerpt ? `— ${a.excerpt.slice(0, 200)}` : ''} (${a.url})`)
+    .join('\n');
+
+  const platformConstraints: Record<string, { limit: string; format: string; model: string; maxTokens: number }> = {
+    twitter:   { limit: '280 chars max', format: 'single tweet — no threads, no bullets, no hashtags', model: 'claude-haiku-4-5', maxTokens: 150 },
+    bluesky:   { limit: '300 chars max', format: 'single post — no bullets, no hashtags', model: 'claude-haiku-4-5', maxTokens: 150 },
+    medium:    { limit: '700-1200 words', format: 'Medium markdown with # title, personal scene opener, short paragraphs, end with a direct question', model: 'claude-opus-4-7', maxTokens: 4096 },
+  };
+  const cfg = platformConstraints[platform];
+  if (!cfg) {
+    console.error(`[Max][react] Unknown platform: ${platform}. Use twitter|bluesky|medium.`);
+    process.exit(1);
+  }
+
+  const prompt = `You are Nate Voss. Generate ONE ${platform} post reacting to breaking news about "${topic}".
+
+${angle ? `NATE'S GENUINE ANGLE (from his actual experience — build the post around this): ${angle}\n` : 'NATE HAS NOT SPECIFIED A PERSONAL ANGLE — choose the most defensible observable/discourse/meta angle from the news below.\n'}
+HONEST-TAKE RULE — non-negotiable:
+You may comment on OBSERVABLE second-order effects, PRICING/availability/policy shifts, the DISCOURSE (what the community is collectively saying), META-commentary on how people are reacting, or PATTERN recognition across similar past events.
+You may NOT claim any product, model, framework, or tool is "good", "bad", "impressive", "a game-changer", "solid", or any quality/performance judgment UNLESS Nate has personally tested it and the angle above explicitly states that testing.
+If you catch yourself drifting toward quality claims, pivot to "what's observable instead is X".
+
+FORMAT: ${cfg.format}
+LENGTH: ${cfg.limit}
+
+NEWS CONTEXT:
+${articlesBlock || '(no articles fetched — rely on the angle above and general knowledge of the topic)'}
+
+Generate the post now. No preamble, no explanation, no meta-commentary. Just the post itself.${platform === 'medium' ? ' Return as markdown starting with a single # title line.' : ''}`;
+
+  console.log('[Max][react] Generating...');
+  let text = await generateContent(apiKey, prompt, { temperature: 0.7, maxTokens: cfg.maxTokens, model: cfg.model });
+
+  // anti-polish
+  const polished = antiPolish(text, platform);
+  if (polished.changes.length > 0) console.log(`[Max][react] anti-polish: ${polished.changes.join(', ')}`);
+  text = polished.text;
+
+  // quality review (short-post reviewer for twitter/bluesky, article reviewer for medium)
+  let quality;
+  if (platform === 'medium') {
+    const titleMatch = text.match(/^#\s+(.+)$/m);
+    const title = titleMatch ? titleMatch[1] : topic;
+    const body = text.replace(/^#\s+.+$/m, '').trim();
+    quality = await reviewArticle(title, body, apiKey);
+  } else {
+    quality = await reviewBlueskyPost(text, apiKey);
+  }
+  console.log(`[Max][react] Quality: ${quality.score.average}/10 (A:${quality.score.authenticity} V:${quality.score.value} Ac:${quality.score.accuracy} E:${quality.score.engagement})`);
+  if (quality.score.feedback) console.log(`[Max][react] Reviewer note: ${quality.score.feedback}`);
+
+  // Save to reactive-posts.json for later retrieval
+  const fs = await import('node:fs');
+  const reactiveFile = join(dataDir, 'reactive-posts.json');
+  const existing: { posts: any[] } = fs.existsSync(reactiveFile)
+    ? JSON.parse(fs.readFileSync(reactiveFile, 'utf-8'))
+    : { posts: [] };
+  const entry = {
+    id: `react-${Date.now()}`,
+    createdAt: new Date().toISOString(),
+    topic,
+    angle,
+    platform,
+    articleUrls: search.all.slice(0, 5).map((a) => a.url),
+    text,
+    quality: quality.score,
+    passed: quality.passed,
+  };
+  existing.posts.push(entry);
+  existing.posts = existing.posts.slice(-20); // keep last 20
+  fs.writeFileSync(reactiveFile, JSON.stringify(existing, null, 2));
+
+  console.log('\n========== GENERATED POST ==========');
+  console.log(text);
+  console.log('====================================\n');
+  console.log(`[Max][react] Saved as ${entry.id} in data/reactive-posts.json`);
+  console.log('[Max][react] Review the text above. To publish:');
+  if (platform === 'twitter') console.log('  • edit data/pregenerated-content.json to splice in this text for today, then --mode social-post');
+  if (platform === 'bluesky') console.log('  • use --mode post with POST_TEXT env var, or edit pregenerated-content.json');
+  if (platform === 'medium') console.log('  • save text to a .json file with {"title":"...","body":"..."} and run --mode publish-medium --file <path> --submit');
+  if (!quality.passed) console.log('  ⚠ Quality below threshold — review + edit before publishing.');
+}
+
+/**
  * Daily trend fetcher — pulls top HN stories to the running trend log.
  * Pure fetch, zero LLM, CI-safe. Weekly brain synthesises themes from the
  * accumulated headlines.
@@ -825,6 +976,12 @@ async function main() {
       case 'fetch-trends':
         await fetchTrends();
         break;
+      case 'fetch-news':
+        await fetchNews();
+        break;
+      case 'react':
+        await react();
+        break;
       case 'collect-engagement-local':
         await collectEngagementLocal();
         break;
@@ -865,7 +1022,7 @@ async function main() {
         await mediumEngage();
         break;
       default:
-        console.error(`Unknown mode: ${mode}. Use --mode daily|weekly|weekly-data|dashboard|read-daily|fetch-trends|collect-engagement-local|post|generate-week|social-test-hn|social-test-reddit|social-test-twitter|social-post|social-engage|medium-engage|social-test-medium|social-test-substack|publish-substack`);
+        console.error(`Unknown mode: ${mode}. Use --mode daily|weekly|weekly-data|dashboard|read-daily|fetch-trends|fetch-news|react|collect-engagement-local|post|generate-week|social-test-hn|social-test-reddit|social-test-twitter|social-post|social-engage|medium-engage|social-test-medium|social-test-substack|publish-substack`);
         process.exit(1);
     }
   } catch (err) {

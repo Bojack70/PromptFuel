@@ -168,7 +168,7 @@ const GENERATION_PROMPT = (stage: WarmupStage, mondayDate: string, ctx?: Calenda
 
 Current warmup stage: ${stage}
 
-Content categories available: tip, comparison, tutorial, stats, launch, opinion, ai_general, economics, philosophy, short_story, mystery_interactive, character_dark, window_seat
+Content categories available: tip, comparison, tutorial, stats, launch, opinion, ai_general, economics, philosophy, short_story, mystery_interactive, character_dark, window_seat, current_event
 ${stage === 'warmup' ? 'NOTE: During warmup, do NOT use the "stats" category — the account is too new for metrics-bragging to look authentic.' : ''}
 
 Post formats available (assign one per day):
@@ -190,6 +190,7 @@ Rules:
 - Audience-building: include at least 2 posts from "ai_general", "economics", "philosophy", "short_story", "mystery_interactive", or "character_dark" — these build Nate's personal brand without mentioning PromptFuel
 - Use "short_story" at most once per week, "mystery_interactive" at most once per week, "character_dark" at most once per week — these are Medium-first formats, don't overuse them on Bluesky
 - Use "window_seat" at most ONCE per MONTH (roughly 1 week in 4). This is Nate's signature personal-essay format — scarce on purpose. If using this week, use it only for Medium (devto) and only on a Thursday or Friday slot. Do NOT use on Bluesky.
+- Use "current_event" at most ONCE per week, and ONLY IF the news-angles file (data/news-angles.json) contains an eligible angle with "high" or "medium" salience. current_event is reactive and time-sensitive. Do NOT use "current_event" as a default pick. When using it, tie it to the specific event in the angle hint. Prefer Tuesday or Wednesday for Bluesky; prefer Thursday or Friday for Dev.to/Medium (gives time for the story to mature).
 - Assign blueskyFormat based on what's working this week (from format insights above)
 
 Respond in EXACTLY this JSON format, nothing else:

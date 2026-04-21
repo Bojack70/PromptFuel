@@ -39,6 +39,12 @@ jobs:
         run: node packages/max/dist/index.js --mode fetch-trends
         continue-on-error: true
 
+      - name: Fetch daily news (5 sources — HN/ProductHunt/TechCrunch/Ars/Verge)
+        env:
+          MAX_DATA_DIR: packages/max/data
+        run: node packages/max/dist/index.js --mode fetch-news
+        continue-on-error: true
+
       - name: Run daily collection + content
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
