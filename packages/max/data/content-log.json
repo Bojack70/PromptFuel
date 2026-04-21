@@ -58,5 +58,23 @@
     "category": "ai_general",
     "content": "everyone's racing to build AI that passes bar exams and writes poetry. meanwhile i just want mine to consistently return valid JSON. the gap between \"AI can do X\" and \"AI reliably does X in prod\" is where most of us actually live.",
     "postId": "at://did:plc:n54y6c7lx2tt42tpx2brzcdi/app.bsky.feed.post/3mjvyuxqq6x2p"
+  },
+  {
+    "date": "2026-04-21",
+    "timestamp": "2026-04-21T07:44:49.076Z",
+    "platform": "bluesky",
+    "category": "comparison",
+    "content": "How many tokens did your last API call use? Tested Haiku, GPT-4o Mini, Flash on JSON—same prompt. Haiku: 847 tokens, perfect. GPT-4o Mini: 1200 tokens, sloppy. Cost per usable output tells the real story. Test yours: promptfuel.vercel.app",
+    "postId": "at://did:plc:n54y6c7lx2tt42tpx2brzcdi/app.bsky.feed.post/3mjyifjrefc2w"
+  },
+  {
+    "date": "2026-04-21",
+    "timestamp": "2026-04-21T07:44:49.485Z",
+    "platform": "devto",
+    "category": "comparison",
+    "title": "3 Things I Learned Benchmarking Claude, GPT-4o, and Gemini on Real Dev Work",
+    "content": "If you're still picking LLM providers by gut feeling, you're leaving money on the table. I ran 5 developer use cases through Claude 3.5 Sonnet, GPT-4o, and Gemini 2.0 Flash using PromptFuel to measure",
+    "postId": "3530584",
+    "postUrl": "https://dev.to/natevoss/3-things-i-learned-benchmarking-claude-gpt-4o-and-gemini-on-real-dev-work-4cp5"
   }
 ]

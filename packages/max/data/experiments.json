@@ -110,5 +110,37 @@
     },
     "passed": true,
     "retried": false
+  },
+  {
+    "date": "2026-04-21",
+    "timestamp": "2026-04-21T07:44:49.076Z",
+    "platform": "bluesky",
+    "category": "comparison",
+    "qualityScores": {
+      "authenticity": 7,
+      "value": 7,
+      "accuracy": 7,
+      "engagement": 7,
+      "average": 7.8,
+      "feedback": "pre-generated"
+    },
+    "passed": true,
+    "retried": false
+  },
+  {
+    "date": "2026-04-21",
+    "timestamp": "2026-04-21T07:44:49.485Z",
+    "platform": "devto",
+    "category": "comparison",
+    "qualityScores": {
+      "authenticity": 7,
+      "value": 7,
+      "accuracy": 7,
+      "engagement": 7,
+      "average": 7,
+      "feedback": "pre-generated"
+    },
+    "passed": true,
+    "retried": false
   }
 ]
