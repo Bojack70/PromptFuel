@@ -329,7 +329,7 @@ async function daily() {
   try {
     console.log('\n[Max] Sending daily digest...');
     const todaysPosts = loadHistory(config.dataDir).filter((e) => e.date === today());
-    const { subject, html } = buildDailyDigest({ snapshot, stage: plan.stage, todaysPosts });
+    const { subject, html } = buildDailyDigest({ snapshot, stage: plan.stage, todaysPosts, pregeneratedToday: todayPregen });
     const emailResult = await sendEmail(config.resendApiKey, {
       to: config.reportEmail,
       subject,
@@ -655,8 +655,11 @@ async function publishMediumCustom() {
     process.exit(1);
   }
   const dryRun = args.includes('--dry-run');
-  console.log(`[Max] Publishing to Medium: "${article.title.slice(0, 60)}"`);
-  const result = await postToMedium({ title: article.title, body: article.body, dryRun, waitForHuman: true, humanTimeoutMs: 10 * 60_000 });
+  const shouldSubmit = args.includes('--submit');
+  // Default: fill editor + wait for human review (safe). --submit: fully automated. --dry-run: fill only.
+  const waitForHuman = !shouldSubmit && !dryRun;
+  console.log(`[Max] Publishing to Medium: "${article.title.slice(0, 60)}" [${dryRun ? 'dry-run' : shouldSubmit ? 'auto-submit' : 'human-review'}]`);
+  const result = await postToMedium({ title: article.title, body: article.body, dryRun, waitForHuman, humanTimeoutMs: 10 * 60_000 });
   console.log(`[Max] Done. URL: ${result.submittedUrl}`);
 }
 

@@ -47,6 +47,16 @@ export const DEVTO_DAYS: Record<WarmupStage, number[]> = {
   active: [1, 3, 5],  // Mon + Wed + Fri
 };
 
+// Substack mirrors Dev.to cadence — Note posted same days as Dev.to article
+export const SUBSTACK_DAYS: Record<WarmupStage, number[]> = {
+  warmup: [2],        // Tuesday
+  transition: [2, 4], // Tue + Thu
+  active: [1, 3, 5],  // Mon + Wed + Fri
+};
+
+// Medium engage (clap + comment) — Mon/Wed/Fri, not stage-aware
+export const MEDIUM_ENGAGE_DAYS: number[] = [1, 3, 5];
+
 function daysSince(dateStr: string): number {
   const start = new Date(dateStr + 'T00:00:00Z');
   const now = new Date();

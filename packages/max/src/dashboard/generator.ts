@@ -12,6 +12,7 @@ import type { ExperimentEntry } from '../experiments/tracker.js';
 import { loadEngagement, type EngagementSnapshot, type BlueskyEngagement, type DevtoEngagement } from '../analytics/engagement.js';
 import { loadCorrelationReport, type CorrelationReport } from '../brain/correlation.js';
 import { loadStrategyLog, type StrategyDecision } from '../brain/strategy.js';
+import { getStage, DEVTO_DAYS, SUBSTACK_DAYS, MEDIUM_ENGAGE_DAYS } from '../content/scheduler.js';
 
 function loadAllSnapshots(dataDir: string): DaySnapshot[] {
   const dir = join(dataDir, 'snapshots');
@@ -156,6 +157,76 @@ function buildStrategySection(dataDir: string): string {
 </div>`;
 }
 
+function buildWeekCalendar(dataDir: string): string {
+  const calFile = join(dataDir, 'calendar.json');
+  const preFile = join(dataDir, 'pregenerated-content.json');
+  if (!existsSync(calFile)) return '';
+
+  type CalendarDay = { date: string; bluesky?: string; devto?: string | null; blueskyAngle?: string; devtoAngle?: string };
+  type PrePost = { date: string; bluesky?: { text: string }; devto?: { title: string }; medium?: { title: string }; substack?: { note: string } };
+
+  const cal = JSON.parse(readFileSync(calFile, 'utf-8')) as { days: CalendarDay[] };
+  const pre: { posts: PrePost[] } = existsSync(preFile)
+    ? JSON.parse(readFileSync(preFile, 'utf-8'))
+    : { posts: [] };
+  const preMap = Object.fromEntries(pre.posts.map((p) => [p.date, p]));
+
+  const stage = getStage();
+  const todayStr = new Date().toISOString().split('T')[0];
+  const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+  const rows = cal.days.map((day) => {
+    const utcDay = new Date(day.date + 'T12:00:00Z').getUTCDay();
+    const p = preMap[day.date];
+    const isToday = day.date === todayStr;
+    const isPast = day.date < todayStr;
+    const isDevtoDay = DEVTO_DAYS[stage].includes(utcDay);
+    const isSubstackDay = SUBSTACK_DAYS[stage].includes(utcDay);
+    const isEngageDay = MEDIUM_ENGAGE_DAYS.includes(utcDay);
+    const dayName = DAY_NAMES[utcDay];
+    const bg = isToday ? '#1e3a5f' : isPast ? '#0f172a' : '#1e293b';
+    const border = isToday ? '2px solid #3b82f6' : '1px solid #334155';
+
+    const items: string[] = [];
+
+    // Bluesky — always, AUTO
+    items.push(`<div style="margin:3px 0"><span style="background:#0085ff;color:#fff;font-size:10px;padding:1px 5px;border-radius:3px">AUTO</span> <strong>Bluesky</strong>${p?.bluesky ? ` <span style="color:#94a3b8;font-size:11px">— ${p.bluesky.text.slice(0, 60)}…</span>` : ''}</div>`);
+
+    // Dev.to — stage-aware, AUTO
+    if (isDevtoDay) {
+      items.push(`<div style="margin:3px 0"><span style="background:#166534;color:#fff;font-size:10px;padding:1px 5px;border-radius:3px">AUTO</span> <strong>Dev.to</strong>${p?.devto ? ` <span style="color:#94a3b8;font-size:11px">— ${p.devto.title.slice(0, 60)}…</span>` : ''}</div>`);
+    }
+
+    // Medium — same days as Dev.to, MANUAL
+    if (isDevtoDay) {
+      items.push(`<div style="margin:3px 0"><span style="background:#f59e0b;color:#fff;font-size:10px;padding:1px 5px;border-radius:3px">MANUAL</span> <strong>Medium</strong>${p?.medium ? ` <span style="color:#94a3b8;font-size:11px">— ${p.medium.title.slice(0, 60)}…</span>` : ''}<br><code style="font-size:10px;color:#94a3b8">--mode social-post --medium</code></div>`);
+    }
+
+    // Substack Note — same days as Dev.to, MANUAL
+    if (isSubstackDay) {
+      items.push(`<div style="margin:3px 0"><span style="background:#f59e0b;color:#fff;font-size:10px;padding:1px 5px;border-radius:3px">MANUAL</span> <strong>Substack Note</strong>${p?.substack ? ` <span style="color:#94a3b8;font-size:11px">— ${p.substack.note.slice(0, 50)}…</span>` : ''}<br><code style="font-size:10px;color:#94a3b8">--mode social-test-substack --submit</code></div>`);
+    }
+
+    // Medium Engage — Mon/Wed/Fri, MANUAL
+    if (isEngageDay) {
+      items.push(`<div style="margin:3px 0"><span style="background:#7c3aed;color:#fff;font-size:10px;padding:1px 5px;border-radius:3px">MANUAL</span> <strong>Medium Engage</strong> <span style="color:#94a3b8;font-size:11px">— clap + comment</span><br><code style="font-size:10px;color:#94a3b8">--mode medium-engage --topic programming</code></div>`);
+    }
+
+    return `<div style="background:${bg};border:${border};border-radius:10px;padding:14px;min-width:180px">
+      <div style="font-weight:700;font-size:13px;margin-bottom:8px;color:${isToday ? '#93c5fd' : '#e2e8f0'}">${dayName} ${day.date}${isToday ? ' <span style="font-size:10px;background:#3b82f6;color:#fff;padding:1px 6px;border-radius:3px">TODAY</span>' : isPast ? ' <span style="font-size:10px;color:#475569">past</span>' : ''}</div>
+      ${items.join('')}
+    </div>`;
+  }).join('');
+
+  return `
+<div style="margin-bottom:24px">
+  <h2 style="font-size:16px;margin-bottom:12px">This Week</h2>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px">
+    ${rows}
+  </div>
+</div>`;
+}
+
 export function generateDashboard(dataDir: string): void {
   const snapshots = loadAllSnapshots(dataDir);
   const contentLog = loadContentLog(dataDir);
@@ -194,6 +265,7 @@ export function generateDashboard(dataDir: string): void {
     : 0;
 
   // New sections
+  const weekCalendar = buildWeekCalendar(dataDir);
   const engagementCards = buildEngagementSection(dataDir);
   const correlationSection = buildCorrelationSection(dataDir);
   const strategySection = buildStrategySection(dataDir);
@@ -238,6 +310,8 @@ export function generateDashboard(dataDir: string): void {
 
 <h1>Max Agent Dashboard</h1>
 <p class="subtitle">Generated ${new Date().toISOString().split('T')[0]} · ${snapshots.length} snapshots · ${contentLog.length} posts · ${experiments.length} experiments</p>
+
+${weekCalendar}
 
 <div class="grid">
   <div class="card">
