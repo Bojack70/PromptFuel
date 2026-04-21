@@ -286,7 +286,13 @@ async function simulateReading(tabId: number, verify = false): Promise<void> {
   }
 }
 
-/** Extract title + first ~1500 chars of article body for comment grounding. */
+/**
+ * Extract title + first ~3000 chars of article body for comment grounding.
+ * 3000 chars covers most Medium articles end-to-end (typical 600-1500 words ≈
+ * 3500-9000 chars; first 3000 covers thesis + main argument + usually one
+ * supporting section). Bumped from 1500 because closing-paragraph insights
+ * were being missed in comments.
+ */
 async function extractArticleContent(tabId: number): Promise<{ title: string; excerpt: string }> {
   const data = await executeScript<{ title: string; excerpt: string } | null>(
     tabId,
@@ -296,7 +302,7 @@ async function extractArticleContent(tabId: number): Promise<{ title: string; ex
     var article = document.querySelector('article');
     if (!article) return null;
     var paragraphs = Array.from(article.querySelectorAll('p')).map(function(p) { return (p.textContent || '').trim(); }).filter(Boolean);
-    var excerpt = paragraphs.join(' ').slice(0, 1500);
+    var excerpt = paragraphs.join(' ').slice(0, 3000);
     return { title: title, excerpt: excerpt };
     `,
   );
