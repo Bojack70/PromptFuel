@@ -40,6 +40,53 @@
 <p class="subtitle">Generated 2026-04-21 · 7 snapshots · 11 posts · 11 experiments</p>
 
 
+<div style="background:linear-gradient(135deg,#1e293b 0%,#1e1b4b 100%);border-radius:14px;padding:22px 26px;margin-bottom:24px;border:1px solid #334155">
+  <div style="display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;margin-bottom:14px">
+    <h2 style="font-size:20px;color:#f8fafc;margin:0">Today's Actions — Tuesday</h2>
+    <div style="color:#94a3b8;font-size:13px">2026-04-21 · stage: <strong style="color:#e2e8f0">transition</strong></div>
+  </div>
+
+  <h3 style="font-size:13px;color:#86efac;margin:0 0 8px 0;text-transform:uppercase;letter-spacing:0.5px">CI handles these at 06:00 UTC</h3>
+  <ul style="margin:0 0 4px 0;padding:0"><li style="margin:6px 0;padding:8px 12px;background:#064e3b;border-radius:6px;border-left:3px solid #22c55e;list-style:none">
+      <span style="font-size:11px;background:#22c55e;color:#fff;padding:1px 6px;border-radius:3px;margin-right:8px">AUTO</span><strong>Bluesky</strong> <span style="color:#94a3b8;font-size:12px">— "How many tokens did your last API call use? Tested Haiku, GPT-4o Mini,…"</span>
+    </li><li style="margin:6px 0;padding:8px 12px;background:#064e3b;border-radius:6px;border-left:3px solid #22c55e;list-style:none">
+      <span style="font-size:11px;background:#22c55e;color:#fff;padding:1px 6px;border-radius:3px;margin-right:8px">AUTO</span><strong>Dev.to</strong> <span style="color:#94a3b8;font-size:12px">— "3 Things I Learned Benchmarking Claude, GPT-4o, and Gemini on Real Dev…"</span>
+    </li></ul>
+
+  <h3 style="font-size:13px;color:#fcd34d;margin:18px 0 8px 0;text-transform:uppercase;letter-spacing:0.5px">You run these today</h3>
+  <ul style="margin:0;padding:0"><li style="margin:6px 0;padding:10px 12px;background:#451a03;border-radius:6px;border-left:3px solid #f59e0b;list-style:none">
+          <span style="font-size:11px;background:#f59e0b;color:#fff;padding:1px 6px;border-radius:3px;margin-right:8px">MANUAL</span>
+          <strong>Twitter + Medium</strong> — <span style="color:#94a3b8;font-size:12px">"🐦 How many tokens did your last API call use? Tested Haik… | 📝 3 Things I Learned Running the Same 5 Prompts Through C…"</span><br>
+          <code style="font-size:12px;background:#1e293b;color:#e2e8f0;padding:4px 8px;border-radius:4px;margin-top:6px;display:inline-block">cd packages/max && node dist/index.js --mode social-post --medium</code>
+        </li><li style="margin:6px 0;padding:10px 12px;background:#451a03;border-radius:6px;border-left:3px solid #f59e0b;list-style:none">
+          <span style="font-size:11px;background:#f59e0b;color:#fff;padding:1px 6px;border-radius:3px;margin-right:8px">MANUAL</span>
+          <strong>Substack Note</strong> — <span style="color:#94a3b8;font-size:12px">"How many tokens did your last API call use? Tested Haiku, GPT-4o Mini, Flash on …"</span><br>
+          <code style="font-size:12px;background:#1e293b;color:#e2e8f0;padding:4px 8px;border-radius:4px;margin-top:6px;display:inline-block">cd packages/max && node dist/index.js --mode social-test-substack --submit</code>
+        </li></ul>
+
+  
+  <h3 style="font-size:13px;color:#fca5a5;margin:18px 0 8px 0;text-transform:uppercase;letter-spacing:0.5px">⚙ First-Run Setup (do once)</h3>
+       <p style="color:#94a3b8;font-size:12px;margin-bottom:8px">These scrapers need a DOM inspection pass before first live use. Run each with OpenTabs started + Brave logged in to that platform. They write HTML dumps to <code>data/dom-dumps/</code> — share them to finalize selectors.</p>
+       <ul style="margin:0;padding:0">
+         <li style="margin:6px 0;padding:10px 12px;background:#450a0a;border-radius:6px;border-left:3px solid #ef4444;list-style:none">
+             <span style="font-size:11px;background:#ef4444;color:#fff;padding:1px 6px;border-radius:3px;margin-right:8px">SETUP</span>
+             <strong>Calibrate Medium scraper</strong><br>
+             <code style="font-size:12px;background:#1e293b;color:#e2e8f0;padding:4px 8px;border-radius:4px;margin-top:6px;display:inline-block">cd packages/max && node dist/index.js --mode collect-engagement-local --only medium --dry-run</code>
+             <div style="font-size:12px;color:#94a3b8;margin-top:6px">Dumps medium DOM to data/dom-dumps/ so selectors can be verified before first live run.</div>
+           </li><li style="margin:6px 0;padding:10px 12px;background:#450a0a;border-radius:6px;border-left:3px solid #ef4444;list-style:none">
+             <span style="font-size:11px;background:#ef4444;color:#fff;padding:1px 6px;border-radius:3px;margin-right:8px">SETUP</span>
+             <strong>Calibrate Substack scraper</strong><br>
+             <code style="font-size:12px;background:#1e293b;color:#e2e8f0;padding:4px 8px;border-radius:4px;margin-top:6px;display:inline-block">cd packages/max && node dist/index.js --mode collect-engagement-local --only substack --dry-run</code>
+             
+           </li><li style="margin:6px 0;padding:10px 12px;background:#450a0a;border-radius:6px;border-left:3px solid #ef4444;list-style:none">
+             <span style="font-size:11px;background:#ef4444;color:#fff;padding:1px 6px;border-radius:3px;margin-right:8px">SETUP</span>
+             <strong>Calibrate Twitter scraper</strong><br>
+             <code style="font-size:12px;background:#1e293b;color:#e2e8f0;padding:4px 8px;border-radius:4px;margin-top:6px;display:inline-block">cd packages/max && node dist/index.js --mode collect-engagement-local --only twitter --dry-run</code>
+             
+           </li>
+       </ul>
+</div>
+
 <div style="margin-bottom:24px">
   <h2 style="font-size:16px;margin-bottom:12px">This Week</h2>
   <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px">

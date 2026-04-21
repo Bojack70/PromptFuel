@@ -401,6 +401,160 @@ function buildWeekCalendar(dataDir: string): string {
 </div>`;
 }
 
+/**
+ * Today's Actions — prominent card at top of dashboard answering
+ * "what do I run right now?" Covers:
+ *   • AUTO items (what CI is handling today at 06:00 UTC)
+ *   • MANUAL items from today's calendar (content posting, engagement)
+ *   • Monday-specific weekly brain + local engagement collection
+ *   • First-run scraper calibration (shown only until engagement-local.json exists)
+ */
+function buildTodayActionsSection(dataDir: string): string {
+  const calFile = join(dataDir, 'calendar.json');
+  const preFile = join(dataDir, 'pregenerated-content.json');
+  const engagementLocalFile = join(dataDir, 'engagement-local.json');
+  if (!existsSync(calFile)) return '';
+
+  type CalendarDay = { date: string; bluesky?: string; devto?: string | null };
+  type PrePost = { date: string; bluesky?: { text: string }; twitter?: { text: string; category: string }; devto?: { title: string }; medium?: { title: string }; substack?: { note: string } };
+
+  const cal = JSON.parse(readFileSync(calFile, 'utf-8')) as { days: CalendarDay[] };
+  const pre: { posts: PrePost[] } = existsSync(preFile)
+    ? JSON.parse(readFileSync(preFile, 'utf-8'))
+    : { posts: [] };
+  const preMap = Object.fromEntries(pre.posts.map((p) => [p.date, p]));
+
+  const todayStr = new Date().toISOString().split('T')[0];
+  const todayCal = cal.days.find((d) => d.date === todayStr);
+  const utcDay = new Date(todayStr + 'T12:00:00Z').getUTCDay();
+  const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const dayName = DAY_NAMES[utcDay];
+  const p = preMap[todayStr];
+
+  const stage = getStage();
+  const isDevtoDay = DEVTO_DAYS[stage].includes(utcDay) || !!todayCal?.devto;
+  const isSubstackDay = SUBSTACK_DAYS[stage].includes(utcDay) || !!todayCal?.devto;
+  const isEngageDay = MEDIUM_ENGAGE_DAYS.includes(utcDay);
+  const isMonday = utcDay === 1;
+
+  // --- AUTO items (informational — what CI is doing) ---
+  const autoLines: string[] = [];
+  autoLines.push(`<strong>Bluesky</strong> ${p?.bluesky ? `<span style="color:#94a3b8;font-size:12px">— "${p.bluesky.text.slice(0, 70)}…"</span>` : ''}`);
+  if (isDevtoDay) autoLines.push(`<strong>Dev.to</strong> ${p?.devto ? `<span style="color:#94a3b8;font-size:12px">— "${p.devto.title.slice(0, 70)}…"</span>` : ''}`);
+
+  // --- MANUAL content items (things user runs today) ---
+  const manualItems: Array<{ label: string; preview?: string; cmd: string }> = [];
+  if (isDevtoDay && p?.medium) {
+    const twitterText = p.twitter?.text ?? p.bluesky?.text ?? '';
+    const twitterCat = p.twitter?.category ?? '';
+    manualItems.push({
+      label: 'Twitter + Medium',
+      preview: `🐦${twitterCat ? ` [${twitterCat}]` : ''} ${twitterText.slice(0, 55)}… | 📝 ${p.medium.title.slice(0, 55)}…`,
+      cmd: 'cd packages/max && node dist/index.js --mode social-post --medium',
+    });
+  }
+  if (isSubstackDay && p?.substack) {
+    manualItems.push({
+      label: 'Substack Note',
+      preview: p.substack.note.slice(0, 80) + '…',
+      cmd: 'cd packages/max && node dist/index.js --mode social-test-substack --submit',
+    });
+  }
+  if (isEngageDay) {
+    manualItems.push({
+      label: 'Medium Engage (clap + comment on 3 articles)',
+      cmd: 'cd packages/max && node dist/index.js --mode medium-engage --topic programming',
+    });
+  }
+
+  // --- MONDAY — weekly brain ---
+  const mondayItems: Array<{ label: string; cmd: string; note?: string }> = [];
+  if (isMonday) {
+    mondayItems.push({
+      label: 'Weekly brain (reflection + calendar + content pre-generation)',
+      cmd: 'cd packages/max && npx pnpm build && node dist/index.js --mode weekly',
+      note: 'Runs locally via your Claude Code subscription. Includes local engagement collection (Medium/Substack/Twitter) if OpenTabs is running.',
+    });
+  }
+
+  // --- FIRST-RUN calibration (only if scrapers haven't run yet) ---
+  const firstRunItems: Array<{ label: string; cmd: string; note?: string }> = [];
+  if (!existsSync(engagementLocalFile)) {
+    firstRunItems.push({
+      label: 'Calibrate Medium scraper',
+      cmd: 'cd packages/max && node dist/index.js --mode collect-engagement-local --only medium --dry-run',
+      note: 'Dumps medium DOM to data/dom-dumps/ so selectors can be verified before first live run.',
+    });
+    firstRunItems.push({
+      label: 'Calibrate Substack scraper',
+      cmd: 'cd packages/max && node dist/index.js --mode collect-engagement-local --only substack --dry-run',
+    });
+    firstRunItems.push({
+      label: 'Calibrate Twitter scraper',
+      cmd: 'cd packages/max && node dist/index.js --mode collect-engagement-local --only twitter --dry-run',
+    });
+  }
+
+  // --- Build HTML ---
+  const autoHtml = autoLines.map((l) =>
+    `<li style="margin:6px 0;padding:8px 12px;background:#064e3b;border-radius:6px;border-left:3px solid #22c55e;list-style:none">
+      <span style="font-size:11px;background:#22c55e;color:#fff;padding:1px 6px;border-radius:3px;margin-right:8px">AUTO</span>${l}
+    </li>`).join('');
+
+  const manualHtml = manualItems.length === 0
+    ? `<li style="color:#6b7280;list-style:none;padding:8px 12px">Nothing manual scheduled for today.</li>`
+    : manualItems.map((item) =>
+        `<li style="margin:6px 0;padding:10px 12px;background:#451a03;border-radius:6px;border-left:3px solid #f59e0b;list-style:none">
+          <span style="font-size:11px;background:#f59e0b;color:#fff;padding:1px 6px;border-radius:3px;margin-right:8px">MANUAL</span>
+          <strong>${item.label}</strong>${item.preview ? ` — <span style="color:#94a3b8;font-size:12px">"${item.preview}"</span>` : ''}<br>
+          <code style="font-size:12px;background:#1e293b;color:#e2e8f0;padding:4px 8px;border-radius:4px;margin-top:6px;display:inline-block">${item.cmd}</code>
+        </li>`).join('');
+
+  const mondayHtml = mondayItems.length > 0
+    ? `<h3 style="font-size:13px;color:#c7d2fe;margin:18px 0 8px 0;text-transform:uppercase;letter-spacing:0.5px">Monday — Weekly Brain</h3>
+       <ul style="margin:0;padding:0">
+         ${mondayItems.map((item) =>
+           `<li style="margin:6px 0;padding:10px 12px;background:#1e1b4b;border-radius:6px;border-left:3px solid #818cf8;list-style:none">
+             <span style="font-size:11px;background:#818cf8;color:#fff;padding:1px 6px;border-radius:3px;margin-right:8px">WEEKLY</span>
+             <strong>${item.label}</strong><br>
+             <code style="font-size:12px;background:#1e293b;color:#e2e8f0;padding:4px 8px;border-radius:4px;margin-top:6px;display:inline-block">${item.cmd}</code>
+             ${item.note ? `<div style="font-size:12px;color:#94a3b8;margin-top:6px">${item.note}</div>` : ''}
+           </li>`).join('')}
+       </ul>`
+    : '';
+
+  const firstRunHtml = firstRunItems.length > 0
+    ? `<h3 style="font-size:13px;color:#fca5a5;margin:18px 0 8px 0;text-transform:uppercase;letter-spacing:0.5px">⚙ First-Run Setup (do once)</h3>
+       <p style="color:#94a3b8;font-size:12px;margin-bottom:8px">These scrapers need a DOM inspection pass before first live use. Run each with OpenTabs started + Brave logged in to that platform. They write HTML dumps to <code>data/dom-dumps/</code> — share them to finalize selectors.</p>
+       <ul style="margin:0;padding:0">
+         ${firstRunItems.map((item) =>
+           `<li style="margin:6px 0;padding:10px 12px;background:#450a0a;border-radius:6px;border-left:3px solid #ef4444;list-style:none">
+             <span style="font-size:11px;background:#ef4444;color:#fff;padding:1px 6px;border-radius:3px;margin-right:8px">SETUP</span>
+             <strong>${item.label}</strong><br>
+             <code style="font-size:12px;background:#1e293b;color:#e2e8f0;padding:4px 8px;border-radius:4px;margin-top:6px;display:inline-block">${item.cmd}</code>
+             ${item.note ? `<div style="font-size:12px;color:#94a3b8;margin-top:6px">${item.note}</div>` : ''}
+           </li>`).join('')}
+       </ul>`
+    : '';
+
+  return `
+<div style="background:linear-gradient(135deg,#1e293b 0%,#1e1b4b 100%);border-radius:14px;padding:22px 26px;margin-bottom:24px;border:1px solid #334155">
+  <div style="display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;margin-bottom:14px">
+    <h2 style="font-size:20px;color:#f8fafc;margin:0">Today's Actions — ${dayName}</h2>
+    <div style="color:#94a3b8;font-size:13px">${todayStr} · stage: <strong style="color:#e2e8f0">${stage}</strong></div>
+  </div>
+
+  <h3 style="font-size:13px;color:#86efac;margin:0 0 8px 0;text-transform:uppercase;letter-spacing:0.5px">CI handles these at 06:00 UTC</h3>
+  <ul style="margin:0 0 4px 0;padding:0">${autoHtml}</ul>
+
+  <h3 style="font-size:13px;color:#fcd34d;margin:18px 0 8px 0;text-transform:uppercase;letter-spacing:0.5px">You run these today</h3>
+  <ul style="margin:0;padding:0">${manualHtml}</ul>
+
+  ${mondayHtml}
+  ${firstRunHtml}
+</div>`;
+}
+
 export function generateDashboard(dataDir: string): void {
   const snapshots = loadAllSnapshots(dataDir);
   const contentLog = loadContentLog(dataDir);
@@ -439,6 +593,7 @@ export function generateDashboard(dataDir: string): void {
     : 0;
 
   // New sections
+  const todayActions = buildTodayActionsSection(dataDir);
   const weekCalendar = buildWeekCalendar(dataDir);
   const engagementCards = buildEngagementSection(dataDir);
   const correlationSection = buildCorrelationSection(dataDir);
@@ -487,6 +642,7 @@ export function generateDashboard(dataDir: string): void {
 <h1>Max Agent Dashboard</h1>
 <p class="subtitle">Generated ${new Date().toISOString().split('T')[0]} · ${snapshots.length} snapshots · ${contentLog.length} posts · ${experiments.length} experiments</p>
 
+${todayActions}
 ${weekCalendar}
 
 <div class="grid">
