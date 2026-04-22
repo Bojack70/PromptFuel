@@ -1,24 +1,34 @@
 /**
- * Substack Notes engagement — like and reply to other writers' Notes.
+ * Substack Notes engagement — like other writers' Notes + generate reply DRAFTS
+ * for manual paste.
  *
- * Parallel to medium-engage.ts but targeting Substack's Notes feed (the tweet-like
- * micro-content surface). Uses the same anti-detection principles:
- *   - 3-5 notes engaged per session
- *   - 2-3 likes per session, 0-2 replies per session, hard-capped at 3/day
- *   - Long inter-note cooldowns (30-60s; 60-120s after a reply)
- *   - Dedup via data/substack-engaged.json (never engage same note twice)
+ * Likes are fully automated. REPLIES ARE DRAFTS ONLY — the automated submit
+ * path does not work (see limitations below). Replies that pass the relevance
+ * filter are generated and saved to data/substack-reply-drafts.json for the
+ * user to review and paste manually.
+ *
+ * Anti-detection design (likes only — drafts are offline):
+ *   - 3-5 notes read per session
+ *   - 2-3 likes per session
+ *   - Long inter-note cooldowns (30-60s)
+ *   - Dedup via data/substack-engaged.json (never like same note twice)
  *   - Daily caps persisted on disk (restart-safe)
  *
- * SCAFFOLDING NOTICE (2026-04-22): Substack's Notes DOM is obfuscated similar
- * to Medium's — selectors below are educated guesses based on Substack conventions
- * and need live calibration. First run should always be `--dry-run`, which
- * dumps the feed DOM to data/dom-dumps/ without interacting. Inspect, adjust
- * selectors, then run live.
+ * Why replies are drafts only (verified 2026-04-22 via live DOM + event trace):
+ *   Substack's Tiptap editor listens to `paste` events with isTrusted=true,
+ *   which only fire from real OS-level Cmd+V. Our tooling stack:
+ *     - ClipboardEvent('paste')    → isTrusted=false → Tiptap rejects
+ *     - document.execCommand       → fires input events, no paste → Tiptap rejects
+ *     - editor.commands.insertContent → updates internal state but Post button
+ *                                      stays disabled (enable hook watches paste)
+ *     - OpenTabs browser_press_key  → no keyboard events reach the page at all
+ *   The only working path requires real OS keyboard events (AppleScript) or
+ *   Chrome DevTools Protocol (which OpenTabs does not expose).
  *
  * Usage (via --mode substack-engage in index.ts):
- *   node dist/index.js --mode substack-engage --dry-run     (first-run DOM dump)
- *   node dist/index.js --mode substack-engage               (live, conservative defaults)
- *   node dist/index.js --mode substack-engage --verify      (1 note, no cooldowns, no dedup)
+ *   node dist/index.js --mode substack-engage --dry-run     (DOM dump, no actions)
+ *   node dist/index.js --mode substack-engage               (live likes + drafts)
+ *   node dist/index.js --mode substack-engage --verify      (3 notes, no cooldowns)
  */
 
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
@@ -31,7 +41,6 @@ import {
   closeTab,
   waitForElement,
   executeScript,
-  queryElements,
   jitter,
   sleep,
 } from './client.js';
@@ -45,12 +54,12 @@ export interface SubstackEngageConfig {
   /** Hard caps — all optional, conservative defaults applied. */
   maxReadPerSession?: number;
   maxLikePerSession?: number;
-  maxReplyPerSession?: number;
+  maxDraftsPerSession?: number;
   dailyLikeCap?: number;
-  dailyReplyCap?: number;
+  dailyDraftCap?: number;
   /**
    * Verify mode — for smoke-testing selectors + LLM path.
-   * Caps at 1 note, skips cooldowns, forces like+reply attempt, skips history write.
+   * Caps at 3 notes, skips cooldowns, skips history write.
    */
   verify?: boolean;
 }
@@ -58,12 +67,29 @@ export interface SubstackEngageConfig {
 export interface SubstackEngageResult {
   read: number;
   liked: number;
-  replied: number;
+  /** Reply drafts saved to data/substack-reply-drafts.json (not auto-posted). */
+  draftsGenerated: number;
   skipped: string[];
-  dailyTotals: { likes: number; replies: number };
+  dailyTotals: { likes: number; draftsGenerated: number };
   /** True if the run produced a DOM dump instead of live interactions (for selector calibration). */
   dumpedDom?: boolean;
   domDumpPath?: string;
+}
+
+/** A generated reply draft awaiting manual paste to Substack. */
+export interface ReplyDraft {
+  noteId: string;
+  author: string;
+  url: string;
+  notePreview: string;
+  reply: string;
+  generatedAt: string;
+  /** User can flip this to true after pasting, or delete the entry. */
+  posted?: boolean;
+}
+
+interface ReplyDraftsFile {
+  drafts: ReplyDraft[];
 }
 
 interface NoteRef {
@@ -82,7 +108,8 @@ interface EngagementEntry {
   noteId: string;
   url: string;
   author: string;
-  action: 'read' | 'like' | 'reply';
+  /** 'draft' replaces the old 'reply' — we never auto-post, just generate drafts. */
+  action: 'read' | 'like' | 'draft';
   textPreview?: string;
   reply?: string;
 }
@@ -95,21 +122,23 @@ interface EngagementHistory {
 // ─── Constants ──────────────────────────────────────────────────────────────
 
 const HISTORY_FILE = 'substack-engaged.json';
+const DRAFTS_FILE = 'substack-reply-drafts.json';
 const FEED_URL = 'https://substack.com/notes';
 const DOM_DUMP_SUBDIR = 'dom-dumps';
 
 const DEFAULTS = {
   maxReadPerSession: 5,
   maxLikePerSession: 3,
-  maxReplyPerSession: 2,
+  /** Cap on reply-draft generation per session (offline — no anti-detection concern). */
+  maxDraftsPerSession: 2,
   dailyLikeCap: 5,
-  dailyReplyCap: 3,
+  /** Cap on reply-draft generation per day (limits LLM spend on drafts you may not use). */
+  dailyDraftCap: 5,
 };
 
-// Human-like ratios — slightly higher than Medium because Notes are lighter-weight
-// (easier to justify a like on a good note than a clap on an article you barely read).
+// Like probability (no reply probability — we always generate drafts if relevance
+// filter passes, since drafts are free to discard).
 const LIKE_PROBABILITY = 0.7;
-const REPLY_PROBABILITY = 0.35;
 
 // ─── History helpers ────────────────────────────────────────────────────────
 
@@ -144,6 +173,31 @@ function dumpDir(dataDir: string): string {
   const dir = join(dataDir, DOM_DUMP_SUBDIR);
   if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
   return dir;
+}
+
+// ─── Reply drafts ──────────────────────────────────────────────────────────
+
+function loadDrafts(dataDir: string): ReplyDraftsFile {
+  const file = join(dataDir, DRAFTS_FILE);
+  if (!existsSync(file)) return { drafts: [] };
+  try {
+    return JSON.parse(readFileSync(file, 'utf-8')) as ReplyDraftsFile;
+  } catch {
+    return { drafts: [] };
+  }
+}
+
+function saveDrafts(dataDir: string, file: ReplyDraftsFile): void {
+  writeFileSync(join(dataDir, DRAFTS_FILE), JSON.stringify(file, null, 2));
+}
+
+function appendDraft(dataDir: string, draft: ReplyDraft): void {
+  const file = loadDrafts(dataDir);
+  // Dedup: if a draft for this noteId already exists, overwrite it (regeneration)
+  const existingIdx = file.drafts.findIndex((d) => d.noteId === draft.noteId);
+  if (existingIdx >= 0) file.drafts[existingIdx] = draft;
+  else file.drafts.push(draft);
+  saveDrafts(dataDir, file);
 }
 
 // ─── Note discovery ─────────────────────────────────────────────────────────
@@ -278,9 +332,15 @@ async function simulateFeedBrowsing(tabId: number, verify = false): Promise<void
 // ─── Like action ────────────────────────────────────────────────────────────
 
 /**
- * Click the Like button on the note card identified by noteId.
- * Note card = <div role="article" aria-label="Note"> containing <a href=".../note/<id>">
- * Like button = <button aria-label="Like"> (exact match — Substack uses this verbatim).
+ * Click the Like button on the note identified by noteId, then verify the like
+ * actually registered (not just that we clicked).
+ *
+ * Confirmed via live DOM diagnostic 2026-04-22:
+ *   - aria-label stays "Like" even after liking (does NOT flip to "Liked"/"Unlike")
+ *   - Real success signal: `.isLiked-pX6wdS` class added to button's .container-CDGars div
+ *   - Secondary signal: `.active-hmQjWF` added to the button itself
+ *   - Button filtering MUST use URL-permalink match, not [role="article"] ancestor
+ *     (detail pages have 27+ Like buttons for sidebar/related notes)
  */
 async function likeNote(tabId: number, noteId: string, dryRun: boolean): Promise<boolean> {
   if (dryRun) {
@@ -288,37 +348,70 @@ async function likeNote(tabId: number, noteId: string, dryRun: boolean): Promise
     return true;
   }
 
-  const clicked = await executeScript<string>(
+  // Step 1: find + click the target Like button via URL-permalink filter
+  const clickResult = await executeScript<{ ok: boolean; reason: string; wasAlreadyLiked?: boolean }>(
     tabId,
     `
-    // Find the specific note card containing this noteId permalink
-    var cards = Array.from(document.querySelectorAll('[role="article"][aria-label="Note"]'));
-    var card = null;
-    for (var i = 0; i < cards.length; i++) {
-      if (cards[i].querySelector('a[href*="/note/${noteId}"]')) {
-        card = cards[i];
-        break;
+    var allLikes = Array.from(document.querySelectorAll('button[aria-label="Like"]'));
+    var targetBtn = null;
+    for (var i = 0; i < allLikes.length; i++) {
+      var btn = allLikes[i];
+      var el = btn;
+      for (var up = 0; up < 10 && el; up++) {
+        var link = el.querySelector && el.querySelector('a[href*="/note/${noteId}"]');
+        if (link) { targetBtn = btn; break; }
+        el = el.parentElement;
+      }
+      if (targetBtn) break;
+    }
+    if (!targetBtn) return { ok: false, reason: 'button-not-found' };
+
+    // Already-liked detection: check .isLiked-pX6wdS on inner container
+    var container = targetBtn.querySelector('.container-CDGars');
+    var alreadyLiked = container && container.classList && container.classList.contains('isLiked-pX6wdS');
+    if (alreadyLiked) return { ok: true, reason: 'already-liked', wasAlreadyLiked: true };
+
+    targetBtn.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    targetBtn.click();
+    return { ok: true, reason: 'clicked', wasAlreadyLiked: false };
+    `,
+  ).catch((): { ok: boolean; reason: string; wasAlreadyLiked?: boolean } => ({ ok: false, reason: 'script-threw' }));
+
+  if (!clickResult.ok) {
+    console.log(`[Max] substack-engage: like failed — ${clickResult.reason}`);
+    return false;
+  }
+  if (clickResult.wasAlreadyLiked) {
+    console.log(`[Max] substack-engage: note already liked`);
+    return true;
+  }
+
+  // Step 2: verify the like actually registered (React has to re-render)
+  await sleep(800);
+  const verified = await executeScript<boolean>(
+    tabId,
+    `
+    var allLikes = Array.from(document.querySelectorAll('button[aria-label="Like"]'));
+    for (var i = 0; i < allLikes.length; i++) {
+      var btn = allLikes[i];
+      var el = btn;
+      for (var up = 0; up < 10 && el; up++) {
+        if (el.querySelector && el.querySelector('a[href*="/note/${noteId}"]')) {
+          var container = btn.querySelector('.container-CDGars');
+          return !!(container && container.classList && container.classList.contains('isLiked-pX6wdS'));
+        }
+        el = el.parentElement;
       }
     }
-    if (!card) return 'no-card';
-
-    var btn = card.querySelector('button[aria-label="Like"]');
-    if (!btn) {
-      // Might already be liked — Substack toggles the label
-      var liked = card.querySelector('button[aria-label="Unlike"], button[aria-label="Liked"]');
-      if (liked) return 'already-liked';
-      return 'no-button';
-    }
-
-    btn.scrollIntoView({ block: 'center', behavior: 'smooth' });
-    btn.click();
-    return 'clicked';
+    return false;
     `,
-  ).catch(() => 'error');
+  ).catch(() => false);
 
-  if (clicked === 'clicked') return true;
-  console.log(`[Max] substack-engage: like failed (${clicked}) for ${noteId}`);
-  return false;
+  if (!verified) {
+    console.log(`[Max] substack-engage: click fired but .isLiked-pX6wdS never appeared — like did NOT register`);
+    return false;
+  }
+  return true;
 }
 
 // ─── Reply generation ──────────────────────────────────────────────────────
@@ -428,289 +521,6 @@ REASON: <one short sentence>`;
   }
 }
 
-// ─── Reply posting ──────────────────────────────────────────────────────────
-
-/**
- * Open the reply composer on a specific note and post the reply.
- * Substack Notes uses a Tiptap (ProseMirror) editor similar to its newsletter
- * editor — execCommand('insertText') should fire the input events Tiptap listens to.
- */
-async function postReply(
-  tabId: number,
-  noteId: string,
-  reply: string,
-  dryRun: boolean,
-): Promise<{ posted: boolean; humanAssisted: boolean }> {
-  if (dryRun) {
-    console.log(`[Max] substack-engage: DRY RUN — would reply: "${reply}"`);
-    return { posted: true, humanAssisted: false };
-  }
-
-  // Step 1: click the Comment button on the target note
-  const opened = await executeScript<string>(
-    tabId,
-    `
-    var cards = Array.from(document.querySelectorAll('[role="article"][aria-label="Note"]'));
-    var card = null;
-    for (var i = 0; i < cards.length; i++) {
-      if (cards[i].querySelector('a[href*="/note/${noteId}"]')) {
-        card = cards[i];
-        break;
-      }
-    }
-    if (!card) return 'no-card';
-
-    var btn = card.querySelector('button[aria-label="Comment"]');
-    if (!btn) return 'no-button';
-    btn.scrollIntoView({ block: 'center', behavior: 'smooth' });
-    btn.click();
-    return 'clicked';
-    `,
-  ).catch(() => 'error');
-
-  if (opened !== 'clicked') {
-    console.log(`[Max] substack-engage: reply button open failed (${opened})`);
-    return { posted: false, humanAssisted: true };
-  }
-
-  // Wait for the modal to mount + Tiptap to hydrate. Screenshot confirmed
-  // Substack opens a <dialog>-style modal with an "Avatar + Name + Leave a reply..."
-  // editor and Cancel/Post buttons. Needs 1.5-3s for the editor to be interactive.
-  await jitter(2000, 3500);
-
-  // Step 2a: locate the MODAL's reply editor + Post button. Tag them with data-*
-  // attributes so subsequent fill/submit steps can find them deterministically
-  // (same pattern medium-engage uses for the side-panel).
-  //
-  // Strategy:
-  //   - Prefer [role="dialog"] or [aria-modal="true"] scope
-  //   - Fallback: find the contenteditable whose placeholder contains "reply"
-  //   - Walk up from that editor to the nearest ancestor also containing a "Post" button
-  const targeted = await executeScript<{ ok: boolean; diag: string }>(
-    tabId,
-    `
-    // Substack's reply modal contains TWO contenteditables:
-    //   1. The quoted note being replied to (read-only-ish, shows original text)
-    //   2. Nate's reply editor (empty, placeholder "Leave a reply...")
-    // We MUST target the reply editor specifically — picking any contenteditable
-    // caught the quote in the previous iteration and our paste landed there silently.
-    //
-    // Strategy: scan for the contenteditable whose own attributes OR nearest
-    // descendant placeholder contains "reply" / "leave a reply". Fall back to
-    // "last contenteditable in the modal" (the reply comes AFTER the quote).
-    function getPlaceholderText(el) {
-      if (!el) return '';
-      var direct = el.getAttribute('data-placeholder') ||
-                   el.getAttribute('aria-placeholder') ||
-                   el.getAttribute('placeholder') ||
-                   '';
-      if (direct) return direct.toLowerCase();
-      // Tiptap often renders placeholder as a child span/div with data-placeholder
-      var phEl = el.querySelector('[data-placeholder], [aria-placeholder]');
-      if (phEl) {
-        return (phEl.getAttribute('data-placeholder') || phEl.getAttribute('aria-placeholder') || '').toLowerCase();
-      }
-      return '';
-    }
-
-    function isReplyEditor(el) {
-      var ph = getPlaceholderText(el);
-      if (ph.indexOf('reply') !== -1) return true;
-      // Also check parent chain for a "Leave a reply" text node as a weaker signal
-      var parent = el.parentElement;
-      for (var up = 0; up < 3 && parent; up++) {
-        var txt = (parent.textContent || '').toLowerCase();
-        if (txt.indexOf('leave a reply') !== -1 && txt.length < 200) return true;
-        parent = parent.parentElement;
-      }
-      return false;
-    }
-
-    function findReplyModal() {
-      // Primary: explicit dialog/modal scope, find the reply editor inside
-      var modals = Array.from(document.querySelectorAll('[role="dialog"], [aria-modal="true"]'))
-        .filter(function(el) { return el.offsetParent !== null; });
-      for (var i = 0; i < modals.length; i++) {
-        var modal = modals[i];
-        var editors = Array.from(modal.querySelectorAll('.ProseMirror, [contenteditable="true"]'))
-          .filter(function(el) { return el.offsetParent !== null; });
-        if (editors.length === 0) continue;
-
-        // Prefer explicit placeholder match
-        var replyEditor = editors.find(isReplyEditor);
-        // Fallback: last editor in the modal (reply comes AFTER the quote)
-        if (!replyEditor) replyEditor = editors[editors.length - 1];
-
-        var postBtn = Array.from(modal.querySelectorAll('button')).find(function(b) {
-          var t = (b.textContent || '').trim();
-          return t === 'Post' || t === 'Reply';
-        });
-        if (replyEditor && postBtn) {
-          var via = replyEditor === editors.find(isReplyEditor) ? 'dialog-placeholder' : 'dialog-last-editor';
-          return { editor: replyEditor, postBtn: postBtn, via: via };
-        }
-      }
-
-      // Fallback: no dialog role — walk up from a "reply" placeholder editor
-      var allEditors = Array.from(document.querySelectorAll('.ProseMirror, [contenteditable="true"]'))
-        .filter(function(el) { return el.offsetParent !== null; });
-      for (var j = 0; j < allEditors.length; j++) {
-        var ed = allEditors[j];
-        if (!isReplyEditor(ed)) continue;
-        var ancestor = ed.parentElement;
-        for (var up = 0; up < 8 && ancestor && ancestor !== document.body; up++) {
-          var post = Array.from(ancestor.querySelectorAll('button')).find(function(b) {
-            var t = (b.textContent || '').trim();
-            return t === 'Post' || t === 'Reply';
-          });
-          if (post) return { editor: ed, postBtn: post, via: 'placeholder-walkup' };
-          ancestor = ancestor.parentElement;
-        }
-      }
-
-      return null;
-    }
-
-    var ui = findReplyModal();
-    if (!ui) {
-      // Diagnostic — list visible editors + Post-ish buttons
-      var editors = Array.from(document.querySelectorAll('[contenteditable="true"]'))
-        .filter(function(el) { return el.offsetParent !== null; })
-        .map(function(el) {
-          var p = el.getAttribute('data-placeholder') || el.getAttribute('aria-placeholder') || el.getAttribute('placeholder') || '';
-          return 'ce[' + p.slice(0, 40) + ']';
-        });
-      var posts = Array.from(document.querySelectorAll('button'))
-        .filter(function(b) { if (b.offsetParent === null) return false; var t = (b.textContent || '').trim(); return t === 'Post' || t === 'Reply'; })
-        .map(function(b) {
-          var dis = b.disabled || b.getAttribute('aria-disabled') === 'true';
-          return b.textContent.trim() + (dis ? '(disabled)' : '(enabled)');
-        });
-      return { ok: false, diag: 'editors=' + JSON.stringify(editors) + ' posts=' + JSON.stringify(posts) };
-    }
-
-    ui.editor.setAttribute('data-pf-substack-target', '1');
-    ui.postBtn.setAttribute('data-pf-substack-submit', '1');
-
-    // Trigger Tiptap's focus via real mouse events at editor coordinates
-    var rect = ui.editor.getBoundingClientRect();
-    var cx = rect.left + rect.width / 2;
-    var cy = rect.top + Math.min(20, rect.height / 2);
-    ['mousedown', 'mouseup', 'click'].forEach(function(type) {
-      ui.editor.dispatchEvent(new MouseEvent(type, { bubbles: true, cancelable: true, clientX: cx, clientY: cy }));
-    });
-    ui.editor.focus();
-
-    return { ok: true, diag: 'via=' + ui.via };
-    `,
-  ).catch((): { ok: boolean; diag: string } => ({ ok: false, diag: 'script-threw' }));
-
-  if (!targeted.ok) {
-    console.log(`[Max] substack-engage: reply modal not found — ${targeted.diag}`);
-    return { posted: false, humanAssisted: true };
-  }
-  console.log(`[Max] substack-engage: reply modal located (${targeted.diag})`);
-
-  await jitter(600, 1000);
-
-  // Step 2b: fill the editor via ClipboardEvent (Tiptap/ProseMirror has a
-  // first-class paste handler that updates the internal model — same pattern
-  // medium-engage uses for Slate). Fall back to execCommand if paste doesn't land.
-  const filled = await executeScript<{ ok: boolean; textLen: number; method: string }>(
-    tabId,
-    `
-    var editor = document.querySelector('[data-pf-substack-target="1"]');
-    if (!editor) return { ok: false, textLen: 0, method: 'no-editor' };
-    var text = ${JSON.stringify(reply)};
-
-    editor.focus();
-
-    // Place caret at start of editor
-    try {
-      var sel = window.getSelection();
-      var range = document.createRange();
-      range.selectNodeContents(editor);
-      range.collapse(true);
-      sel.removeAllRanges();
-      sel.addRange(range);
-    } catch (e) {}
-
-    var method = 'none';
-
-    // Attempt 1: ClipboardEvent('paste') — Tiptap listens for this
-    try {
-      var dt = new DataTransfer();
-      dt.setData('text/plain', text);
-      var pasteEvt = new ClipboardEvent('paste', { bubbles: true, cancelable: true, clipboardData: dt });
-      try { Object.defineProperty(pasteEvt, 'clipboardData', { value: dt }); } catch (e) {}
-      editor.dispatchEvent(pasteEvt);
-      method = 'paste';
-    } catch (e) {}
-
-    // Attempt 2: execCommand fallback if paste didn't land text
-    if ((editor.textContent || '').trim().length === 0) {
-      document.execCommand('selectAll');
-      document.execCommand('insertText', false, text);
-      method = 'execCommand';
-    }
-
-    var textLen = (editor.textContent || '').length;
-    return { ok: textLen > 0, textLen: textLen, method: method };
-    `,
-  ).catch(() => ({ ok: false, textLen: 0, method: 'threw' }));
-
-  if (!filled.ok) {
-    console.log(`[Max] substack-engage: fill failed — method=${filled.method} textLen=${filled.textLen}`);
-    return { posted: false, humanAssisted: true };
-  }
-  console.log(`[Max] substack-engage: editor filled (method=${filled.method}, ${filled.textLen} chars)`);
-
-  // Let Tiptap run its state updater + re-render (enables the Post button)
-  await jitter(1500, 2500);
-
-  // Step 3: click the marked Post button. Reject if disabled — that means the
-  // editor fill didn't update Tiptap's internal model even though DOM shows text.
-  const published = await executeScript<string>(
-    tabId,
-    `
-    var btn = document.querySelector('[data-pf-substack-submit="1"]');
-    if (!btn) return 'no-button';
-    if (btn.disabled || btn.getAttribute('aria-disabled') === 'true') {
-      // Capture state so we can tell whether fill truly landed
-      var editor = document.querySelector('[data-pf-substack-target="1"]');
-      var txt = editor ? (editor.textContent || '') : '';
-      return 'disabled|txtLen=' + txt.length + '|preview=' + txt.slice(0, 40).replace(/\\n/g, ' ');
-    }
-    btn.click();
-    return 'clicked';
-    `,
-  ).catch(() => 'threw');
-
-  if (published === 'no-button' || published.indexOf('disabled|') === 0 || published === 'threw') {
-    console.log(`[Max] substack-engage: publish failed — ${published}`);
-    return { posted: false, humanAssisted: true };
-  }
-
-  // Step 4: verify the modal closed (real success signal). If modal is still
-  // present, the click was registered but submit didn't go through — treat as failure.
-  await sleep(3000);
-  const modalClosed = await executeScript<boolean>(
-    tabId,
-    `
-    var stillOpen = document.querySelector('[data-pf-substack-submit="1"]');
-    if (!stillOpen) return true; // our tagged button is gone = modal dismissed
-    // Also count hidden as closed
-    return stillOpen.offsetParent === null;
-    `,
-  ).catch(() => false);
-
-  if (!modalClosed) {
-    console.log(`[Max] substack-engage: modal still open after Post click — reply likely did not send`);
-    return { posted: false, humanAssisted: true };
-  }
-
-  return { posted: true, humanAssisted: false };
-}
 
 // ─── Dry-run DOM dump ───────────────────────────────────────────────────────
 
@@ -735,37 +545,37 @@ async function dumpFeedDom(tabId: number, dataDir: string): Promise<string | und
 
 export async function engageSubstack(config: SubstackEngageConfig): Promise<SubstackEngageResult> {
   if (config.verify) {
-    console.log('[Max] substack-engage: VERIFY MODE — 1 note, no cooldowns, forced like+reply, no history write');
+    console.log('[Max] substack-engage: VERIFY MODE — 3 notes, no cooldowns, no history write');
   }
 
   const caps = config.verify
-    ? { maxReadPerSession: 3, maxLikePerSession: 3, maxReplyPerSession: 1, dailyLikeCap: 99, dailyReplyCap: 99 }
+    ? { maxReadPerSession: 3, maxLikePerSession: 3, maxDraftsPerSession: 3, dailyLikeCap: 99, dailyDraftCap: 99 }
     : {
         maxReadPerSession: config.maxReadPerSession ?? DEFAULTS.maxReadPerSession,
         maxLikePerSession: config.maxLikePerSession ?? DEFAULTS.maxLikePerSession,
-        maxReplyPerSession: config.maxReplyPerSession ?? DEFAULTS.maxReplyPerSession,
+        maxDraftsPerSession: config.maxDraftsPerSession ?? DEFAULTS.maxDraftsPerSession,
         dailyLikeCap: config.dailyLikeCap ?? DEFAULTS.dailyLikeCap,
-        dailyReplyCap: config.dailyReplyCap ?? DEFAULTS.dailyReplyCap,
+        dailyDraftCap: config.dailyDraftCap ?? DEFAULTS.dailyDraftCap,
       };
 
   const history = loadHistory(config.dataDir);
   const likesToday = countToday(history, 'like');
-  const repliesToday = countToday(history, 'reply');
+  const draftsToday = countToday(history, 'draft');
 
-  if (likesToday >= caps.dailyLikeCap && repliesToday >= caps.dailyReplyCap) {
+  if (likesToday >= caps.dailyLikeCap && draftsToday >= caps.dailyDraftCap) {
     console.log(
-      `[Max] substack-engage: daily caps already hit (likes=${likesToday}/${caps.dailyLikeCap}, replies=${repliesToday}/${caps.dailyReplyCap}) — skipping`,
+      `[Max] substack-engage: daily caps already hit (likes=${likesToday}/${caps.dailyLikeCap}, drafts=${draftsToday}/${caps.dailyDraftCap}) — skipping`,
     );
     return {
       read: 0,
       liked: 0,
-      replied: 0,
+      draftsGenerated: 0,
       skipped: ['daily-cap-hit'],
-      dailyTotals: { likes: likesToday, replies: repliesToday },
+      dailyTotals: { likes: likesToday, draftsGenerated: draftsToday },
     };
   }
 
-  console.log(`[Max] substack-engage: today so far: ${likesToday} likes, ${repliesToday} replies`);
+  console.log(`[Max] substack-engage: today so far: ${likesToday} likes, ${draftsToday} drafts`);
 
   // Pre-session warm-up (skipped in dry-run/verify)
   if (!config.dryRun && !config.verify) {
@@ -811,9 +621,9 @@ export async function engageSubstack(config: SubstackEngageConfig): Promise<Subs
     return {
       read: 0,
       liked: 0,
-      replied: 0,
+      draftsGenerated: 0,
       skipped: [],
-      dailyTotals: { likes: likesToday, replies: repliesToday },
+      dailyTotals: { likes: likesToday, draftsGenerated: draftsToday },
       dumpedDom: true,
       domDumpPath,
     };
@@ -827,9 +637,9 @@ export async function engageSubstack(config: SubstackEngageConfig): Promise<Subs
     return {
       read: 0,
       liked: 0,
-      replied: 0,
+      draftsGenerated: 0,
       skipped: ['no-fresh-notes'],
-      dailyTotals: { likes: likesToday, replies: repliesToday },
+      dailyTotals: { likes: likesToday, draftsGenerated: draftsToday },
       domDumpPath,
     };
   }
@@ -839,16 +649,16 @@ export async function engageSubstack(config: SubstackEngageConfig): Promise<Subs
   const result: SubstackEngageResult = {
     read: 0,
     liked: 0,
-    replied: 0,
+    draftsGenerated: 0,
     skipped: [],
-    dailyTotals: { likes: likesToday, replies: repliesToday },
+    dailyTotals: { likes: likesToday, draftsGenerated: draftsToday },
     domDumpPath,
   };
 
   for (let i = 0; i < picks.length; i++) {
     const note = picks[i];
 
-    if (result.liked >= caps.maxLikePerSession && result.replied >= caps.maxReplyPerSession) {
+    if (result.liked >= caps.maxLikePerSession && result.draftsGenerated >= caps.maxDraftsPerSession) {
       console.log(`[Max] substack-engage: session caps reached — stopping early`);
       break;
     }
@@ -858,7 +668,7 @@ export async function engageSubstack(config: SubstackEngageConfig): Promise<Subs
     // Scroll the note into view first (it may be far down the feed)
     await executeScript(
       feedTab.id,
-      `var a = document.querySelector('a[href*="/notes/note/${note.id}"]');
+      `var a = document.querySelector('a[href*="/note/${note.id}"]');
        if (a) a.scrollIntoView({ block: 'center', behavior: 'smooth' });`,
     ).catch(() => {});
     await jitter(config.verify ? 500 : 1500, config.verify ? 1500 : 3500);
@@ -873,15 +683,14 @@ export async function engageSubstack(config: SubstackEngageConfig): Promise<Subs
       textPreview: note.text.slice(0, 120),
     });
 
-    // Decide like
+    // Decide like — fully automated, verified working
     const dailyLikesRemaining = caps.dailyLikeCap - (likesToday + result.liked);
     const sessionLikesRemaining = caps.maxLikePerSession - result.liked;
     const canLike = dailyLikesRemaining > 0 && sessionLikesRemaining > 0;
     const willLike = canLike && (config.verify || Math.random() < LIKE_PROBABILITY);
 
-    let liked = false;
     if (willLike) {
-      liked = await likeNote(feedTab.id, note.id, config.dryRun);
+      const liked = await likeNote(feedTab.id, note.id, config.dryRun);
       if (liked) {
         result.liked++;
         history.entries.push({
@@ -895,56 +704,61 @@ export async function engageSubstack(config: SubstackEngageConfig): Promise<Subs
       }
     }
 
-    // Decide reply (only if liked succeeded, matching Medium's clap-gates-comment convention)
-    const dailyRepliesRemaining = caps.dailyReplyCap - (repliesToday + result.replied);
-    const sessionRepliesRemaining = caps.maxReplyPerSession - result.replied;
-    const canReply = config.verify
-      ? dailyRepliesRemaining > 0 && sessionRepliesRemaining > 0
-      : liked && dailyRepliesRemaining > 0 && sessionRepliesRemaining > 0;
-    const willReply = canReply && (config.verify || Math.random() < REPLY_PROBABILITY);
+    // Decide reply DRAFT generation. Drafts are saved to data/substack-reply-drafts.json
+    // for manual paste — automated submission is not possible (see file header).
+    // No like-gate here (drafts are offline, not platform actions).
+    const dailyDraftsRemaining = caps.dailyDraftCap - (draftsToday + result.draftsGenerated);
+    const sessionDraftsRemaining = caps.maxDraftsPerSession - result.draftsGenerated;
+    const canDraft = dailyDraftsRemaining > 0 && sessionDraftsRemaining > 0;
 
-    if (willReply) {
+    if (canDraft) {
       try {
         if (note.text.length < 40) {
-          console.log(`[Max] substack-engage: note text too short (${note.text.length} chars), skipping reply`);
+          console.log(`[Max] substack-engage: note text too short (${note.text.length} chars), skipping draft`);
         } else {
-          // Relevance filter — honest-take rule: skip if Nate doesn't have genuine
-          // standing to engage (demographic-gated requests, off-lane topics, solicitations)
           const relevance = await shouldReply(config.claudeApiKey, note.text, note.author);
           if (!relevance.canReply) {
-            console.log(`[Max] substack-engage: SKIP reply — ${relevance.reason}`);
-            // Continue to next note — we still liked it (if willLike fired), that's enough
+            console.log(`[Max] substack-engage: SKIP draft — ${relevance.reason}`);
           } else {
-            console.log(`[Max] substack-engage: reply OK — ${relevance.reason}`);
+            console.log(`[Max] substack-engage: draft OK — ${relevance.reason}`);
             const reply = await generateReply(config.claudeApiKey, note.text, note.author, config.dataDir);
-            console.log(`[Max] substack-engage: generated reply — "${reply.slice(0, 80)}${reply.length > 80 ? '...' : ''}"`);
+            console.log(`[Max] substack-engage: generated draft — "${reply.slice(0, 80)}${reply.length > 80 ? '...' : ''}"`);
 
-            const { posted, humanAssisted } = await postReply(feedTab.id, note.id, reply, config.dryRun);
-            if (posted) {
-              result.replied++;
+            // Save draft to disk for manual paste — verify mode skips persistence
+            if (!config.verify) {
+              appendDraft(config.dataDir, {
+                noteId: note.id,
+                author: note.author,
+                url: note.url,
+                notePreview: note.text.slice(0, 200),
+                reply,
+                generatedAt: new Date().toISOString(),
+                posted: false,
+              });
               history.entries.push({
                 date: todayUTC(),
                 noteId: note.id,
                 url: note.url,
                 author: note.author,
-                action: 'reply',
+                action: 'draft',
                 reply,
               });
-              console.log(`[Max] substack-engage: reply posted${humanAssisted ? ' (human-assisted)' : ''}`);
+              console.log(`[Max] substack-engage: draft saved to ${DRAFTS_FILE}`);
             } else {
-              console.log(`[Max] substack-engage: reply not posted — consider finishing manually in Brave`);
+              console.log(`[Max] substack-engage: VERIFY — draft generated but not persisted`);
             }
+            result.draftsGenerated++;
           }
         }
       } catch (err) {
-        console.warn(`[Max] substack-engage: reply step failed — ${(err as Error).message}`);
+        console.warn(`[Max] substack-engage: draft step failed — ${(err as Error).message}`);
       }
     }
 
-    // Cooldown before next note
+    // Cooldown before next note (likes only — drafts are offline so no rate-limit concern)
     if (i < picks.length - 1 && !config.verify) {
-      const lower = willReply ? 60_000 : 30_000;
-      const upper = willReply ? 120_000 : 60_000;
+      const lower = 30_000;
+      const upper = 60_000;
       console.log(`[Max] substack-engage: cooldown ${Math.round(lower / 1000)}-${Math.round(upper / 1000)}s...`);
       await jitter(lower, upper);
     }
@@ -962,12 +776,13 @@ export async function engageSubstack(config: SubstackEngageConfig): Promise<Subs
 
   result.dailyTotals = {
     likes: likesToday + result.liked,
-    replies: repliesToday + result.replied,
+    draftsGenerated: draftsToday + result.draftsGenerated,
   };
 
   console.log(
-    `[Max] substack-engage: done — read=${result.read} liked=${result.liked} replied=${result.replied} ` +
-      `| today totals: ${result.dailyTotals.likes} likes, ${result.dailyTotals.replies} replies`,
+    `[Max] substack-engage: done — read=${result.read} liked=${result.liked} drafts=${result.draftsGenerated} ` +
+      `| today: ${result.dailyTotals.likes} likes, ${result.dailyTotals.draftsGenerated} drafts ` +
+      `(paste drafts manually from data/${DRAFTS_FILE})`,
   );
   return result;
 }
