@@ -1,36 +1,60 @@
 /**
- * Substack Notes engagement — like + reply to other writers' Notes.
+ * Substack Notes engagement — like other writers' Notes; generate reply drafts
+ * for manual review.
  *
- * Fully automated after 2026-04-22 breakthrough. Previous "drafts only" design
- * was based on incomplete diagnosis; the winning recipe:
- *   1. Click Comment button (trusted CDP click) → modal opens
- *   2. Dummy keypress via pressKey with editor selector (trusted CDP keyDown+char+keyUp
- *      fires real `input` event → Substack's Post-enable hook triggers)
- *   3. Replace dummy content via Tiptap's `chain().focus().selectAll().deleteSelection()
- *      .insertContent(reply).run()` — clean DOM + internal state, Post stays enabled
- *   4. Click Post via browser_click_element (trusted CDP Input.dispatchMouseEvent)
- *   5. Verify via reply-text-in-DOM (comment count display is unreliable — rounds/caches)
+ * **CURRENT DEFAULT: likes + reply DRAFTS ONLY. Auto-submit disabled.**
  *
- * Why the double-step — OpenTabs pressKey for printable chars double-inserts each
- * character (known OpenTabs bug: sends both keyDown-with-text AND char-with-text to
- * CDP). We can't directly type reply content cleanly, but we only need ONE char to
- * trigger the input-event enable hook; then we replace via Tiptap's internal API.
+ * Why drafts-only by default (discovered 2026-04-22 after initial "ship" celebration):
+ *   The auto-submit recipe technically works — server accepts replies, count
+ *   increments, "Reply sent" toast fires. BUT Substack SHADOW-MODERATES replies
+ *   from new/low-reputation accounts. Evidence:
+ *     - @emmabeames note count went 99→100 after our reply — but the reply text
+ *       ("retirement plan now") is NOT visible on the note's public page
+ *     - @lauragutierrezg note count went 92→93 after our reply — but the reply
+ *       text ("basically home spa") is NOT visible on the note's public page
+ *     - Nate's own profile at /@natevoss/notes says "You haven't published anything yet"
+ *     - One reply (@ripavika) did get liked by the author — may be visible to the
+ *       author via their dashboard but likely still hidden from public feed
+ *   Substack's anti-spam filter ghost-bans replies from accounts with:
+ *     - Few subscribers (<5)
+ *     - No own-published notes
+ *     - Rapid-fire replies to high-traffic notes
+ *   The submissions are stored server-side but silently hidden from public view.
+ *
+ * Operational conclusion: until Nate's account has reputation (subscribers + own
+ * notes + organic engagement history), auto-submitted replies have near-zero
+ * audience-building value. The cheapest signal (the "Reply sent" toast) cannot
+ * distinguish "posted and visible" from "posted and shadowed."
+ *
+ * Strategy: likes are always safe and register on the author's notification feed
+ * (does NOT require reputation to be visible — likes are just a count). Auto-reply
+ * re-enables when set `SUBSTACK_AUTO_REPLY=1` in env — the code works, just
+ * off-by-default until Nate builds reputation.
+ *
+ * The winning recipe (preserved for when SUBSTACK_AUTO_REPLY=1):
+ *   1. browser_click_element on Comment button (trusted CDP click) → modal opens
+ *   2. pressKey single dummy char on editor selector — trusted CDP keyDown+char+keyUp
+ *      fires REAL input event, triggers Substack's Post-enable hook. Editor shows
+ *      "xx" because OpenTabs double-inserts printable chars (known bug) — we replace
+ *      in next step so it doesn't matter.
+ *   3. editor.editor.chain().focus().selectAll().deleteSelection().insertContent(text).run()
+ *      — clean DOM + internal Tiptap state, Post stays enabled
+ *   4. browser_click_element on Post button (trusted CDP click)
+ *   5. Poll for "Reply sent" toast (server-confirmed acceptance — NOT visibility)
  *
  * Anti-detection design:
  *   - 3-5 notes engaged per session
- *   - 2-3 likes per session, 0-2 replies per session
+ *   - 2-3 likes per session, 0-2 drafts (or replies when enabled) per session
  *   - Long inter-note cooldowns (30-60s; 60-120s after reply)
  *   - Dedup via data/substack-engaged.json (never engage same note twice)
  *   - Daily caps persisted on disk (restart-safe)
- *   - Relevance filter (honest-take rule) runs before every reply
- *
- * Fallback: if auto-submit fails at any step (rare after verification), the reply
- * text is saved to data/substack-reply-drafts.json so no content is lost.
+ *   - Relevance filter (honest-take rule) runs before every reply/draft
  *
  * Usage (via --mode substack-engage in index.ts):
- *   node dist/index.js --mode substack-engage --dry-run     (DOM dump, no actions)
- *   node dist/index.js --mode substack-engage               (live likes + replies)
- *   node dist/index.js --mode substack-engage --verify      (3 notes, no cooldowns)
+ *   node dist/index.js --mode substack-engage --dry-run                 (DOM dump, no actions)
+ *   node dist/index.js --mode substack-engage                           (live likes + drafts)
+ *   SUBSTACK_AUTO_REPLY=1 node dist/index.js --mode substack-engage     (auto-submit enabled)
+ *   node dist/index.js --mode substack-engage --verify                  (3 notes, no cooldowns)
  */
 
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
@@ -55,6 +79,13 @@ export interface SubstackEngageConfig {
   claudeApiKey: string;
   dataDir: string;
   dryRun: boolean;
+  /**
+   * Enable actual reply auto-submission. Default FALSE → generates reply text
+   * and saves to data/substack-reply-drafts.json as a draft (no submission
+   * attempt). Only flip true when Nate's account has built enough reputation
+   * to avoid Substack's shadow-moderation filter. See file header for details.
+   */
+  autoReply?: boolean;
   /** Hard caps — all optional, conservative defaults applied. */
   maxReadPerSession?: number;
   maxLikePerSession?: number;
@@ -762,6 +793,15 @@ export async function engageSubstack(config: SubstackEngageConfig): Promise<Subs
   if (config.verify) {
     console.log('[Max] substack-engage: VERIFY MODE — 3 notes, no cooldowns, no history write');
   }
+  // Log the reply mode explicitly — drafts-only is the safe default; auto-submit
+  // requires explicit opt-in because Substack shadow-moderates replies from new accounts.
+  const replyMode = config.autoReply ? 'AUTO-SUBMIT' : 'DRAFTS-ONLY';
+  console.log(
+    `[Max] substack-engage: reply mode = ${replyMode}` +
+      (config.autoReply
+        ? ' (auto-submitting — ensure Nate has built reputation; see file header)'
+        : ' (saving reply text to data/substack-reply-drafts.json; set SUBSTACK_AUTO_REPLY=1 to auto-submit)'),
+  );
 
   const caps = config.verify
     ? { maxReadPerSession: 3, maxLikePerSession: 3, maxReplyPerSession: 1, dailyLikeCap: 99, dailyReplyCap: 99 }
@@ -945,28 +985,56 @@ export async function engageSubstack(config: SubstackEngageConfig): Promise<Subs
             console.log(`[Max] substack-engage: reply OK — ${relevance.reason}`);
             const reply = await generateReply(config.claudeApiKey, note.text, note.author, config.dataDir);
             console.log(`[Max] substack-engage: generated reply — "${reply.slice(0, 80)}${reply.length > 80 ? '...' : ''}"`);
+            didReply = true; // counts toward cooldown (we spent time generating)
 
-            // Attempt auto-submit via the hybrid dummy-keypress + Tiptap-chain recipe
-            const submitResult = await postReply(feedTab.id, note.id, reply, config.dryRun);
+            if (config.autoReply) {
+              // Auto-submit path — only active when explicitly enabled. See file header
+              // for why this is off-by-default (Substack shadow-moderates new accounts).
+              const submitResult = await postReply(feedTab.id, note.id, reply, config.dryRun);
 
-            if (submitResult.posted) {
-              result.replied++;
-              didReply = true;
-              if (!config.verify) {
-                history.entries.push({
-                  date: todayUTC(),
-                  noteId: note.id,
-                  url: note.url,
-                  author: note.author,
-                  action: 'reply',
-                  reply,
-                });
+              if (submitResult.posted) {
+                result.replied++;
+                if (!config.verify) {
+                  history.entries.push({
+                    date: todayUTC(),
+                    noteId: note.id,
+                    url: note.url,
+                    author: note.author,
+                    action: 'reply',
+                    reply,
+                  });
+                }
+                console.log(`[Max] substack-engage: ✅ reply auto-posted (server-accepted — public visibility NOT guaranteed if account reputation is low)`);
+              } else {
+                // Submit failed at some step — save as draft fallback
+                result.fallbackDrafts++;
+                if (!config.verify) {
+                  appendDraft(config.dataDir, {
+                    noteId: note.id,
+                    author: note.author,
+                    url: note.url,
+                    notePreview: note.text.slice(0, 200),
+                    reply,
+                    generatedAt: new Date().toISOString(),
+                    fallbackReason: submitResult.reason || 'unknown',
+                    posted: false,
+                  });
+                  history.entries.push({
+                    date: todayUTC(),
+                    noteId: note.id,
+                    url: note.url,
+                    author: note.author,
+                    action: 'draft',
+                    reply,
+                  });
+                  console.log(`[Max] substack-engage: ⚠ auto-submit failed (${submitResult.reason}) — draft saved to ${DRAFTS_FILE}`);
+                } else {
+                  console.log(`[Max] substack-engage: VERIFY ⚠ auto-submit failed (${submitResult.reason}) — draft NOT persisted`);
+                }
               }
-              console.log(`[Max] substack-engage: ✅ reply auto-posted`);
             } else {
-              // Auto-submit failed — fall back to saving as a draft so content isn't lost
+              // Drafts-only path (default) — no submission attempt, just persist.
               result.fallbackDrafts++;
-              didReply = true; // counts toward cooldown decision even as a draft
               if (!config.verify) {
                 appendDraft(config.dataDir, {
                   noteId: note.id,
@@ -975,7 +1043,7 @@ export async function engageSubstack(config: SubstackEngageConfig): Promise<Subs
                   notePreview: note.text.slice(0, 200),
                   reply,
                   generatedAt: new Date().toISOString(),
-                  fallbackReason: submitResult.reason || 'unknown',
+                  fallbackReason: 'autoReply-disabled',
                   posted: false,
                 });
                 history.entries.push({
@@ -986,9 +1054,9 @@ export async function engageSubstack(config: SubstackEngageConfig): Promise<Subs
                   action: 'draft',
                   reply,
                 });
-                console.log(`[Max] substack-engage: ⚠ auto-submit failed (${submitResult.reason}) — draft saved to ${DRAFTS_FILE}`);
+                console.log(`[Max] substack-engage: draft saved to ${DRAFTS_FILE} (auto-submit disabled)`);
               } else {
-                console.log(`[Max] substack-engage: VERIFY ⚠ auto-submit failed (${submitResult.reason}) — draft NOT persisted`);
+                console.log(`[Max] substack-engage: VERIFY — draft generated but not persisted (auto-submit disabled)`);
               }
             }
           }

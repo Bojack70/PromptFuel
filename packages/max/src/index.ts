@@ -814,11 +814,15 @@ async function substackEngage() {
     process.exit(1);
   }
   console.log(`[Max] LLM mode: ${mode}${mode === 'cli' ? ' (Claude Code subscription subprocess)' : ' (Anthropic API)'}`);
+  // Auto-reply is off by default — Substack shadow-moderates new accounts.
+  // Enable via SUBSTACK_AUTO_REPLY=1 env var OR --auto-reply flag.
+  const autoReply = process.env.SUBSTACK_AUTO_REPLY === '1' || args.includes('--auto-reply');
   const result = await engageSubstack({
     claudeApiKey: apiKey,
     dataDir,
     dryRun: args.includes('--dry-run'),
     verify: args.includes('--verify'),
+    autoReply,
   });
   console.log('[Max] substack-engage complete:', JSON.stringify(result, null, 2));
 }
