@@ -792,6 +792,38 @@ async function mediumEngage() {
 }
 
 /**
+ * Substack Notes engagement — like and reply to other writers' Notes.
+ *
+ * Parallel to medium-engage. Anti-detection-first: conservative caps, scroll-based
+ * browsing, Claude-generated replies that reference note content.
+ *
+ * Usage:
+ *   node dist/index.js --mode substack-engage --dry-run     (first-run DOM dump)
+ *   node dist/index.js --mode substack-engage               (live run)
+ *   node dist/index.js --mode substack-engage --verify      (1-note smoke test)
+ *
+ * Requires Brave logged into substack.com and (in CLI mode) Claude Code subscription.
+ */
+async function substackEngage() {
+  const { engageSubstack } = await import('./publish/opentabs/substack-engage.js');
+  const dataDir = process.env.MAX_DATA_DIR ?? fileURLToPath(new URL('../data', import.meta.url));
+  const mode = (process.env.MAX_LLM_MODE ?? 'cli').toLowerCase();
+  const apiKey = process.env.ANTHROPIC_API_KEY ?? '';
+  if (mode === 'api' && !apiKey) {
+    console.error('[Max] MAX_LLM_MODE=api but ANTHROPIC_API_KEY is not set.');
+    process.exit(1);
+  }
+  console.log(`[Max] LLM mode: ${mode}${mode === 'cli' ? ' (Claude Code subscription subprocess)' : ' (Anthropic API)'}`);
+  const result = await engageSubstack({
+    claudeApiKey: apiKey,
+    dataDir,
+    dryRun: args.includes('--dry-run'),
+    verify: args.includes('--verify'),
+  });
+  console.log('[Max] substack-engage complete:', JSON.stringify(result, null, 2));
+}
+
+/**
  * Trigger-based social posting across Twitter, Reddit, HN, and Medium.
  *
  * Usage:
@@ -1021,8 +1053,11 @@ async function main() {
       case 'medium-engage':
         await mediumEngage();
         break;
+      case 'substack-engage':
+        await substackEngage();
+        break;
       default:
-        console.error(`Unknown mode: ${mode}. Use --mode daily|weekly|weekly-data|dashboard|read-daily|fetch-trends|fetch-news|react|collect-engagement-local|post|generate-week|social-test-hn|social-test-reddit|social-test-twitter|social-post|social-engage|medium-engage|social-test-medium|social-test-substack|publish-substack`);
+        console.error(`Unknown mode: ${mode}. Use --mode daily|weekly|weekly-data|dashboard|read-daily|fetch-trends|fetch-news|react|collect-engagement-local|post|generate-week|social-test-hn|social-test-reddit|social-test-twitter|social-post|social-engage|medium-engage|substack-engage|social-test-medium|social-test-substack|publish-substack`);
         process.exit(1);
     }
   } catch (err) {
