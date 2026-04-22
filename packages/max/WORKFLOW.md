@@ -54,6 +54,7 @@ Needed for platforms with no official API, or where the API is gated.
 |---|---|---|
 | `--mode social-engage` | Twitter, Reddit, HN | Warmup: likes, upvotes (no comments yet) |
 | `--mode medium-engage --topic <topic> --verify` | Medium | Clap + comment on relevant articles |
+| `--mode substack-engage` | Substack Notes | **Likes auto + reply DRAFTS** — drafts saved to `data/substack-reply-drafts.json` for manual paste (auto-submit not possible — Tiptap requires `isTrusted=true` paste events) |
 | `--mode social-post --medium` | Medium | Publish today's pre-generated Medium article (on Dev.to days) |
 | `--mode social-post --hn` | Hacker News | Submit from weekly draft (human-assisted) |
 | `--mode social-post` (default) | Twitter/X | Auto-post to Twitter |
@@ -64,6 +65,7 @@ Suggested daily routine (5-10 min in Brave):
 ```bash
 node dist/index.js --mode social-engage
 node dist/index.js --mode medium-engage --topic programming --verify
+node dist/index.js --mode substack-engage     # likes auto + drafts to data/substack-reply-drafts.json
 # on Dev.to days (Mon/Wed/Fri in active stage):
 node dist/index.js --mode social-post --medium
 ```
@@ -86,6 +88,7 @@ node dist/index.js --mode social-post --medium
 | **Reddit (API)** | OAuth2 | On hold | Reddit approval pending |
 | **Reddit (OpenTabs)** | OpenTabs | r/test only | until karma ~50, then rotate real subs |
 | **Substack** | OpenTabs | Built, not wired into scheduler | ad-hoc via `--mode publish-substack` |
+| **Substack engage (Notes)** | OpenTabs | Likes live ✅ — reply drafts to `data/substack-reply-drafts.json` (auto-submit blocked by Tiptap `isTrusted` gating) | manual `--mode substack-engage` |
 
 ---
 
