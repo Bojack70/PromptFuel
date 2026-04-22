@@ -370,6 +370,64 @@ async function generateReply(
   return text;
 }
 
+// ─── Relevance filter ──────────────────────────────────────────────────────
+
+/**
+ * Pre-reply check — does Nate have legitimate standing to engage with this note?
+ * Applies the "honest-take rule" from the global CLAUDE.md: don't engage where
+ * you don't have genuine demographic/experiential/topical standing.
+ *
+ * Returns { canReply: false } for:
+ *   - demographic-gated requests ("send me girls who write about...")
+ *   - topics outside Nate's lived experience (medical/identity-specific)
+ *   - solicitations / self-promo / product pitches
+ *   - notes too short/cryptic to engage meaningfully
+ *   - notes where the only honest response is generic agreement
+ *
+ * Cost: one extra Haiku call per note. Cheap, prevents embarrassment.
+ */
+async function shouldReply(
+  apiKey: string,
+  noteText: string,
+  author: string,
+): Promise<{ canReply: boolean; reason: string }> {
+  const prompt = `You are screening Substack notes for Nate Voss — a male indie developer in his 30s who writes about: tech/AI, philosophy of work, grounded life reflection, dry humor/satire, and occasional flash fiction. NOT a self-help writer, NOT a lifestyle/wellness voice.
+
+Note from ${author}: "${noteText}"
+
+Decide whether Nate can add something genuine and on-topic here.
+
+Say NO if:
+- The note explicitly requests a demographic Nate doesn't fit (e.g., "girls who write about X", "women in tech share...", "moms only")
+- The topic is outside his authentic experience (specific medical conditions, identity categories, life stages he hasn't lived)
+- The note is a solicitation/self-promo/product pitch or asks for subscriptions
+- The note is too short or cryptic to meaningfully engage with
+- The only honest reply would be generic agreement or sympathy (low-value)
+- The note is a personal vulnerability disclosure where a reply from a stranger would be unwelcome
+
+Say YES only if Nate can add a specific observation, counter-point, or anecdote from his actual lane.
+
+Respond EXACTLY in this format (2 lines):
+VERDICT: YES or NO
+REASON: <one short sentence>`;
+
+  try {
+    const resp = await generateContent(apiKey, prompt, {
+      model: 'claude-haiku-4-5',
+      temperature: 0.2,
+      maxTokens: 80,
+    });
+    const verdictMatch = resp.match(/VERDICT:\s*(YES|NO)/i);
+    const reasonMatch = resp.match(/REASON:\s*(.+)/i);
+    const canReply = verdictMatch ? verdictMatch[1].toUpperCase() === 'YES' : false;
+    const reason = reasonMatch ? reasonMatch[1].trim().slice(0, 120) : 'no-reason-given';
+    return { canReply, reason };
+  } catch (err) {
+    // On filter failure, fail-closed (skip reply rather than post something inappropriate)
+    return { canReply: false, reason: `filter-error: ${(err as Error).message}` };
+  }
+}
+
 // ─── Reply posting ──────────────────────────────────────────────────────────
 
 /**
@@ -415,59 +473,242 @@ async function postReply(
     return { posted: false, humanAssisted: true };
   }
 
-  await jitter(1500, 3000);
+  // Wait for the modal to mount + Tiptap to hydrate. Screenshot confirmed
+  // Substack opens a <dialog>-style modal with an "Avatar + Name + Leave a reply..."
+  // editor and Cancel/Post buttons. Needs 1.5-3s for the editor to be interactive.
+  await jitter(2000, 3500);
 
-  // Step 2: fill the reply editor (Tiptap ProseMirror)
-  const filled = await executeScript<boolean>(
+  // Step 2a: locate the MODAL's reply editor + Post button. Tag them with data-*
+  // attributes so subsequent fill/submit steps can find them deterministically
+  // (same pattern medium-engage uses for the side-panel).
+  //
+  // Strategy:
+  //   - Prefer [role="dialog"] or [aria-modal="true"] scope
+  //   - Fallback: find the contenteditable whose placeholder contains "reply"
+  //   - Walk up from that editor to the nearest ancestor also containing a "Post" button
+  const targeted = await executeScript<{ ok: boolean; diag: string }>(
     tabId,
     `
-    var editors = Array.from(document.querySelectorAll('.ProseMirror, [contenteditable="true"]'))
-      .filter(function(el) { return el.offsetParent !== null; });
-    // Prefer the one that just appeared (latest in DOM order is a decent heuristic for the open modal/drawer)
-    var editor = editors.length > 0 ? editors[editors.length - 1] : null;
-    if (!editor) return false;
-    editor.click();
-    editor.focus();
+    // Substack's reply modal contains TWO contenteditables:
+    //   1. The quoted note being replied to (read-only-ish, shows original text)
+    //   2. Nate's reply editor (empty, placeholder "Leave a reply...")
+    // We MUST target the reply editor specifically — picking any contenteditable
+    // caught the quote in the previous iteration and our paste landed there silently.
+    //
+    // Strategy: scan for the contenteditable whose own attributes OR nearest
+    // descendant placeholder contains "reply" / "leave a reply". Fall back to
+    // "last contenteditable in the modal" (the reply comes AFTER the quote).
+    function getPlaceholderText(el) {
+      if (!el) return '';
+      var direct = el.getAttribute('data-placeholder') ||
+                   el.getAttribute('aria-placeholder') ||
+                   el.getAttribute('placeholder') ||
+                   '';
+      if (direct) return direct.toLowerCase();
+      // Tiptap often renders placeholder as a child span/div with data-placeholder
+      var phEl = el.querySelector('[data-placeholder], [aria-placeholder]');
+      if (phEl) {
+        return (phEl.getAttribute('data-placeholder') || phEl.getAttribute('aria-placeholder') || '').toLowerCase();
+      }
+      return '';
+    }
+
+    function isReplyEditor(el) {
+      var ph = getPlaceholderText(el);
+      if (ph.indexOf('reply') !== -1) return true;
+      // Also check parent chain for a "Leave a reply" text node as a weaker signal
+      var parent = el.parentElement;
+      for (var up = 0; up < 3 && parent; up++) {
+        var txt = (parent.textContent || '').toLowerCase();
+        if (txt.indexOf('leave a reply') !== -1 && txt.length < 200) return true;
+        parent = parent.parentElement;
+      }
+      return false;
+    }
+
+    function findReplyModal() {
+      // Primary: explicit dialog/modal scope, find the reply editor inside
+      var modals = Array.from(document.querySelectorAll('[role="dialog"], [aria-modal="true"]'))
+        .filter(function(el) { return el.offsetParent !== null; });
+      for (var i = 0; i < modals.length; i++) {
+        var modal = modals[i];
+        var editors = Array.from(modal.querySelectorAll('.ProseMirror, [contenteditable="true"]'))
+          .filter(function(el) { return el.offsetParent !== null; });
+        if (editors.length === 0) continue;
+
+        // Prefer explicit placeholder match
+        var replyEditor = editors.find(isReplyEditor);
+        // Fallback: last editor in the modal (reply comes AFTER the quote)
+        if (!replyEditor) replyEditor = editors[editors.length - 1];
+
+        var postBtn = Array.from(modal.querySelectorAll('button')).find(function(b) {
+          var t = (b.textContent || '').trim();
+          return t === 'Post' || t === 'Reply';
+        });
+        if (replyEditor && postBtn) {
+          var via = replyEditor === editors.find(isReplyEditor) ? 'dialog-placeholder' : 'dialog-last-editor';
+          return { editor: replyEditor, postBtn: postBtn, via: via };
+        }
+      }
+
+      // Fallback: no dialog role — walk up from a "reply" placeholder editor
+      var allEditors = Array.from(document.querySelectorAll('.ProseMirror, [contenteditable="true"]'))
+        .filter(function(el) { return el.offsetParent !== null; });
+      for (var j = 0; j < allEditors.length; j++) {
+        var ed = allEditors[j];
+        if (!isReplyEditor(ed)) continue;
+        var ancestor = ed.parentElement;
+        for (var up = 0; up < 8 && ancestor && ancestor !== document.body; up++) {
+          var post = Array.from(ancestor.querySelectorAll('button')).find(function(b) {
+            var t = (b.textContent || '').trim();
+            return t === 'Post' || t === 'Reply';
+          });
+          if (post) return { editor: ed, postBtn: post, via: 'placeholder-walkup' };
+          ancestor = ancestor.parentElement;
+        }
+      }
+
+      return null;
+    }
+
+    var ui = findReplyModal();
+    if (!ui) {
+      // Diagnostic — list visible editors + Post-ish buttons
+      var editors = Array.from(document.querySelectorAll('[contenteditable="true"]'))
+        .filter(function(el) { return el.offsetParent !== null; })
+        .map(function(el) {
+          var p = el.getAttribute('data-placeholder') || el.getAttribute('aria-placeholder') || el.getAttribute('placeholder') || '';
+          return 'ce[' + p.slice(0, 40) + ']';
+        });
+      var posts = Array.from(document.querySelectorAll('button'))
+        .filter(function(b) { if (b.offsetParent === null) return false; var t = (b.textContent || '').trim(); return t === 'Post' || t === 'Reply'; })
+        .map(function(b) {
+          var dis = b.disabled || b.getAttribute('aria-disabled') === 'true';
+          return b.textContent.trim() + (dis ? '(disabled)' : '(enabled)');
+        });
+      return { ok: false, diag: 'editors=' + JSON.stringify(editors) + ' posts=' + JSON.stringify(posts) };
+    }
+
+    ui.editor.setAttribute('data-pf-substack-target', '1');
+    ui.postBtn.setAttribute('data-pf-substack-submit', '1');
+
+    // Trigger Tiptap's focus via real mouse events at editor coordinates
+    var rect = ui.editor.getBoundingClientRect();
+    var cx = rect.left + rect.width / 2;
+    var cy = rect.top + Math.min(20, rect.height / 2);
+    ['mousedown', 'mouseup', 'click'].forEach(function(type) {
+      ui.editor.dispatchEvent(new MouseEvent(type, { bubbles: true, cancelable: true, clientX: cx, clientY: cy }));
+    });
+    ui.editor.focus();
+
+    return { ok: true, diag: 'via=' + ui.via };
+    `,
+  ).catch((): { ok: boolean; diag: string } => ({ ok: false, diag: 'script-threw' }));
+
+  if (!targeted.ok) {
+    console.log(`[Max] substack-engage: reply modal not found — ${targeted.diag}`);
+    return { posted: false, humanAssisted: true };
+  }
+  console.log(`[Max] substack-engage: reply modal located (${targeted.diag})`);
+
+  await jitter(600, 1000);
+
+  // Step 2b: fill the editor via ClipboardEvent (Tiptap/ProseMirror has a
+  // first-class paste handler that updates the internal model — same pattern
+  // medium-engage uses for Slate). Fall back to execCommand if paste doesn't land.
+  const filled = await executeScript<{ ok: boolean; textLen: number; method: string }>(
+    tabId,
+    `
+    var editor = document.querySelector('[data-pf-substack-target="1"]');
+    if (!editor) return { ok: false, textLen: 0, method: 'no-editor' };
     var text = ${JSON.stringify(reply)};
-    // Tiptap/ProseMirror: execCommand('insertText') fires the beforeinput/input events Tiptap listens to
-    document.execCommand('selectAll');
-    document.execCommand('insertText', false, text);
-    return (editor.textContent || '').length > 0;
+
+    editor.focus();
+
+    // Place caret at start of editor
+    try {
+      var sel = window.getSelection();
+      var range = document.createRange();
+      range.selectNodeContents(editor);
+      range.collapse(true);
+      sel.removeAllRanges();
+      sel.addRange(range);
+    } catch (e) {}
+
+    var method = 'none';
+
+    // Attempt 1: ClipboardEvent('paste') — Tiptap listens for this
+    try {
+      var dt = new DataTransfer();
+      dt.setData('text/plain', text);
+      var pasteEvt = new ClipboardEvent('paste', { bubbles: true, cancelable: true, clipboardData: dt });
+      try { Object.defineProperty(pasteEvt, 'clipboardData', { value: dt }); } catch (e) {}
+      editor.dispatchEvent(pasteEvt);
+      method = 'paste';
+    } catch (e) {}
+
+    // Attempt 2: execCommand fallback if paste didn't land text
+    if ((editor.textContent || '').trim().length === 0) {
+      document.execCommand('selectAll');
+      document.execCommand('insertText', false, text);
+      method = 'execCommand';
+    }
+
+    var textLen = (editor.textContent || '').length;
+    return { ok: textLen > 0, textLen: textLen, method: method };
+    `,
+  ).catch(() => ({ ok: false, textLen: 0, method: 'threw' }));
+
+  if (!filled.ok) {
+    console.log(`[Max] substack-engage: fill failed — method=${filled.method} textLen=${filled.textLen}`);
+    return { posted: false, humanAssisted: true };
+  }
+  console.log(`[Max] substack-engage: editor filled (method=${filled.method}, ${filled.textLen} chars)`);
+
+  // Let Tiptap run its state updater + re-render (enables the Post button)
+  await jitter(1500, 2500);
+
+  // Step 3: click the marked Post button. Reject if disabled — that means the
+  // editor fill didn't update Tiptap's internal model even though DOM shows text.
+  const published = await executeScript<string>(
+    tabId,
+    `
+    var btn = document.querySelector('[data-pf-substack-submit="1"]');
+    if (!btn) return 'no-button';
+    if (btn.disabled || btn.getAttribute('aria-disabled') === 'true') {
+      // Capture state so we can tell whether fill truly landed
+      var editor = document.querySelector('[data-pf-substack-target="1"]');
+      var txt = editor ? (editor.textContent || '') : '';
+      return 'disabled|txtLen=' + txt.length + '|preview=' + txt.slice(0, 40).replace(/\\n/g, ' ');
+    }
+    btn.click();
+    return 'clicked';
+    `,
+  ).catch(() => 'threw');
+
+  if (published === 'no-button' || published.indexOf('disabled|') === 0 || published === 'threw') {
+    console.log(`[Max] substack-engage: publish failed — ${published}`);
+    return { posted: false, humanAssisted: true };
+  }
+
+  // Step 4: verify the modal closed (real success signal). If modal is still
+  // present, the click was registered but submit didn't go through — treat as failure.
+  await sleep(3000);
+  const modalClosed = await executeScript<boolean>(
+    tabId,
+    `
+    var stillOpen = document.querySelector('[data-pf-substack-submit="1"]');
+    if (!stillOpen) return true; // our tagged button is gone = modal dismissed
+    // Also count hidden as closed
+    return stillOpen.offsetParent === null;
     `,
   ).catch(() => false);
 
-  if (!filled) {
-    console.log(`[Max] substack-engage: reply editor fill failed`);
+  if (!modalClosed) {
+    console.log(`[Max] substack-engage: modal still open after Post click — reply likely did not send`);
     return { posted: false, humanAssisted: true };
   }
 
-  await jitter(1200, 2500);
-
-  // Step 3: click the Reply/Post submit button
-  const published = await executeScript<string | null>(
-    tabId,
-    `
-    // Look for the submit button — typically labelled "Reply" or "Post"
-    var candidates = Array.from(document.querySelectorAll('button')).filter(function(b) {
-      if (b.offsetParent === null) return false;
-      if (b.disabled || b.getAttribute('aria-disabled') === 'true') return false;
-      var t = (b.textContent || '').trim().toLowerCase();
-      return t === 'reply' || t === 'post' || t === 'send';
-    });
-    if (candidates.length === 0) return null;
-    // Prefer the last one (most recently-rendered modal button)
-    var btn = candidates[candidates.length - 1];
-    var label = (btn.textContent || '').trim();
-    btn.click();
-    return label;
-    `,
-  ).catch(() => null);
-
-  if (!published) {
-    return { posted: false, humanAssisted: true };
-  }
-
-  await sleep(2000);
   return { posted: true, humanAssisted: false };
 }
 
@@ -498,7 +739,7 @@ export async function engageSubstack(config: SubstackEngageConfig): Promise<Subs
   }
 
   const caps = config.verify
-    ? { maxReadPerSession: 1, maxLikePerSession: 1, maxReplyPerSession: 1, dailyLikeCap: 99, dailyReplyCap: 99 }
+    ? { maxReadPerSession: 3, maxLikePerSession: 3, maxReplyPerSession: 1, dailyLikeCap: 99, dailyReplyCap: 99 }
     : {
         maxReadPerSession: config.maxReadPerSession ?? DEFAULTS.maxReadPerSession,
         maxLikePerSession: config.maxLikePerSession ?? DEFAULTS.maxLikePerSession,
@@ -667,23 +908,32 @@ export async function engageSubstack(config: SubstackEngageConfig): Promise<Subs
         if (note.text.length < 40) {
           console.log(`[Max] substack-engage: note text too short (${note.text.length} chars), skipping reply`);
         } else {
-          const reply = await generateReply(config.claudeApiKey, note.text, note.author, config.dataDir);
-          console.log(`[Max] substack-engage: generated reply — "${reply.slice(0, 80)}${reply.length > 80 ? '...' : ''}"`);
-
-          const { posted, humanAssisted } = await postReply(feedTab.id, note.id, reply, config.dryRun);
-          if (posted) {
-            result.replied++;
-            history.entries.push({
-              date: todayUTC(),
-              noteId: note.id,
-              url: note.url,
-              author: note.author,
-              action: 'reply',
-              reply,
-            });
-            console.log(`[Max] substack-engage: reply posted${humanAssisted ? ' (human-assisted)' : ''}`);
+          // Relevance filter — honest-take rule: skip if Nate doesn't have genuine
+          // standing to engage (demographic-gated requests, off-lane topics, solicitations)
+          const relevance = await shouldReply(config.claudeApiKey, note.text, note.author);
+          if (!relevance.canReply) {
+            console.log(`[Max] substack-engage: SKIP reply — ${relevance.reason}`);
+            // Continue to next note — we still liked it (if willLike fired), that's enough
           } else {
-            console.log(`[Max] substack-engage: reply not posted — consider finishing manually in Brave`);
+            console.log(`[Max] substack-engage: reply OK — ${relevance.reason}`);
+            const reply = await generateReply(config.claudeApiKey, note.text, note.author, config.dataDir);
+            console.log(`[Max] substack-engage: generated reply — "${reply.slice(0, 80)}${reply.length > 80 ? '...' : ''}"`);
+
+            const { posted, humanAssisted } = await postReply(feedTab.id, note.id, reply, config.dryRun);
+            if (posted) {
+              result.replied++;
+              history.entries.push({
+                date: todayUTC(),
+                noteId: note.id,
+                url: note.url,
+                author: note.author,
+                action: 'reply',
+                reply,
+              });
+              console.log(`[Max] substack-engage: reply posted${humanAssisted ? ' (human-assisted)' : ''}`);
+            } else {
+              console.log(`[Max] substack-engage: reply not posted — consider finishing manually in Brave`);
+            }
           }
         }
       } catch (err) {
