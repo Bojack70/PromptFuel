@@ -82,8 +82,19 @@ export function clickElement(tabId: number, selector: string): Promise<{ tag: st
   return callTool('browser_click_element', { tabId, selector });
 }
 
-export function pressKey(tabId: number, key: string, modifiers: { ctrl?: boolean; meta?: boolean; shift?: boolean; alt?: boolean } = {}): Promise<void> {
-  return callTool('browser_press_key', { tabId, key, ...modifiers });
+export function pressKey(
+  tabId: number,
+  key: string,
+  modifiers: { ctrl?: boolean; meta?: boolean; shift?: boolean; alt?: boolean } = {},
+  selector?: string,
+): Promise<void> {
+  // OpenTabs server expects `modifiers` as a nested object — NOT spread at top level.
+  // Verified by reading platform/browser-extension/src/browser-commands/key-press-command.ts
+  // (server reads `params.modifiers.meta`, etc.). Previous spread version silently
+  // dropped all modifiers so e.g. pressKey('v', {meta:true}) became plain 'v'.
+  const args: Record<string, unknown> = { tabId, key, modifiers };
+  if (selector) args.selector = selector;
+  return callTool('browser_press_key', args);
 }
 
 export function waitForElement(tabId: number, selector: string, timeoutMs = 15000, visible = true): Promise<void> {
