@@ -432,7 +432,7 @@ async function collectEngagementLocal() {
   const handles = {
     medium: process.env.MEDIUM_HANDLE ?? 'natevoss.dev',
     substack: process.env.SUBSTACK_HANDLE ?? 'natevoss',
-    twitter: process.env.TWITTER_HANDLE ?? 'natevoss',
+    twitter: process.env.TWITTER_HANDLE ?? 'natevoss_dev',
   };
 
   console.log(`[Max] Collecting local engagement (medium=${handles.medium}, substack=${handles.substack}, twitter=${handles.twitter})${dryRun ? ' [dry-run]' : ''}${only ? ` [only=${only}]` : ''}`);

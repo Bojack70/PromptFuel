@@ -62,10 +62,9 @@ export async function fetchSubstackEngagement(opts: CollectOptions): Promise<Sub
   try {
     await waitForElement(tab.id, 'body', 15000);
   } catch {
-    console.warn('[Max][substack-eng] body never appeared — aborting');
-    return { collectedAt: new Date().toISOString(), handle, subscribers: null, freeSubscribers: null, paidSubscribers: null, posts: [], notes: [] };
+    console.warn('[Max][substack-eng] waitForElement timed out but proceeding anyway');
   }
-  await new Promise((r) => setTimeout(r, 4000));
+  await new Promise((r) => setTimeout(r, 5000));
 
   const dumpIfNeeded = async (reason: string, label: string): Promise<string | undefined> => {
     try {
@@ -95,7 +94,10 @@ export async function fetchSubstackEngagement(opts: CollectOptions): Promise<Sub
     const s = await executeScript<number | null>(
       tab.id,
       `
-      // Look for any text matching "N subscribers" or "N subscriber" in nav/header/widget areas.
+      var bodyText = document.body.textContent || '';
+      // Detect onboarding "get your first N subscribers" → real count is 0
+      if (/get your first \\d+ subscribers/i.test(bodyText)) return 0;
+      // Look for standalone "N subscribers" or "N subscriber" labels
       var all = Array.from(document.querySelectorAll('a, span, div, h1, h2, h3')).map(function(n) {
         return (n.textContent || '').trim();
       });
@@ -103,9 +105,14 @@ export async function fetchSubstackEngagement(opts: CollectOptions): Promise<Sub
         var m = all[i].match(/^([\\d,]+)\\s+subscribers?$/i);
         if (m) return parseInt(m[1].replace(/,/g, ''), 10);
       }
-      // Fallback: look for a number right before the word 'subscribers' in page text
-      var m2 = document.body.textContent.match(/([\\d,]+)\\s+subscribers/i);
-      return m2 ? parseInt(m2[1].replace(/,/g, ''), 10) : null;
+      // Fallback: number directly before "subscribers" in body text (skip if inside "first N")
+      var matches = bodyText.matchAll(/([\\d,]+)\\s+subscribers/gi);
+      for (var match of matches) {
+        var context = bodyText.slice(Math.max(0, bodyText.indexOf(match[0]) - 20), bodyText.indexOf(match[0]));
+        if (/first/i.test(context)) continue;
+        return parseInt(match[1].replace(/,/g, ''), 10);
+      }
+      return null;
       `,
     );
     subscribers = typeof s === 'number' ? s : null;

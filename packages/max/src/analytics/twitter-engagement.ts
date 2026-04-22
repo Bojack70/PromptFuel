@@ -56,11 +56,10 @@ export async function fetchTwitterEngagement(opts: CollectOptions): Promise<Twit
   try {
     await waitForElement(tab.id, 'body', 15000);
   } catch {
-    console.warn('[Max][twitter-eng] body never appeared — aborting');
-    return { collectedAt: new Date().toISOString(), handle, followers: null, following: null, tweets: [] };
+    console.warn('[Max][twitter-eng] waitForElement timed out but proceeding anyway');
   }
   // Give time for timeline hydration and lazy-loaded tweet cards
-  await new Promise((r) => setTimeout(r, 5000));
+  await new Promise((r) => setTimeout(r, 6000));
 
   const dumpIfNeeded = async (reason: string): Promise<string | undefined> => {
     try {
