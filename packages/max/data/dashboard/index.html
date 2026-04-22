@@ -7,118 +7,93 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; padding: 24px; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f9fafb; color: #111827; padding: 24px; }
   h1 { font-size: 24px; margin-bottom: 4px; }
-  .subtitle { color: #94a3b8; margin-bottom: 24px; font-size: 14px; }
+  .subtitle { color: #6b7280; margin-bottom: 24px; font-size: 14px; }
   .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 24px; }
-  .card { background: #1e293b; border-radius: 12px; padding: 20px; }
-  .card h3 { font-size: 13px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
-  .card .value { font-size: 28px; font-weight: 700; }
+  .card { background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+  .card h3 { font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 8px; font-weight: 500; }
+  .card .value { font-size: 28px; font-weight: 700; color: #111827; }
   .card .delta { font-size: 14px; margin-left: 8px; }
-  .delta.up { color: #22c55e; }
-  .delta.down { color: #ef4444; }
-  .delta.flat { color: #6b7280; }
-  .chart-card { background: #1e293b; border-radius: 12px; padding: 20px; margin-bottom: 24px; }
-  .chart-card h2 { font-size: 16px; margin-bottom: 16px; }
+  .delta.up { color: #16a34a; }
+  .delta.down { color: #dc2626; }
+  .delta.flat { color: #9ca3af; }
+  .chart-card { background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+  .chart-card h2 { font-size: 15px; font-weight: 600; color: #111827; margin-bottom: 16px; }
   .chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
   canvas { max-height: 260px; }
   table { width: 100%; border-collapse: collapse; font-size: 14px; }
-  th { text-align: left; padding: 8px; color: #94a3b8; border-bottom: 2px solid #334155; }
-  td { padding: 8px; border-bottom: 1px solid #334155; }
-  .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
-  .badge-bluesky { background: #0085ff; color: #fff; }
-  .badge-devto { background: #166534; color: #fff; }
-  .badge-reddit { background: #ff4500; color: #fff; }
-  .badge-pass { background: #166534; color: #fff; }
-  .badge-fail { background: #991b1b; color: #fff; }
+  th { text-align: left; padding: 8px 10px; color: #6b7280; border-bottom: 1px solid #e5e7eb; font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+  td { padding: 10px; border-bottom: 1px solid #f3f4f6; color: #374151; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 500; }
+  .badge-bluesky { background: #dbeafe; color: #1d4ed8; }
+  .badge-devto { background: #dcfce7; color: #15803d; }
+  .badge-reddit { background: #fee2e2; color: #dc2626; }
+  .badge-pass { background: #dcfce7; color: #15803d; }
+  .badge-fail { background: #fee2e2; color: #dc2626; }
   @media (max-width: 768px) { .chart-row { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
 
 <h1>Max Agent Dashboard</h1>
-<p class="subtitle">Generated 2026-04-21 · 7 snapshots · 11 posts · 11 experiments</p>
+<p class="subtitle">Generated 2026-04-22 · 7 snapshots · 11 posts · 11 experiments</p>
 
 
-<div style="background:linear-gradient(135deg,#1e293b 0%,#1e1b4b 100%);border-radius:14px;padding:22px 26px;margin-bottom:24px;border:1px solid #334155">
+<div style="background:#ffffff;border-radius:14px;padding:22px 26px;margin-bottom:24px;border:1px solid #e5e7eb;box-shadow:0 1px 3px rgba(0,0,0,0.06)">
   <div style="display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;margin-bottom:14px">
-    <h2 style="font-size:20px;color:#f8fafc;margin:0">Today's Actions — Tuesday</h2>
-    <div style="color:#94a3b8;font-size:13px">2026-04-21 · stage: <strong style="color:#e2e8f0">transition</strong></div>
+    <h2 style="font-size:20px;font-weight:700;color:#111827;margin:0">Today's Actions — Wednesday</h2>
+    <div style="color:#6b7280;font-size:13px">2026-04-22 · stage: <strong style="color:#111827">transition</strong></div>
   </div>
 
-  <h3 style="font-size:13px;color:#86efac;margin:0 0 8px 0;text-transform:uppercase;letter-spacing:0.5px">CI handles these at 06:00 UTC</h3>
-  <ul style="margin:0 0 4px 0;padding:0"><li style="margin:6px 0;padding:8px 12px;background:#064e3b;border-radius:6px;border-left:3px solid #22c55e;list-style:none">
-      <span style="font-size:11px;background:#22c55e;color:#fff;padding:1px 6px;border-radius:3px;margin-right:8px">AUTO</span><strong>Bluesky</strong> <span style="color:#94a3b8;font-size:12px">— "How many tokens did your last API call use? Tested Haiku, GPT-4o Mini,…"</span>
-    </li><li style="margin:6px 0;padding:8px 12px;background:#064e3b;border-radius:6px;border-left:3px solid #22c55e;list-style:none">
-      <span style="font-size:11px;background:#22c55e;color:#fff;padding:1px 6px;border-radius:3px;margin-right:8px">AUTO</span><strong>Dev.to</strong> <span style="color:#94a3b8;font-size:12px">— "3 Things I Learned Benchmarking Claude, GPT-4o, and Gemini on Real Dev…"</span>
+  <h3 style="font-size:11px;color:#16a34a;margin:0 0 8px 0;text-transform:uppercase;letter-spacing:0.6px;font-weight:600">CI handles these at 06:00 UTC</h3>
+  <ul style="margin:0 0 4px 0;padding:0"><li style="margin:6px 0;padding:8px 12px;background:#f0fdf4;border-radius:6px;border-left:3px solid #22c55e;list-style:none;color:#111827">
+      <span style="font-size:11px;background:#22c55e;color:#fff;padding:1px 6px;border-radius:3px;margin-right:8px">AUTO</span><strong>Bluesky</strong> <span style="color:#6b7280;font-size:12px">— "asked Claude to 'optimize my code' but didn't specify what mattered. g…"</span>
     </li></ul>
 
-  <h3 style="font-size:13px;color:#fcd34d;margin:18px 0 8px 0;text-transform:uppercase;letter-spacing:0.5px">You run these today</h3>
-  <ul style="margin:0;padding:0"><li style="margin:6px 0;padding:10px 12px;background:#451a03;border-radius:6px;border-left:3px solid #f59e0b;list-style:none">
+  <h3 style="font-size:11px;color:#d97706;margin:18px 0 8px 0;text-transform:uppercase;letter-spacing:0.6px;font-weight:600">You run these today</h3>
+  <ul style="margin:0;padding:0"><li style="margin:6px 0;padding:10px 12px;background:#fffbeb;border-radius:6px;border-left:3px solid #f59e0b;list-style:none;color:#111827">
           <span style="font-size:11px;background:#f59e0b;color:#fff;padding:1px 6px;border-radius:3px;margin-right:8px">MANUAL</span>
-          <strong>Twitter + Medium</strong> — <span style="color:#94a3b8;font-size:12px">"🐦 How many tokens did your last API call use? Tested Haik… | 📝 3 Things I Learned Running the Same 5 Prompts Through C…"</span><br>
-          <code style="font-size:12px;background:#1e293b;color:#e2e8f0;padding:4px 8px;border-radius:4px;margin-top:6px;display:inline-block">cd packages/max && node dist/index.js --mode social-post --medium</code>
-        </li><li style="margin:6px 0;padding:10px 12px;background:#451a03;border-radius:6px;border-left:3px solid #f59e0b;list-style:none">
-          <span style="font-size:11px;background:#f59e0b;color:#fff;padding:1px 6px;border-radius:3px;margin-right:8px">MANUAL</span>
-          <strong>Substack Note</strong> — <span style="color:#94a3b8;font-size:12px">"How many tokens did your last API call use? Tested Haiku, GPT-4o Mini, Flash on …"</span><br>
-          <code style="font-size:12px;background:#1e293b;color:#e2e8f0;padding:4px 8px;border-radius:4px;margin-top:6px;display:inline-block">cd packages/max && node dist/index.js --mode social-test-substack --submit</code>
+          <strong>Medium Engage (clap + comment on 3 articles)</strong><br>
+          <code style="font-size:12px;background:#f3f4f6;color:#374151;padding:4px 8px;border-radius:4px;margin-top:6px;display:inline-block">cd packages/max && node dist/index.js --mode medium-engage --topic programming</code>
         </li></ul>
 
   
-  <h3 style="font-size:13px;color:#fca5a5;margin:18px 0 8px 0;text-transform:uppercase;letter-spacing:0.5px">⚙ First-Run Setup (do once)</h3>
-       <p style="color:#94a3b8;font-size:12px;margin-bottom:8px">These scrapers need a DOM inspection pass before first live use. Run each with OpenTabs started + Brave logged in to that platform. They write HTML dumps to <code>data/dom-dumps/</code> — share them to finalize selectors.</p>
-       <ul style="margin:0;padding:0">
-         <li style="margin:6px 0;padding:10px 12px;background:#450a0a;border-radius:6px;border-left:3px solid #ef4444;list-style:none">
-             <span style="font-size:11px;background:#ef4444;color:#fff;padding:1px 6px;border-radius:3px;margin-right:8px">SETUP</span>
-             <strong>Calibrate Medium scraper</strong><br>
-             <code style="font-size:12px;background:#1e293b;color:#e2e8f0;padding:4px 8px;border-radius:4px;margin-top:6px;display:inline-block">cd packages/max && node dist/index.js --mode collect-engagement-local --only medium --dry-run</code>
-             <div style="font-size:12px;color:#94a3b8;margin-top:6px">Dumps medium DOM to data/dom-dumps/ so selectors can be verified before first live run.</div>
-           </li><li style="margin:6px 0;padding:10px 12px;background:#450a0a;border-radius:6px;border-left:3px solid #ef4444;list-style:none">
-             <span style="font-size:11px;background:#ef4444;color:#fff;padding:1px 6px;border-radius:3px;margin-right:8px">SETUP</span>
-             <strong>Calibrate Substack scraper</strong><br>
-             <code style="font-size:12px;background:#1e293b;color:#e2e8f0;padding:4px 8px;border-radius:4px;margin-top:6px;display:inline-block">cd packages/max && node dist/index.js --mode collect-engagement-local --only substack --dry-run</code>
-             
-           </li><li style="margin:6px 0;padding:10px 12px;background:#450a0a;border-radius:6px;border-left:3px solid #ef4444;list-style:none">
-             <span style="font-size:11px;background:#ef4444;color:#fff;padding:1px 6px;border-radius:3px;margin-right:8px">SETUP</span>
-             <strong>Calibrate Twitter scraper</strong><br>
-             <code style="font-size:12px;background:#1e293b;color:#e2e8f0;padding:4px 8px;border-radius:4px;margin-top:6px;display:inline-block">cd packages/max && node dist/index.js --mode collect-engagement-local --only twitter --dry-run</code>
-             
-           </li>
-       </ul>
   
-<h3 style="font-size:13px;color:#93c5fd;margin:18px 0 8px 0;text-transform:uppercase;letter-spacing:0.5px">On demand — when breaking news happens</h3>
-<p style="color:#94a3b8;font-size:12px;margin-bottom:8px">React to a specific event with a genuine take (required: --topic). Respects the honest-take rule — no quality/performance claims without firsthand testing. Outputs to stdout + <code>data/reactive-posts.json</code>; you review before publishing.</p>
-<div style="background:#172554;border-left:3px solid #60a5fa;padding:10px 12px;border-radius:6px;font-size:12px">
-  <code style="display:block;background:#1e293b;color:#e2e8f0;padding:6px 10px;border-radius:4px;margin-bottom:4px">cd packages/max &amp;&amp; node dist/index.js --mode react --topic "your topic" --angle "your genuine take" --platform twitter</code>
-  <div style="color:#94a3b8">--angle is optional but recommended. --platform: twitter (default) | bluesky | medium.</div>
+  
+<h3 style="font-size:11px;color:#2563eb;margin:18px 0 8px 0;text-transform:uppercase;letter-spacing:0.6px;font-weight:600">On demand — when breaking news happens</h3>
+<p style="color:#6b7280;font-size:12px;margin-bottom:8px">React to a specific event with a genuine take (required: --topic). Respects the honest-take rule — no quality/performance claims without firsthand testing. Outputs to stdout + <code>data/reactive-posts.json</code>; you review before publishing.</p>
+<div style="background:#eff6ff;border-left:3px solid #3b82f6;padding:10px 12px;border-radius:6px;font-size:12px">
+  <code style="display:block;background:#f3f4f6;color:#374151;padding:6px 10px;border-radius:4px;margin-bottom:4px">cd packages/max &amp;&amp; node dist/index.js --mode react --topic "your topic" --angle "your genuine take" --platform twitter</code>
+  <div style="color:#6b7280">--angle is optional but recommended. --platform: twitter (default) | bluesky | medium.</div>
 </div>
 </div>
 
 <div style="margin-bottom:24px">
   <h2 style="font-size:16px;margin-bottom:12px">This Week</h2>
   <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px">
-    <div style="background:#0f172a;border:1px solid #334155;border-radius:10px;padding:14px;min-width:180px">
-      <div style="font-weight:700;font-size:13px;margin-bottom:8px;color:#e2e8f0">Mon 2026-04-20 <span style="font-size:10px;color:#475569">past</span></div>
-      <div style="margin:3px 0"><span style="background:#0085ff;color:#fff;font-size:10px;padding:1px 5px;border-radius:3px">AUTO</span> <strong>Bluesky</strong> <span style="color:#94a3b8;font-size:11px">— everyone reaches for gpt-4o for code. turns out claude 3.5 s…</span></div><div style="margin:3px 0"><span style="background:#7c3aed;color:#fff;font-size:10px;padding:1px 5px;border-radius:3px">MANUAL</span> <strong>Medium Engage</strong> <span style="color:#94a3b8;font-size:11px">— clap + comment</span><br><code style="font-size:10px;color:#94a3b8">--mode medium-engage --topic programming</code></div>
-    </div><div style="background:#1e3a5f;border:2px solid #3b82f6;border-radius:10px;padding:14px;min-width:180px">
-      <div style="font-weight:700;font-size:13px;margin-bottom:8px;color:#93c5fd">Tue 2026-04-21 <span style="font-size:10px;background:#3b82f6;color:#fff;padding:1px 6px;border-radius:3px">TODAY</span></div>
-      <div style="margin:3px 0"><span style="background:#0085ff;color:#fff;font-size:10px;padding:1px 5px;border-radius:3px">AUTO</span> <strong>Bluesky</strong> <span style="color:#94a3b8;font-size:11px">— How many tokens did your last API call use? Tested Haiku, GP…</span></div><div style="margin:3px 0"><span style="background:#166534;color:#fff;font-size:10px;padding:1px 5px;border-radius:3px">AUTO</span> <strong>Dev.to</strong> <span style="color:#94a3b8;font-size:11px">— 3 Things I Learned Benchmarking Claude, GPT-4o, and Gemini o…</span></div><div style="margin:3px 0"><span style="background:#f59e0b;color:#fff;font-size:10px;padding:1px 5px;border-radius:3px">MANUAL</span> <strong>Twitter + Medium</strong><div style="color:#94a3b8;font-size:11px;margin-top:2px">🐦 <span style="color:#60a5fa;font-size:10px">[]</span> How many tokens did your last API call use? Tested Haiku, GP…</div><div style="color:#94a3b8;font-size:11px;margin-top:2px">📝 3 Things I Learned Running the Same 5 Prompts Through Claude…</div><code style="font-size:10px;color:#94a3b8;margin-top:3px;display:block">--mode social-post --medium</code></div><div style="margin:3px 0"><span style="background:#f59e0b;color:#fff;font-size:10px;padding:1px 5px;border-radius:3px">MANUAL</span> <strong>Substack Note</strong> <span style="color:#94a3b8;font-size:11px">— How many tokens did your last API call use? Tested…</span><br><code style="font-size:10px;color:#94a3b8">--mode social-test-substack --submit</code></div>
-    </div><div style="background:#1e293b;border:1px solid #334155;border-radius:10px;padding:14px;min-width:180px">
-      <div style="font-weight:700;font-size:13px;margin-bottom:8px;color:#e2e8f0">Wed 2026-04-22</div>
-      <div style="margin:3px 0"><span style="background:#0085ff;color:#fff;font-size:10px;padding:1px 5px;border-radius:3px">AUTO</span> <strong>Bluesky</strong> <span style="color:#94a3b8;font-size:11px">— asked Claude to 'optimize my code' but didn't specify what m…</span></div><div style="margin:3px 0"><span style="background:#7c3aed;color:#fff;font-size:10px;padding:1px 5px;border-radius:3px">MANUAL</span> <strong>Medium Engage</strong> <span style="color:#94a3b8;font-size:11px">— clap + comment</span><br><code style="font-size:10px;color:#94a3b8">--mode medium-engage --topic programming</code></div>
-    </div><div style="background:#1e293b;border:1px solid #334155;border-radius:10px;padding:14px;min-width:180px">
-      <div style="font-weight:700;font-size:13px;margin-bottom:8px;color:#e2e8f0">Thu 2026-04-23</div>
-      <div style="margin:3px 0"><span style="background:#0085ff;color:#fff;font-size:10px;padding:1px 5px;border-radius:3px">AUTO</span> <strong>Bluesky</strong> <span style="color:#94a3b8;font-size:11px">— 47 tokens. Same prompt, 6 models — Claude 142, GPT-4o 189, G…</span></div><div style="margin:3px 0"><span style="background:#166534;color:#fff;font-size:10px;padding:1px 5px;border-radius:3px">AUTO</span> <strong>Dev.to</strong> <span style="color:#94a3b8;font-size:11px">— How I Accidentally Spent $800/Month on LLM Tokens I Didn't N…</span></div><div style="margin:3px 0"><span style="background:#f59e0b;color:#fff;font-size:10px;padding:1px 5px;border-radius:3px">MANUAL</span> <strong>Twitter + Medium</strong><div style="color:#94a3b8;font-size:11px;margin-top:2px">🐦 <span style="color:#60a5fa;font-size:10px">[]</span> 47 tokens. Same prompt, 6 models — Claude 142, GPT-4o 189, G…</div><div style="color:#94a3b8;font-size:11px;margin-top:2px">📝 I Spent Three Weeks Debugging a Problem That Was Just Me Bei…</div><code style="font-size:10px;color:#94a3b8;margin-top:3px;display:block">--mode social-post --medium</code></div><div style="margin:3px 0"><span style="background:#f59e0b;color:#fff;font-size:10px;padding:1px 5px;border-radius:3px">MANUAL</span> <strong>Substack Note</strong> <span style="color:#94a3b8;font-size:11px">— 47 tokens. Same prompt, 6 models — Claude 142, GPT…</span><br><code style="font-size:10px;color:#94a3b8">--mode social-test-substack --submit</code></div>
-    </div><div style="background:#1e293b;border:1px solid #334155;border-radius:10px;padding:14px;min-width:180px">
-      <div style="font-weight:700;font-size:13px;margin-bottom:8px;color:#e2e8f0">Fri 2026-04-24</div>
-      <div style="margin:3px 0"><span style="background:#0085ff;color:#fff;font-size:10px;padding:1px 5px;border-radius:3px">AUTO</span> <strong>Bluesky</strong> <span style="color:#94a3b8;font-size:11px">— 3 rewrite tricks that cut prompts 30%+:
-1. Kill filler adjec…</span></div><div style="margin:3px 0"><span style="background:#7c3aed;color:#fff;font-size:10px;padding:1px 5px;border-radius:3px">MANUAL</span> <strong>Medium Engage</strong> <span style="color:#94a3b8;font-size:11px">— clap + comment</span><br><code style="font-size:10px;color:#94a3b8">--mode medium-engage --topic programming</code></div>
-    </div><div style="background:#1e293b;border:1px solid #334155;border-radius:10px;padding:14px;min-width:180px">
-      <div style="font-weight:700;font-size:13px;margin-bottom:8px;color:#e2e8f0">Sat 2026-04-25</div>
-      <div style="margin:3px 0"><span style="background:#0085ff;color:#fff;font-size:10px;padding:1px 5px;border-radius:3px">AUTO</span> <strong>Bluesky</strong> <span style="color:#94a3b8;font-size:11px">— i automated something that deserved thinking. shipped it fas…</span></div>
-    </div><div style="background:#1e293b;border:1px solid #334155;border-radius:10px;padding:14px;min-width:180px">
-      <div style="font-weight:700;font-size:13px;margin-bottom:8px;color:#e2e8f0">Sun 2026-04-26</div>
-      <div style="margin:3px 0"><span style="background:#0085ff;color:#fff;font-size:10px;padding:1px 5px;border-radius:3px">AUTO</span> <strong>Bluesky</strong> <span style="color:#94a3b8;font-size:11px">— cost dropped 10x in 18 months. you're still picking models l…</span></div>
+    <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:14px;min-width:180px">
+      <div style="font-weight:700;font-size:13px;margin-bottom:8px;color:#111827">Mon 2026-04-20 <span style="font-size:10px;color:#9ca3af">past</span></div>
+      <div style="margin:3px 0"><span style="background:#1d4ed8;color:#fff;font-size:10px;padding:1px 5px;border-radius:3px">AUTO</span> <strong>Bluesky</strong> <span style="color:#6b7280;font-size:11px">— everyone reaches for gpt-4o for code. turns out claude 3.5 s…</span></div><div style="margin:3px 0"><span style="background:#7c3aed;color:#fff;font-size:10px;padding:1px 5px;border-radius:3px">MANUAL</span> <strong>Medium Engage</strong> <span style="color:#6b7280;font-size:11px">— clap + comment</span><br><code style="font-size:10px;color:#6b7280">--mode medium-engage --topic programming</code></div>
+    </div><div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:14px;min-width:180px">
+      <div style="font-weight:700;font-size:13px;margin-bottom:8px;color:#111827">Tue 2026-04-21 <span style="font-size:10px;color:#9ca3af">past</span></div>
+      <div style="margin:3px 0"><span style="background:#1d4ed8;color:#fff;font-size:10px;padding:1px 5px;border-radius:3px">AUTO</span> <strong>Bluesky</strong> <span style="color:#6b7280;font-size:11px">— How many tokens did your last API call use? Tested Haiku, GP…</span></div><div style="margin:3px 0"><span style="background:#15803d;color:#fff;font-size:10px;padding:1px 5px;border-radius:3px">AUTO</span> <strong>Dev.to</strong> <span style="color:#6b7280;font-size:11px">— 3 Things I Learned Benchmarking Claude, GPT-4o, and Gemini o…</span></div><div style="margin:3px 0"><span style="background:#d97706;color:#fff;font-size:10px;padding:1px 5px;border-radius:3px">MANUAL</span> <strong>Twitter + Medium</strong><div style="color:#6b7280;font-size:11px;margin-top:2px">🐦 <span style="color:#2563eb;font-size:10px">[]</span> How many tokens did your last API call use? Tested Haiku, GP…</div><div style="color:#6b7280;font-size:11px;margin-top:2px">📝 3 Things I Learned Running the Same 5 Prompts Through Claude…</div><code style="font-size:10px;color:#6b7280;margin-top:3px;display:block">--mode social-post --medium</code></div><div style="margin:3px 0"><span style="background:#d97706;color:#fff;font-size:10px;padding:1px 5px;border-radius:3px">MANUAL</span> <strong>Substack Note</strong> <span style="color:#6b7280;font-size:11px">— How many tokens did your last API call use? Tested…</span><br><code style="font-size:10px;color:#6b7280">--mode social-test-substack --submit</code></div>
+    </div><div style="background:#eff6ff;border:2px solid #3b82f6;border-radius:10px;padding:14px;min-width:180px">
+      <div style="font-weight:700;font-size:13px;margin-bottom:8px;color:#2563eb">Wed 2026-04-22 <span style="font-size:10px;background:#3b82f6;color:#fff;padding:1px 6px;border-radius:3px">TODAY</span></div>
+      <div style="margin:3px 0"><span style="background:#1d4ed8;color:#fff;font-size:10px;padding:1px 5px;border-radius:3px">AUTO</span> <strong>Bluesky</strong> <span style="color:#6b7280;font-size:11px">— asked Claude to 'optimize my code' but didn't specify what m…</span></div><div style="margin:3px 0"><span style="background:#7c3aed;color:#fff;font-size:10px;padding:1px 5px;border-radius:3px">MANUAL</span> <strong>Medium Engage</strong> <span style="color:#6b7280;font-size:11px">— clap + comment</span><br><code style="font-size:10px;color:#6b7280">--mode medium-engage --topic programming</code></div>
+    </div><div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;padding:14px;min-width:180px">
+      <div style="font-weight:700;font-size:13px;margin-bottom:8px;color:#111827">Thu 2026-04-23</div>
+      <div style="margin:3px 0"><span style="background:#1d4ed8;color:#fff;font-size:10px;padding:1px 5px;border-radius:3px">AUTO</span> <strong>Bluesky</strong> <span style="color:#6b7280;font-size:11px">— 47 tokens. Same prompt, 6 models — Claude 142, GPT-4o 189, G…</span></div><div style="margin:3px 0"><span style="background:#15803d;color:#fff;font-size:10px;padding:1px 5px;border-radius:3px">AUTO</span> <strong>Dev.to</strong> <span style="color:#6b7280;font-size:11px">— How I Accidentally Spent $800/Month on LLM Tokens I Didn't N…</span></div><div style="margin:3px 0"><span style="background:#d97706;color:#fff;font-size:10px;padding:1px 5px;border-radius:3px">MANUAL</span> <strong>Twitter + Medium</strong><div style="color:#6b7280;font-size:11px;margin-top:2px">🐦 <span style="color:#2563eb;font-size:10px">[]</span> 47 tokens. Same prompt, 6 models — Claude 142, GPT-4o 189, G…</div><div style="color:#6b7280;font-size:11px;margin-top:2px">📝 I Spent Three Weeks Debugging a Problem That Was Just Me Bei…</div><code style="font-size:10px;color:#6b7280;margin-top:3px;display:block">--mode social-post --medium</code></div><div style="margin:3px 0"><span style="background:#d97706;color:#fff;font-size:10px;padding:1px 5px;border-radius:3px">MANUAL</span> <strong>Substack Note</strong> <span style="color:#6b7280;font-size:11px">— 47 tokens. Same prompt, 6 models — Claude 142, GPT…</span><br><code style="font-size:10px;color:#6b7280">--mode social-test-substack --submit</code></div>
+    </div><div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;padding:14px;min-width:180px">
+      <div style="font-weight:700;font-size:13px;margin-bottom:8px;color:#111827">Fri 2026-04-24</div>
+      <div style="margin:3px 0"><span style="background:#1d4ed8;color:#fff;font-size:10px;padding:1px 5px;border-radius:3px">AUTO</span> <strong>Bluesky</strong> <span style="color:#6b7280;font-size:11px">— 3 rewrite tricks that cut prompts 30%+:
+1. Kill filler adjec…</span></div><div style="margin:3px 0"><span style="background:#7c3aed;color:#fff;font-size:10px;padding:1px 5px;border-radius:3px">MANUAL</span> <strong>Medium Engage</strong> <span style="color:#6b7280;font-size:11px">— clap + comment</span><br><code style="font-size:10px;color:#6b7280">--mode medium-engage --topic programming</code></div>
+    </div><div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;padding:14px;min-width:180px">
+      <div style="font-weight:700;font-size:13px;margin-bottom:8px;color:#111827">Sat 2026-04-25</div>
+      <div style="margin:3px 0"><span style="background:#1d4ed8;color:#fff;font-size:10px;padding:1px 5px;border-radius:3px">AUTO</span> <strong>Bluesky</strong> <span style="color:#6b7280;font-size:11px">— i automated something that deserved thinking. shipped it fas…</span></div>
+    </div><div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;padding:14px;min-width:180px">
+      <div style="font-weight:700;font-size:13px;margin-bottom:8px;color:#111827">Sun 2026-04-26</div>
+      <div style="margin:3px 0"><span style="background:#1d4ed8;color:#fff;font-size:10px;padding:1px 5px;border-radius:3px">AUTO</span> <strong>Bluesky</strong> <span style="color:#6b7280;font-size:11px">— cost dropped 10x in 18 months. you're still picking models l…</span></div>
     </div>
   </div>
 </div>
@@ -181,19 +156,19 @@
       <td>2026-04-21</td>
       <td><span class="badge badge-devto">devto</span></td>
       <td>comparison</td>
-      <td><a href="https://dev.to/natevoss/3-things-i-learned-benchmarking-claude-gpt-4o-and-gemini-on-real-dev-work-5340" style="color:#60a5fa">3 Things I Learned Benchmarking Claude, GPT-4o, and Gemini on Real Dev Work</a></td>
+      <td><a href="https://dev.to/natevoss/3-things-i-learned-benchmarking-claude-gpt-4o-and-gemini-on-real-dev-work-5340" style="color:#2563eb">3 Things I Learned Benchmarking Claude, GPT-4o, and Gemini on Real Dev Work</a></td>
     </tr>
 <tr>
       <td>2026-04-21</td>
       <td><span class="badge badge-devto">devto</span></td>
       <td>comparison</td>
-      <td><a href="https://dev.to/natevoss/3-things-i-learned-benchmarking-claude-gpt-4o-and-gemini-on-real-dev-work-38fl" style="color:#60a5fa">3 Things I Learned Benchmarking Claude, GPT-4o, and Gemini on Real Dev Work</a></td>
+      <td><a href="https://dev.to/natevoss/3-things-i-learned-benchmarking-claude-gpt-4o-and-gemini-on-real-dev-work-38fl" style="color:#2563eb">3 Things I Learned Benchmarking Claude, GPT-4o, and Gemini on Real Dev Work</a></td>
     </tr>
 <tr>
       <td>2026-04-21</td>
       <td><span class="badge badge-devto">devto</span></td>
       <td>comparison</td>
-      <td><a href="https://dev.to/natevoss/3-things-i-learned-benchmarking-claude-gpt-4o-and-gemini-on-real-dev-work-4cp5" style="color:#60a5fa">3 Things I Learned Benchmarking Claude, GPT-4o, and Gemini on Real Dev Work</a></td>
+      <td><a href="https://dev.to/natevoss/3-things-i-learned-benchmarking-claude-gpt-4o-and-gemini-on-real-dev-work-4cp5" style="color:#2563eb">3 Things I Learned Benchmarking Claude, GPT-4o, and Gemini on Real Dev Work</a></td>
     </tr>
 <tr>
       <td>2026-04-21</td>
@@ -223,13 +198,13 @@
       <td>2026-04-17</td>
       <td><span class="badge badge-devto">devto</span></td>
       <td>comparison</td>
-      <td><a href="https://dev.to/natevoss/i-tested-claude-haiku-gpt-4o-mini-and-gemini-flash-on-real-tasks-heres-what-actually-happened-1ec0" style="color:#60a5fa">I Tested Claude Haiku, GPT-4o Mini, and Gemini Flash on Real Tasks. Here's What Actually Happened.</a></td>
+      <td><a href="https://dev.to/natevoss/i-tested-claude-haiku-gpt-4o-mini-and-gemini-flash-on-real-tasks-heres-what-actually-happened-1ec0" style="color:#2563eb">I Tested Claude Haiku, GPT-4o Mini, and Gemini Flash on Real Tasks. Here's What Actually Happened.</a></td>
     </tr>
 <tr>
       <td>2026-04-17</td>
       <td><span class="badge badge-devto">devto</span></td>
       <td>comparison</td>
-      <td><a href="https://dev.to/natevoss/i-tested-claude-haiku-gpt-4o-mini-and-gemini-flash-on-real-tasks-heres-what-actually-happened-3mc6" style="color:#60a5fa">I Tested Claude Haiku, GPT-4o Mini, and Gemini Flash on Real Tasks. Here's What Actually Happened.</a></td>
+      <td><a href="https://dev.to/natevoss/i-tested-claude-haiku-gpt-4o-mini-and-gemini-flash-on-real-tasks-heres-what-actually-happened-3mc6" style="color:#2563eb">I Tested Claude Haiku, GPT-4o Mini, and Gemini Flash on Real Tasks. Here's What Actually Happened.</a></td>
     </tr>
 <tr>
       <td>2026-04-17</td>
@@ -385,7 +360,7 @@
   <h2>Content Correlation (impact score)</h2>
   <table>
     <tr><th>Date</th><th>Platform</th><th>Category</th><th>Engagement</th><th>Stars +</th><th>Score</th></tr>
-    <tr style="background:#1e3a2f">
+    <tr style="background:#f0fdf4">
         <td>2026-04-17</td>
         <td><span class="badge badge-devto">devto</span></td>
         <td>comparison</td>
@@ -393,7 +368,7 @@
         <td>0</td>
         <td style="font-weight:bold">40</td>
       </tr>
-<tr style="background:#1e3a2f">
+<tr style="background:#f0fdf4">
         <td>2026-04-17</td>
         <td><span class="badge badge-devto">devto</span></td>
         <td>comparison</td>
@@ -401,7 +376,7 @@
         <td>0</td>
         <td style="font-weight:bold">40</td>
       </tr>
-<tr style="background:#1e3a2f">
+<tr style="background:#f0fdf4">
         <td>2026-04-18</td>
         <td><span class="badge badge-bluesky">bluesky</span></td>
         <td>economics</td>
@@ -434,68 +409,68 @@
         <td style="font-weight:bold">-9</td>
       </tr>
   </table>
-  <div style="margin-top:12px;padding:12px;background:#1e293b;border-left:3px solid #f59e0b;border-radius:4px;font-size:13px;line-height:1.6"><div>• devto posts had the highest avg correlation score (40/100)</div><div>• Best performing post: comparison on devto (score 40/100)</div></div>
+  <div style="margin-top:12px;padding:12px;background:#fffbeb;border-left:3px solid #f59e0b;border-radius:4px;font-size:13px;line-height:1.6;color:#111827"><div>• devto posts had the highest avg correlation score (40/100)</div><div>• Best performing post: comparison on devto (score 40/100)</div></div>
 </div>
 
 <div class="chart-card" style="margin-top:24px">
   <h2>Strategy Decisions</h2>
-  <div style="display:grid;gap:12px"><div style="background:#1e293b;border-radius:8px;padding:16px;border-left:3px solid #94a3b8">
-      <div style="font-size:12px;color:#94a3b8;margin-bottom:4px">Week of 2026-04-20 · <span style="color:#94a3b8;font-weight:bold">NEUTRAL</span></div>
-      <div style="font-size:14px;font-weight:600;margin-bottom:4px">Shift content mix to 60% comparison-format articles on Dev.to targeting high-intent tool-evaluation search terms, while eliminating opinion content entirely.</div>
-      <div style="font-size:13px;color:#94a3b8">The only measurable signal is 75 npm downloads suggesting organic discovery from people actively evaluating AI tools — comparison content on Dev.to scored 40 vs Bluesky's 18, directly matching this buyer-intent behavior. Opinion posts show negative conversion and should be cut. Doubling down on comparison content captures readers already in the decision funnel.</div>
+  <div style="display:grid;gap:12px"><div style="background:#f9fafb;border-radius:8px;padding:16px;border-left:3px solid #94a3b8">
+      <div style="font-size:12px;color:#6b7280;margin-bottom:4px">Week of 2026-04-20 · <span style="color:#94a3b8;font-weight:bold">NEUTRAL</span></div>
+      <div style="font-size:14px;font-weight:600;color:#111827;margin-bottom:4px">Shift content mix to 60% comparison-format articles on Dev.to targeting high-intent tool-evaluation search terms, while eliminating opinion content entirely.</div>
+      <div style="font-size:13px;color:#6b7280">The only measurable signal is 75 npm downloads suggesting organic discovery from people actively evaluating AI tools — comparison content on Dev.to scored 40 vs Bluesky's 18, directly matching this buyer-intent behavior. Opinion posts show negative conversion and should be cut. Doubling down on comparison content captures readers already in the decision funnel.</div>
       <div style="font-size:13px;margin-top:8px;color:#94a3b8">neutral: npm +75</div>
     </div></div>
 </div>
 
 <div class="chart-card" style="margin-top:24px">
   <h2>Content Intelligence</h2>
-  <p style="color:#94a3b8;font-size:13px;margin-bottom:16px">What feeds each content prompt: accumulated reading corpus, this week's hot themes, news events Nate can honestly react to, recent notebook observations, Nate's worldview coverage.</p>
+  <p style="color:#6b7280;font-size:13px;margin-bottom:16px">What feeds each content prompt: accumulated reading corpus, this week's hot themes, news events Nate can honestly react to, recent notebook observations, Nate's worldview coverage.</p>
 
   <div style="margin-bottom:20px">
-    <h3 style="font-size:14px;color:#e2e8f0;margin-bottom:10px">Reader Corpus <span style="font-size:12px;color:#6b7280;font-weight:400">— last 7 days / total</span></h3>
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px"><div style="background:#0f172a;border:1px solid #334155;border-radius:8px;padding:10px 14px">
-        <div style="font-size:12px;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">tech-ai</div>
-        <div style="font-size:18px;font-weight:700">1 <span style="font-size:12px;color:#6b7280;font-weight:400">/ 1 total</span></div>
-      </div><div style="background:#0f172a;border:1px solid #334155;border-radius:8px;padding:10px 14px">
-        <div style="font-size:12px;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">life-reflection</div>
-        <div style="font-size:18px;font-weight:700">1 <span style="font-size:12px;color:#6b7280;font-weight:400">/ 1 total</span></div>
-      </div><div style="background:#0f172a;border:1px solid #334155;border-radius:8px;padding:10px 14px">
-        <div style="font-size:12px;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">philosophy-psychology</div>
-        <div style="font-size:18px;font-weight:700">1 <span style="font-size:12px;color:#6b7280;font-weight:400">/ 1 total</span></div>
-      </div><div style="background:#0f172a;border:1px solid #334155;border-radius:8px;padding:10px 14px">
-        <div style="font-size:12px;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">relationships</div>
-        <div style="font-size:18px;font-weight:700">1 <span style="font-size:12px;color:#6b7280;font-weight:400">/ 1 total</span></div>
-      </div><div style="background:#0f172a;border:1px solid #334155;border-radius:8px;padding:10px 14px">
-        <div style="font-size:12px;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">work-economics</div>
-        <div style="font-size:18px;font-weight:700">1 <span style="font-size:12px;color:#6b7280;font-weight:400">/ 1 total</span></div>
-      </div><div style="background:#0f172a;border:1px solid #334155;border-radius:8px;padding:10px 14px">
-        <div style="font-size:12px;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">humor-satire</div>
-        <div style="font-size:18px;font-weight:700">1 <span style="font-size:12px;color:#6b7280;font-weight:400">/ 1 total</span></div>
-      </div><div style="background:#0f172a;border:1px solid #334155;border-radius:8px;padding:10px 14px">
-        <div style="font-size:12px;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">creative-writing</div>
-        <div style="font-size:18px;font-weight:700">1 <span style="font-size:12px;color:#6b7280;font-weight:400">/ 1 total</span></div>
+    <h3 style="font-size:13px;font-weight:600;color:#111827;margin-bottom:10px">Reader Corpus <span style="font-size:12px;color:#9ca3af;font-weight:400">— last 7 days / total</span></h3>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px"><div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:10px 14px">
+        <div style="font-size:12px;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">tech-ai</div>
+        <div style="font-size:18px;font-weight:700;color:#111827">1 <span style="font-size:12px;color:#9ca3af;font-weight:400">/ 1 total</span></div>
+      </div><div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:10px 14px">
+        <div style="font-size:12px;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">life-reflection</div>
+        <div style="font-size:18px;font-weight:700;color:#111827">1 <span style="font-size:12px;color:#9ca3af;font-weight:400">/ 1 total</span></div>
+      </div><div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:10px 14px">
+        <div style="font-size:12px;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">philosophy-psychology</div>
+        <div style="font-size:18px;font-weight:700;color:#111827">1 <span style="font-size:12px;color:#9ca3af;font-weight:400">/ 1 total</span></div>
+      </div><div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:10px 14px">
+        <div style="font-size:12px;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">relationships</div>
+        <div style="font-size:18px;font-weight:700;color:#111827">1 <span style="font-size:12px;color:#9ca3af;font-weight:400">/ 1 total</span></div>
+      </div><div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:10px 14px">
+        <div style="font-size:12px;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">work-economics</div>
+        <div style="font-size:18px;font-weight:700;color:#111827">1 <span style="font-size:12px;color:#9ca3af;font-weight:400">/ 1 total</span></div>
+      </div><div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:10px 14px">
+        <div style="font-size:12px;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">humor-satire</div>
+        <div style="font-size:18px;font-weight:700;color:#111827">1 <span style="font-size:12px;color:#9ca3af;font-weight:400">/ 1 total</span></div>
+      </div><div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:10px 14px">
+        <div style="font-size:12px;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">creative-writing</div>
+        <div style="font-size:18px;font-weight:700;color:#111827">1 <span style="font-size:12px;color:#9ca3af;font-weight:400">/ 1 total</span></div>
       </div></div>
   </div>
 
   <div style="margin-bottom:20px">
-    <h3 style="font-size:14px;color:#e2e8f0;margin-bottom:10px">Breaking News — eligible angles <span style="font-size:12px;color:#6b7280;font-weight:400">— what Nate can honestly post about</span></h3>
-    <div style="color:#6b7280;font-size:13px">58 news entries collected (hn:9 · techcrunch:15 · ars:12 · producthunt:12 · verge:10). Triage runs Monday in weekly brain.</div>
+    <h3 style="font-size:13px;font-weight:600;color:#111827;margin-bottom:10px">Breaking News — eligible angles <span style="font-size:12px;color:#9ca3af;font-weight:400">— what Nate can honestly post about</span></h3>
+    <div style="color:#9ca3af;font-size:13px">58 news entries collected (hn:9 · techcrunch:15 · ars:12 · producthunt:12 · verge:10). Triage runs Monday in weekly brain.</div>
   </div>
 
   <div style="margin-bottom:20px">
-    <h3 style="font-size:14px;color:#e2e8f0;margin-bottom:10px">Trend Themes</h3>
+    <h3 style="font-size:13px;font-weight:600;color:#111827;margin-bottom:10px">Trend Themes</h3>
     <div style="color:#6b7280;font-size:13px">No trend synthesis yet (runs weekly — will appear after first Monday pregen with ≥10 HN headlines). Raw log: 10 headlines captured.</div>
   </div>
 
   <div style="margin-bottom:20px">
-    <h3 style="font-size:14px;color:#e2e8f0;margin-bottom:10px">Notebook — recent observations</h3>
+    <h3 style="font-size:13px;font-weight:600;color:#111827;margin-bottom:10px">Notebook — recent observations</h3>
     <div style="color:#6b7280;font-size:13px">Notebook empty — first entries arrive on the next weekly brain run.</div>
   </div>
 
   <div>
-    <h3 style="font-size:14px;color:#e2e8f0;margin-bottom:10px">Nate's Opinions — 23 stances, coverage by bucket</h3>
+    <h3 style="font-size:13px;font-weight:600;color:#111827;margin-bottom:10px">Nate's Opinions — 23 stances, coverage by bucket</h3>
     <table>
-      <tr><th>Bucket</th><th style="text-align:right">Moderate</th><th style="text-align:right;color:#fb923c">Spicy</th><th style="text-align:right">Total</th></tr>
+      <tr><th>Bucket</th><th style="text-align:right">Moderate</th><th style="text-align:right;color:#f97316">Spicy</th><th style="text-align:right">Total</th></tr>
       <tr>
         <td>life-reflection</td>
         <td style="text-align:right">10</td>
@@ -533,8 +508,12 @@
 
 <div class="chart-card" style="margin-top:24px">
   <h2>Cross-Platform Engagement (Medium / Substack / Twitter)</h2>
-  <p style="color:#94a3b8;font-size:13px">Not collected yet. Runs locally (needs OpenTabs + logged-in Brave) during the Monday <code>--mode weekly</code> pass, or via <code>--mode collect-engagement-local</code>.</p>
-  <p style="color:#6b7280;font-size:12px;margin-top:8px">Bluesky + Dev.to are tracked via API in CI daily — see Engagement section above. Medium/Substack/Twitter have no public metrics APIs, so they need the browser-automation pass.</p>
+  <p style="color:#6b7280;font-size:12px;margin-bottom:12px">Latest snapshot: 2026-04-22T06:36:06.272Z. Collected locally via OpenTabs scrapers — selectors may need periodic calibration.</p>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px"><div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:14px">
+      <div style="font-size:12px;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Medium</div>
+      <div style="font-size:22px;font-weight:700;color:#111827">1<span style="font-size:12px;color:#9ca3af;font-weight:400;margin-left:6px">followers</span></div>
+      <div style="font-size:13px;color:#6b7280;margin-top:4px">2 articles · 14 views · 6 reads</div>
+    </div></div>
 </div>
 
 <script>
@@ -543,26 +522,26 @@ const chartOpts = {
   responsive: true,
   plugins: { legend: { display: false } },
   scales: {
-    x: { ticks: { color: '#94a3b8', maxTicksLimit: 10 }, grid: { color: '#334155' } },
-    y: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } }
+    x: { ticks: { color: '#6b7280', maxTicksLimit: 10 }, grid: { color: '#f3f4f6' } },
+    y: { ticks: { color: '#6b7280' }, grid: { color: '#f3f4f6' } }
   }
 };
 
 new Chart(document.getElementById('starsChart'), {
   type: 'line',
-  data: { labels: dates, datasets: [{ data: [0,0,0,0,0,0,0], borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.1)', fill: true, tension: 0.3 }] },
+  data: { labels: dates, datasets: [{ data: [0,0,0,0,0,0,0], borderColor: '#111827', backgroundColor: 'rgba(17,24,39,0.06)', fill: true, tension: 0.3, pointRadius: 3, pointBackgroundColor: '#111827' }] },
   options: chartOpts
 });
 
 new Chart(document.getElementById('downloadsChart'), {
   type: 'bar',
-  data: { labels: dates, datasets: [{ data: [4,4,1,1,1,27,11], backgroundColor: '#3b82f6' }] },
+  data: { labels: dates, datasets: [{ data: [4,4,1,1,1,27,11], backgroundColor: '#374151', borderRadius: 4 }] },
   options: chartOpts
 });
 
 new Chart(document.getElementById('viewsChart'), {
   type: 'line',
-  data: { labels: dates, datasets: [{ data: [0,0,0,0,0,0,0], borderColor: '#22c55e', backgroundColor: 'rgba(34,197,94,0.1)', fill: true, tension: 0.3 }] },
+  data: { labels: dates, datasets: [{ data: [0,0,0,0,0,0,0], borderColor: '#6b7280', backgroundColor: 'rgba(107,114,128,0.08)', fill: true, tension: 0.3, pointRadius: 3, pointBackgroundColor: '#6b7280' }] },
   options: chartOpts
 });
 
@@ -573,10 +552,10 @@ new Chart(document.getElementById('qualityChart'), {
     labels: ["tutorial","opinion","economics","launch","ai_general","comparison"],
     datasets: [{
       data: [8.5,8.5,8.5,8.5,8.5,7.6],
-      backgroundColor: ['#f59e0b', '#3b82f6', '#22c55e', '#ef4444', '#8b5cf6', '#ec4899']
+      backgroundColor: ['#111827', '#374151', '#6b7280', '#9ca3af', '#d1d5db', '#e5e7eb']
     }]
   },
-  options: { ...chartOpts, scales: { ...chartOpts.scales, y: { ...chartOpts.scales.y, min: 0, max: 10 } } }
+  options: { ...chartOpts, scales: { ...chartOpts.scales, y: { ...chartOpts.scales.y, min: 0, max: 10 } }, datasets: { bar: { borderRadius: 4 } } }
 });
 
 </script>

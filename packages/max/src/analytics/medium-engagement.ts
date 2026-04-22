@@ -58,15 +58,14 @@ export async function fetchMediumEngagement(opts: CollectOptions): Promise<Mediu
   const tab = await openTab(STATS_URL);
   await navigateTab(tab.id, STATS_URL);
 
-  // Wait for any primary content — fall through gracefully if login expired.
+  // Wait for any primary content — proceed even if waitForElement times out (SPA may already be loaded).
   try {
     await waitForElement(tab.id, 'body', 15000);
-  } catch (err) {
-    console.warn('[Max][medium-eng] body never appeared — aborting');
-    return { collectedAt: new Date().toISOString(), handle, followers: null, totalViews: null, totalReads: null, articles: [] };
+  } catch {
+    console.warn('[Max][medium-eng] waitForElement timed out but proceeding anyway');
   }
   // Give the SPA time to render the stats table
-  await new Promise((r) => setTimeout(r, 4000));
+  await new Promise((r) => setTimeout(r, 5000));
 
   // --- DOM dump fallback (runs in dry-run OR when selectors fail) ---
   const dumpIfNeeded = async (reason: string): Promise<string | undefined> => {
@@ -99,32 +98,40 @@ export async function fetchMediumEngagement(opts: CollectOptions): Promise<Mediu
   }
 
   // --- Try to extract article rows ---
-  // Medium stats page uses dynamic classnames; we query by structure.
-  // Each row has: title (a link), views (number), reads (number), fans (number), responses (number).
-  // Strategy: find the main table, iterate rows, extract text.
-  // First-run selectors are BEST GUESSES — adjust after reviewing the DOM dump.
+  // DOM structure confirmed from live dump 2026-04-22:
+  // table tbody tr → 5 tds: [date | title+meta | views | reads | fans]
+  // Title is in h2 inside td[1]. Numbers are in span inside td[2..4].
+  // Article link href contains "/me/stats/post/" or "/@handle/".
   const articles = await executeScript<MediumArticleStats[]>(
     tab.id,
     `
-    var rows = Array.from(document.querySelectorAll('table tbody tr, [role="row"]')).filter(function(r) {
-      // Skip header/empty rows
-      return r.querySelectorAll('td, [role="cell"]').length >= 4;
+    var rows = Array.from(document.querySelectorAll('table tbody tr')).filter(function(r) {
+      return r.querySelectorAll('td').length >= 4;
     });
     var parsed = rows.map(function(row) {
-      var cells = Array.from(row.querySelectorAll('td, [role="cell"]'));
-      var titleEl = row.querySelector('a[href*="/p/"], a[href*="medium.com"], h3, h4');
-      var numCells = cells.map(function(c) {
-        var txt = (c.textContent || '').trim().replace(/,/g, '');
+      var tds = Array.from(row.querySelectorAll('td'));
+      // Title cell is td[1] (0-indexed) — contains h2 with article title
+      var titleCell = tds[1];
+      var titleEl = titleCell ? titleCell.querySelector('h2, h3, h4') : null;
+      // URL: prefer the "View story" link (/@handle/slug), fall back to /me/stats/post/ link
+      var viewStoryLink = titleCell ? titleCell.querySelector('a[href*="/@"]') : null;
+      var statsLink = titleCell ? titleCell.querySelector('a[href*="/me/stats/post/"]') : null;
+      var url = (viewStoryLink && viewStoryLink.href) || (statsLink && statsLink.href) || undefined;
+      // Numbers in td[2]=views, td[3]=reads, td[4]=fans — each has a <span> with the number
+      function extractNum(td) {
+        if (!td) return 0;
+        var span = td.querySelector('span');
+        var txt = ((span || td).textContent || '').trim().replace(/,/g, '');
         var n = parseInt(txt, 10);
-        return isNaN(n) ? null : n;
-      }).filter(function(n) { return n !== null; });
+        return isNaN(n) ? 0 : n;
+      }
       return {
         title: titleEl ? (titleEl.textContent || '').trim() : '',
-        url: titleEl && titleEl.href ? titleEl.href : undefined,
-        views: numCells[0] || 0,
-        reads: numCells[1] || 0,
-        fans: numCells[2] || 0,
-        responses: numCells[3] || 0,
+        url: url,
+        views: extractNum(tds[2]),
+        reads: extractNum(tds[3]),
+        fans: extractNum(tds[4]),
+        responses: 0,
       };
     }).filter(function(r) { return r.title.length > 0; });
     return parsed;

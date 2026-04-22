@@ -39,17 +39,12 @@ import {
 } from './client.js';
 
 /**
- * Map a Medium topic tag to a reader bucket so comments can pull a relevant
- * Nate opinion. Tech-ai is the default since medium-engage is dev-focused;
- * other buckets activate when the topic explicitly maps there.
+ * Map a Medium topic tag back to its content bucket for opinion injection.
  */
 function topicToBucket(topic: string): string {
-  const t = topic.toLowerCase();
-  if (t.includes('life') || t.includes('mindful') || t.includes('self-improvement') || t.includes('relationships')) return 'life-reflection';
-  if (t.includes('philosophy') || t.includes('psychology')) return 'philosophy-psychology';
-  if (t.includes('humor') || t.includes('satire')) return 'humor-satire';
-  if (t.includes('writing') || t.includes('creativity') || t.includes('fiction')) return 'creative-writing';
-  if (t.includes('productivity') || t.includes('startup') || t.includes('business') || t.includes('economics')) return 'work-economics';
+  for (const [bucket, tags] of Object.entries(BUCKET_TOPICS)) {
+    if (tags.some((t) => topic.toLowerCase().includes(t) || t.includes(topic.toLowerCase()))) return bucket;
+  }
   return 'tech-ai';
 }
 
@@ -95,6 +90,7 @@ interface EngagementEntry {
   url: string;
   title: string;
   action: 'read' | 'clap' | 'comment';
+  bucket?: string; // content bucket for rotation tracking
   claps?: number;
   comment?: string;
 }
@@ -108,19 +104,21 @@ interface EngagementHistory {
 
 const HISTORY_FILE = 'medium-engaged.json';
 
-// Broad topic pool. Rotated per session; recent topics biased down.
-const TOPICS = [
-  'artificial-intelligence',
-  'programming',
-  'philosophy',
-  'writing',
-  'fiction',
-  'startup',
-  'self-improvement',
-  'life-lessons',
-  'productivity',
-  'technology',
-];
+// Topics grouped by content bucket — mirrors the buckets Nate actually writes in.
+// Engagement targets the same audiences as the content, building real connections.
+// Tags are chosen for free-content density on Medium's tag pages.
+// Paywalled-heavy tags (personal-growth, self-improvement, mental-health) are excluded
+// — they yield 0 candidates after member-only filtering and waste sessions.
+const BUCKET_TOPICS: Record<string, string[]> = {
+  'tech-ai':              ['artificial-intelligence', 'machine-learning', 'software-engineering', 'programming', 'technology'],
+  'life-reflection':      ['life', 'life-lessons', 'relationships', 'essay', 'personal-essays'],
+  'philosophy-psychology': ['philosophy', 'psychology', 'stoicism', 'culture'],
+  'humor-satire':         ['humor', 'satire', 'comedy'],
+  'creative-writing':     ['writing', 'fiction', 'creative-writing', 'poetry'],
+  'work-economics':       ['startup', 'freelancing', 'remote-work', 'entrepreneurship', 'work'],
+};
+
+const ALL_BUCKETS = Object.keys(BUCKET_TOPICS);
 
 const DEFAULTS = {
   maxReadPerSession: 6,
@@ -175,26 +173,46 @@ function normaliseUrl(url: string): string {
 
 // ─── Topic selection ────────────────────────────────────────────────────────
 
+/**
+ * Pick a topic in two steps: (1) pick a content bucket, biased away from
+ * recently used buckets; (2) pick a random tag from that bucket.
+ * If `forced` is provided and matches a known tag or bucket, honour it.
+ */
 function pickTopic(history: EngagementHistory, forced?: string): string {
-  if (forced && TOPICS.includes(forced)) return forced;
-  if (forced) return forced; // allow off-list topics if explicitly requested
+  if (forced) {
+    // If forced matches a bucket name, pick a random tag from it
+    if (BUCKET_TOPICS[forced]) {
+      const tags = BUCKET_TOPICS[forced];
+      return tags[Math.floor(Math.random() * tags.length)];
+    }
+    // Otherwise treat it as a literal tag (off-list allowed for one-off testing)
+    return forced;
+  }
 
-  // Bias away from topics used in the last 3 sessions
-  const recent = history.entries.slice(-15).map((e) => extractTopicHint(e.url)).filter(Boolean);
-  const weights = TOPICS.map((t) => (recent.includes(t) ? 0.4 : 1.0));
+  // Track recently used buckets from history metadata
+  const recentBuckets = history.entries
+    .slice(-20)
+    .filter((e) => e.action === 'read' && (e as any).bucket)
+    .map((e) => (e as any).bucket as string);
+
+  // Weight buckets down if used in last 4 sessions (each bucket has ~6 tags,
+  // so we rotate ~24 tags before seeing the same bucket twice at full weight)
+  const weights = ALL_BUCKETS.map((b) => {
+    const recentCount = recentBuckets.filter((r) => r === b).length;
+    return recentCount > 0 ? Math.max(0.2, 1.0 - recentCount * 0.2) : 1.0;
+  });
   const total = weights.reduce((s, w) => s + w, 0);
   let r = Math.random() * total;
-  for (let i = 0; i < TOPICS.length; i++) {
+  let bucket = ALL_BUCKETS[0];
+  for (let i = 0; i < ALL_BUCKETS.length; i++) {
     r -= weights[i];
-    if (r <= 0) return TOPICS[i];
+    if (r <= 0) { bucket = ALL_BUCKETS[i]; break; }
   }
-  return TOPICS[0];
-}
 
-function extractTopicHint(url: string): string | null {
-  // Medium URLs don't include tag, so this is a weak heuristic.
-  // We only use topic bias when last-used topic was stored — punted for now.
-  return null;
+  const tags = BUCKET_TOPICS[bucket];
+  const tag = tags[Math.floor(Math.random() * tags.length)];
+  console.log(`[Max] medium-engage: bucket=${bucket} → tag=${tag}`);
+  return tag;
 }
 
 // ─── Article discovery ─────────────────────────────────────────────────────
@@ -204,41 +222,139 @@ interface ArticleRef {
   title: string;
 }
 
-async function collectArticles(tabId: number, limit: number): Promise<ArticleRef[]> {
-  // Medium's tag pages render articles as <article> elements containing an <h2> title
-  // and a link to the story. DOM shifts frequently — we cast a wide net.
-  //
-  // Member-only filter: Medium marks paywalled posts with a star SVG labelled
-  // "Member-only story". We skip those because our engagement automation
-  // (clap + comment) fails on paywalled bodies — the content is replaced with a
-  // "This story is for members only" CTA and the interaction targets disappear.
+async function collectArticles(tabId: number, limit: number, currentYear: string): Promise<ArticleRef[]> {
+  // Medium's tag pages render articles as <article> elements containing an <h2> title,
+  // a link to the story, and metadata text like "13 min read · May 19, 2022".
+  // We extract the year from that metadata text right here in the feed — no need to
+  // open each article to check recency.
   const script = `
+    var currentYear = ${JSON.stringify(currentYear)};
+
+    // Returns which signal triggered member-only detection, or null if not member-only.
+    // Layers tried in order of reliability.
     function isMemberOnly(article) {
-      if (!article) return false;
-      if (article.querySelector('[aria-label*="ember-only" i], [aria-label*="Member only" i]')) return true;
+      if (!article) return null;
+
+      // Primary: Medium's yellow star SVG uses fill="#FFC017" (brand gold, reserved
+      // exclusively for the member-only indicator).
+      var svgNodes = article.querySelectorAll('svg, svg *');
+      for (var i = 0; i < svgNodes.length; i++) {
+        var fill = (svgNodes[i].getAttribute('fill') || '').toLowerCase();
+        if (fill === '#ffc017') return 'svg-fill';
+      }
+
+      // Secondary: aria-labelledby references pointing to a "Member-only story" label.
+      var labelledEls = article.querySelectorAll('[aria-labelledby]');
+      for (var j = 0; j < labelledEls.length; j++) {
+        var refId = labelledEls[j].getAttribute('aria-labelledby');
+        if (!refId) continue;
+        var refEl = document.getElementById(refId);
+        if (refEl && (refEl.textContent || '').toLowerCase().indexOf('member') !== -1) return 'aria-labelledby';
+      }
+
+      // Tertiary: aria-label containing "member"
+      var allEls = article.querySelectorAll('*');
+      for (var k = 0; k < allEls.length; k++) {
+        var label = (allEls[k].getAttribute('aria-label') || '').toLowerCase();
+        if (label.indexOf('member') !== -1) return 'aria-label';
+      }
+
+      // Fallback: text patterns
       var text = (article.textContent || '').toLowerCase();
-      if (text.indexOf('member-only') !== -1) return true;
-      if (text.indexOf('for members only') !== -1) return true;
-      return false;
+      if (text.indexOf('member-only story') !== -1) return 'text';
+      if (text.indexOf('member-only') !== -1) return 'text';
+      if (text.indexOf('for members only') !== -1) return 'text';
+      return null;
     }
+
+    // Extract the publication year from the card's metadata text.
+    // Medium uses multiple date formats in feed cards:
+    //   "8 min read · Jun 10, 2025"  → explicit year (old if not current)
+    //   "8 min read · Apr 22"         → month+day, no year = current year
+    //   "Mar 27"                      → bare month+day = current year
+    //   "3 days ago" / "5h ago"       → relative = current year
+    //   "1w ago" / "2mo ago"          → abbreviated relative = current year
+    //
+    // Algorithm: find ALL "Month Day[, Year]" patterns. If ANY carries an
+    // explicit year, that's the real article date (Medium only shows the year
+    // when it's not the current year). If only bare "Month Day" found, it's
+    // current year. Otherwise check relative date patterns.
+    function extractYear(article) {
+      var text = article.textContent || '';
+
+      // Collect every Month-Day occurrence + its optional year
+      var dateRegex = /(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\\s+\\d{1,2}(?:,\\s*(20\\d{2}))?/gi;
+      var foundAny = false;
+      var explicitYears = [];
+      var m;
+      while ((m = dateRegex.exec(text)) !== null) {
+        foundAny = true;
+        if (m[2]) explicitYears.push(m[2]);
+      }
+
+      if (explicitYears.length > 0) {
+        // If any explicit year is not current, that's the article's real year
+        var nonCurrent = explicitYears.filter(function(y) { return y !== currentYear; });
+        return nonCurrent.length > 0 ? nonCurrent[0] : currentYear;
+      }
+      if (foundAny) return currentYear; // "Mar 27" alone = current year
+
+      // Relative date patterns — Medium concatenates metadata without spaces
+      // ("5h agoA clap icon"), so trailing \\b boundaries fail when ago is followed
+      // by another word char. Drop trailing \\b; leading \\b stays to avoid
+      // matching substrings inside unrelated words.
+      if (/\\d+\\s+(hour|hours|day|days|week|weeks)\\s+ago/i.test(text)) return currentYear;
+      if (/\\byesterday|\\bjust now|\\blast week/i.test(text)) return currentYear;
+      // Abbreviated relative — "5h ago", "3d ago", "2w ago", "1mo ago".
+      // No leading \\b either because Medium writes "Unsplash5h ago" glued to prior text.
+      if (/\\d+\\s*(h|d|w|mo)\\s+ago/i.test(text)) return currentYear;
+
+      return null; // genuinely no date signal — skip
+    }
+
     var seen = new Set();
     var out = [];
     var skippedMember = 0;
-    // Broader net: walk every <article> on the page and pull the primary story link
-    // from within it. Medium's anchor structure varies — sometimes /p/, sometimes
-    // /@user/, sometimes /pub-name/. We'll filter by URL shape below.
+    var skippedOldYear = 0;
+    var skippedUnknownDate = 0;
+    var memberSignalCounts = { 'svg-fill': 0, 'aria-labelledby': 0, 'aria-label': 0, 'text': 0 };
+    var noDateSamples = []; // diagnostic: titles + text snippets of cards with no detectable date
+    var oldYearSamples = []; // diagnostic: titles + detected year of old articles
     var articles = Array.from(document.querySelectorAll('article'));
     var articleCount = articles.length;
+
     for (var j = 0; j < articles.length; j++) {
       var article = articles[j];
-      if (isMemberOnly(article)) { skippedMember++; continue; }
-      // Collect all anchors in the card, prefer ones that look like a story link
+      var memberSignal = isMemberOnly(article);
+      if (memberSignal) {
+        skippedMember++;
+        memberSignalCounts[memberSignal] = (memberSignalCounts[memberSignal] || 0) + 1;
+        continue;
+      }
+
+      var titleElEarly = article.querySelector('h1, h2, h3');
+      var titleEarly = titleElEarly ? (titleElEarly.textContent || '').trim().slice(0, 100) : '(no title)';
+
+      // Year filter on the feed card — no tab needed
+      var year = extractYear(article);
+      if (year === null) {
+        skippedUnknownDate++;
+        // Capture first 200 chars of card text so we can see what date-like signals exist
+        var snippet = (article.textContent || '').replace(/\\s+/g, ' ').trim().slice(0, 200);
+        noDateSamples.push({ title: titleEarly, snippet: snippet });
+        continue;
+      }
+      if (year !== currentYear) {
+        skippedOldYear++;
+        oldYearSamples.push({ title: titleEarly, year: year });
+        continue;
+      }
+
       var links = Array.from(article.querySelectorAll('a[href]'));
       var href = '';
       for (var k = 0; k < links.length; k++) {
         var candidate = links[k].href || '';
         try { var u = new URL(candidate); candidate = u.origin + u.pathname; } catch (e) { continue; }
-        // Story URLs end with -<hash> or include /p/<id>
         if (/-[a-f0-9]{8,}$/i.test(candidate) || /\\/p\\//.test(candidate)) {
           href = candidate;
           break;
@@ -252,17 +368,43 @@ async function collectArticles(tabId: number, limit: number): Promise<ArticleRef
       out.push({ url: href, title: title.slice(0, 200) });
       if (out.length >= ${limit * 3}) break;
     }
-    return { refs: out, skippedMember: skippedMember, articleCount: articleCount };
+    return {
+      refs: out,
+      skippedMember: skippedMember,
+      skippedOldYear: skippedOldYear,
+      skippedUnknownDate: skippedUnknownDate,
+      memberSignalCounts: memberSignalCounts,
+      noDateSamples: noDateSamples,
+      oldYearSamples: oldYearSamples,
+      articleCount: articleCount,
+    };
   `;
-  const result = await executeScript<{ refs: ArticleRef[]; skippedMember: number; articleCount: number } | ArticleRef[] | null>(
+  const result = await executeScript<{ refs: ArticleRef[]; skippedMember: number; skippedOldYear: number; skippedUnknownDate: number; memberSignalCounts: Record<string, number>; noDateSamples: Array<{ title: string; snippet: string }>; oldYearSamples: Array<{ title: string; year: string }>; articleCount: number } | null>(
     tabId,
     script,
   );
   if (!result) return [];
-  if (Array.isArray(result)) return result;
+  const msc = result.memberSignalCounts;
+  const mscBreakdown = `svg=${msc['svg-fill']} aria-ref=${msc['aria-labelledby']} aria-label=${msc['aria-label']} text=${msc['text']}`;
   console.log(
-    `[Max] medium-engage: tag feed — ${result.articleCount} <article> elements, ${result.skippedMember} member-only filtered, ${result.refs.length} candidate(s)`,
+    `[Max] medium-engage: tag feed — ${result.articleCount} articles, ` +
+    `${result.skippedMember} member-only (${mscBreakdown}), ${result.skippedOldYear} old-year, ` +
+    `${result.skippedUnknownDate} no-date filtered → ${result.refs.length} candidate(s)`,
   );
+  // Diagnostic dumps so we can verify what's being rejected
+  if (result.noDateSamples.length > 0) {
+    console.log(`[Max] medium-engage: no-date samples (first ${Math.min(6, result.noDateSamples.length)}):`);
+    result.noDateSamples.slice(0, 6).forEach((s, i) => {
+      console.log(`  [${i + 1}] "${s.title}"`);
+      console.log(`      text: ${s.snippet}`);
+    });
+  }
+  if (result.oldYearSamples.length > 0) {
+    console.log(`[Max] medium-engage: old-year samples:`);
+    result.oldYearSamples.forEach((s, i) => {
+      console.log(`  [${i + 1}] (${s.year}) "${s.title}"`);
+    });
+  }
   return result.refs;
 }
 
@@ -312,22 +454,52 @@ async function extractArticleContent(tabId: number): Promise<{ title: string; ex
 // ─── Recency check ─────────────────────────────────────────────────────────
 
 /**
- * Returns false if the open article is older than maxAgeDays (default 180).
- * Medium renders a <time datetime="..."> in the article header — we parse that.
- * If no date is found we allow the article (fail-open is safer than over-filtering).
+ * Returns false if the article was not published in the current calendar year.
+ * Tries multiple selectors + a year-pattern text scan as fallback.
+ * Fail-closed: if no date can be found at all, skip the article (old articles
+ * often lack machine-readable dates, so "no date" is a red flag, not a green light).
  */
-async function isArticleRecent(tabId: number, maxAgeDays = 180): Promise<boolean> {
-  const published = await executeScript<string | null>(
+async function isArticleRecent(tabId: number): Promise<boolean> {
+  const currentYear = new Date().getFullYear().toString();
+
+  const result = await executeScript<{ datetime: string | null; yearText: string | null }>(
     tabId,
     `
-    var t = document.querySelector('article time[datetime], time[datetime]');
-    return t ? t.getAttribute('datetime') : null;
+    // Try <time datetime="..."> — most reliable
+    var timeEl = document.querySelector('article time[datetime]')
+              || document.querySelector('header time[datetime]')
+              || document.querySelector('time[datetime]');
+    var datetime = timeEl ? timeEl.getAttribute('datetime') : null;
+
+    // Fallback: scan visible date text near the article header for a 4-digit year.
+    // Medium often renders "Jan 5, 2024" or "Published Jan 5" as plain text.
+    var yearText = null;
+    var candidates = Array.from(document.querySelectorAll('article, header, [data-testid]'));
+    for (var i = 0; i < candidates.length; i++) {
+      var m = (candidates[i].textContent || '').match(/\\b(20\\d{2})\\b/);
+      if (m) { yearText = m[1]; break; }
+    }
+
+    return { datetime: datetime, yearText: yearText };
     `,
   ).catch(() => null);
 
-  if (!published) return true; // no date found — allow
-  const age = (Date.now() - new Date(published).getTime()) / 86_400_000;
-  return age <= maxAgeDays;
+  if (!result) return false; // script error — skip
+
+  // Parse datetime attribute first (most precise)
+  if (result.datetime) {
+    const year = new Date(result.datetime).getFullYear().toString();
+    return year === currentYear;
+  }
+
+  // Fall back to year extracted from visible text
+  if (result.yearText) {
+    return result.yearText === currentYear;
+  }
+
+  // No date signal at all — skip (old articles frequently lack datetime attrs)
+  console.log(`[Max] medium-engage: no publication date detected — skipping (fail-closed)`);
+  return false;
 }
 
 // ─── Clap ───────────────────────────────────────────────────────────────────
@@ -864,13 +1036,14 @@ export async function engageMedium(config: MediumEngageConfig): Promise<MediumEn
   ).catch(() => {});
   await jitter(1500, 3000);
 
-  const refs = await collectArticles(feedTab.id, caps.maxReadPerSession);
+  const currentYear = new Date().getFullYear().toString();
+  const refs = await collectArticles(feedTab.id, caps.maxReadPerSession, currentYear);
   await closeTab(feedTab.id).catch(() => {});
 
   // Dedup against history, shuffle, random offset
   const fresh = refs.filter((r) => !isAlreadyEngaged(history, r.url));
   if (fresh.length === 0) {
-    console.log(`[Max] medium-engage: no fresh articles found for ${topic} (all already engaged)`);
+    console.log(`[Max] medium-engage: no candidates for ${topic} (filtered or already engaged)`);
     return {
       topic,
       read: 0,
@@ -940,28 +1113,19 @@ export async function engageMedium(config: MediumEngageConfig): Promise<MediumEn
       continue;
     }
 
-    // Recency check — skip articles older than 6 months (180 days).
-    // Authors of stale posts are unlikely to still be active or to notice engagement.
-    const recent = await isArticleRecent(tab.id, 180);
-    if (!recent) {
-      console.log(`[Max] medium-engage: article older than 180 days — skipping`);
-      result.skipped.push(article.url);
-      await closeTab(tab.id).catch(() => {});
-      continue;
-    }
-
     await jitter(config.verify ? 500 : 2000, config.verify ? 1500 : 4500);
 
     // Simulate reading
     await simulateReading(tab.id, config.verify);
 
-    // Record the read
+    // Record the read (include bucket so rotation weighting works next session)
     result.read++;
     history.entries.push({
       date: todayUTC(),
       url: article.url,
       title: article.title,
       action: 'read',
+      bucket: topicToBucket(topic),
     });
 
     // Decide clap

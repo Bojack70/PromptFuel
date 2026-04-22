@@ -114,7 +114,7 @@ function buildCorrelationSection(dataDir: string): string {
       const engText = c.platform === 'devto'
         ? `${c.engagement.views ?? 0} views, ${c.engagement.reactions ?? 0} reactions`
         : `${c.engagement.likes ?? 0} likes, ${c.engagement.reposts ?? 0} reposts`;
-      const highlight = i < 3 ? ' style="background:#1e3a2f"' : '';
+      const highlight = i < 3 ? ' style="background:#f0fdf4"' : '';
       return `<tr${highlight}>
         <td>${c.date}</td>
         <td><span class="badge badge-${c.platform}">${c.platform}</span></td>
@@ -127,7 +127,7 @@ function buildCorrelationSection(dataDir: string): string {
     .join('\n');
 
   const insightsHtml = report.insights.length > 0
-    ? `<div style="margin-top:12px;padding:12px;background:#1e293b;border-left:3px solid #f59e0b;border-radius:4px;font-size:13px;line-height:1.6">${report.insights.map((i) => `<div>• ${i}</div>`).join('')}</div>`
+    ? `<div style="margin-top:12px;padding:12px;background:#fffbeb;border-left:3px solid #f59e0b;border-radius:4px;font-size:13px;line-height:1.6;color:#111827">${report.insights.map((i) => `<div>• ${i}</div>`).join('')}</div>`
     : '';
 
   return `
@@ -151,10 +151,10 @@ function buildStrategySection(dataDir: string): string {
       : '#f59e0b';
     const verdictLabel = d.outcome ? d.outcome.verdict.toUpperCase() : 'ACTIVE';
 
-    return `<div style="background:#1e293b;border-radius:8px;padding:16px;border-left:3px solid ${verdictColor}">
-      <div style="font-size:12px;color:#94a3b8;margin-bottom:4px">Week of ${d.weekOf} · <span style="color:${verdictColor};font-weight:bold">${verdictLabel}</span></div>
-      <div style="font-size:14px;font-weight:600;margin-bottom:4px">${d.decision}</div>
-      <div style="font-size:13px;color:#94a3b8">${d.rationale}</div>
+    return `<div style="background:#f9fafb;border-radius:8px;padding:16px;border-left:3px solid ${verdictColor}">
+      <div style="font-size:12px;color:#6b7280;margin-bottom:4px">Week of ${d.weekOf} · <span style="color:${verdictColor};font-weight:bold">${verdictLabel}</span></div>
+      <div style="font-size:14px;font-weight:600;color:#111827;margin-bottom:4px">${d.decision}</div>
+      <div style="font-size:13px;color:#6b7280">${d.rationale}</div>
       ${d.outcome ? `<div style="font-size:13px;margin-top:8px;color:${verdictColor}">${d.outcome.summary}</div>` : ''}
     </div>`;
   }).join('\n');
@@ -205,18 +205,18 @@ function buildContentIntelligenceSection(dataDir: string): string {
   const readerCards = Object.entries(bucketCounts)
     .sort((a, b) => b[1].total - a[1].total)
     .map(([bucket, { recent, total }]) =>
-      `<div style="background:#0f172a;border:1px solid #334155;border-radius:8px;padding:10px 14px">
-        <div style="font-size:12px;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">${bucket}</div>
-        <div style="font-size:18px;font-weight:700">${fmt(recent)} <span style="font-size:12px;color:#6b7280;font-weight:400">/ ${fmt(total)} total</span></div>
+      `<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:10px 14px">
+        <div style="font-size:12px;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">${bucket}</div>
+        <div style="font-size:18px;font-weight:700;color:#111827">${fmt(recent)} <span style="font-size:12px;color:#9ca3af;font-weight:400">/ ${fmt(total)} total</span></div>
       </div>`,
     ).join('');
 
   // Trends: hot themes + avoid list
   const themesHtml = trendInsights && trendInsights.hotThemes.length > 0
     ? `<div>
-        <div style="font-size:12px;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Hot Themes (${trendInsights.weekOf}, ${trendInsights.headlinesAnalysed} headlines)</div>
-        ${trendInsights.hotThemes.map((t) => `<span style="display:inline-block;background:#312e81;color:#c7d2fe;border-radius:999px;padding:4px 10px;margin:3px 4px 3px 0;font-size:12px">${t}</span>`).join('')}
-        ${trendInsights.avoidList.length > 0 ? `<div style="margin-top:10px"><div style="font-size:12px;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Over-saturated — avoid</div>${trendInsights.avoidList.map((t) => `<span style="display:inline-block;background:#7f1d1d;color:#fecaca;border-radius:999px;padding:4px 10px;margin:3px 4px 3px 0;font-size:12px">${t}</span>`).join('')}</div>` : ''}
+        <div style="font-size:12px;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Hot Themes (${trendInsights.weekOf}, ${trendInsights.headlinesAnalysed} headlines)</div>
+        ${trendInsights.hotThemes.map((t) => `<span style="display:inline-block;background:#eef2ff;color:#4338ca;border-radius:999px;padding:4px 10px;margin:3px 4px 3px 0;font-size:12px">${t}</span>`).join('')}
+        ${trendInsights.avoidList.length > 0 ? `<div style="margin-top:10px"><div style="font-size:12px;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Over-saturated — avoid</div>${trendInsights.avoidList.map((t) => `<span style="display:inline-block;background:#fee2e2;color:#dc2626;border-radius:999px;padding:4px 10px;margin:3px 4px 3px 0;font-size:12px">${t}</span>`).join('')}</div>` : ''}
       </div>`
     : `<div style="color:#6b7280;font-size:13px">No trend synthesis yet (runs weekly — will appear after first Monday pregen with ≥10 HN headlines). Raw log: ${trendsLog.entries.length} headlines captured.</div>`;
 
@@ -224,9 +224,9 @@ function buildContentIntelligenceSection(dataDir: string): string {
   const recentNotebook = notebook.entries.slice(-5).reverse();
   const notebookHtml = recentNotebook.length > 0
     ? recentNotebook.map((n) =>
-        `<div style="background:#0f172a;border-left:3px solid #60a5fa;border-radius:4px;padding:10px 14px;margin-bottom:8px">
-          <div style="font-size:14px;color:#e2e8f0;line-height:1.4">${n.observation}</div>
-          <div style="font-size:11px;color:#6b7280;margin-top:4px">${n.date} · ${n.source}${n.weekOf ? ` · week of ${n.weekOf}` : ''}</div>
+        `<div style="background:#f0f7ff;border-left:3px solid #3b82f6;border-radius:4px;padding:10px 14px;margin-bottom:8px">
+          <div style="font-size:14px;color:#111827;line-height:1.4">${n.observation}</div>
+          <div style="font-size:11px;color:#9ca3af;margin-top:4px">${n.date} · ${n.source}${n.weekOf ? ` · week of ${n.weekOf}` : ''}</div>
         </div>`,
       ).join('')
     : `<div style="color:#6b7280;font-size:13px">Notebook empty — first entries arrive on the next weekly brain run.</div>`;
@@ -263,55 +263,55 @@ function buildContentIntelligenceSection(dataDir: string): string {
   }
   const newsHtml = newsAngles && newsAngles.eligibleAngles.length > 0
     ? `<div>
-        <div style="font-size:12px;color:#94a3b8;margin-bottom:8px">
+        <div style="font-size:12px;color:#6b7280;margin-bottom:8px">
           ${newsRecent} news entries last 7d (${Object.entries(newsPerSource).map(([s, n]) => `${s}:${n}`).join(' · ')}) · triaged ${newsAngles.generatedAt.split('T')[0]}
         </div>
-        <div style="font-size:12px;color:#86efac;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Eligible angles this week</div>
+        <div style="font-size:12px;color:#16a34a;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;font-weight:600">Eligible angles this week</div>
         ${newsAngles.eligibleAngles.slice(0, 5).map((a) =>
-          `<div style="background:#0f172a;border-left:3px solid #22c55e;padding:10px 12px;margin-bottom:8px;border-radius:4px">
-            <div style="font-size:13px;font-weight:600;margin-bottom:4px">${a.event}</div>
-            <div style="font-size:12px;color:#94a3b8"><span style="color:#86efac">${a.angle}</span> · ${a.salience} salience — ${a.hook}</div>
+          `<div style="background:#f0fdf4;border-left:3px solid #22c55e;padding:10px 12px;margin-bottom:8px;border-radius:4px">
+            <div style="font-size:13px;font-weight:600;color:#111827;margin-bottom:4px">${a.event}</div>
+            <div style="font-size:12px;color:#6b7280"><span style="color:#16a34a">${a.angle}</span> · ${a.salience} salience — ${a.hook}</div>
           </div>`).join('')}
         ${newsAngles.ineligible.length > 0 ? `
-          <div style="font-size:12px;color:#fca5a5;text-transform:uppercase;letter-spacing:0.5px;margin:12px 0 6px">Ineligible — skip (needs firsthand testing)</div>
+          <div style="font-size:12px;color:#dc2626;text-transform:uppercase;letter-spacing:0.5px;margin:12px 0 6px;font-weight:600">Ineligible — skip (needs firsthand testing)</div>
           ${newsAngles.ineligible.slice(0, 3).map((e) =>
-            `<div style="background:#0f172a;border-left:3px solid #ef4444;padding:8px 12px;margin-bottom:6px;border-radius:4px;font-size:12px">
-              <span style="color:#fca5a5">${e.event}</span> — <span style="color:#94a3b8">${e.reason}</span>
+            `<div style="background:#fef2f2;border-left:3px solid #ef4444;padding:8px 12px;margin-bottom:6px;border-radius:4px;font-size:12px">
+              <span style="color:#dc2626">${e.event}</span> — <span style="color:#6b7280">${e.reason}</span>
             </div>`).join('')}
         ` : ''}
       </div>`
-    : `<div style="color:#6b7280;font-size:13px">${newsRecent > 0 ? `${newsRecent} news entries collected (${Object.entries(newsPerSource).map(([s, n]) => `${s}:${n}`).join(' · ')}). Triage runs Monday in weekly brain.` : 'No news collected yet — starts in next CI run via --mode fetch-news.'}</div>`;
+    : `<div style="color:#9ca3af;font-size:13px">${newsRecent > 0 ? `${newsRecent} news entries collected (${Object.entries(newsPerSource).map(([s, n]) => `${s}:${n}`).join(' · ')}). Triage runs Monday in weekly brain.` : 'No news collected yet — starts in next CI run via --mode fetch-news.'}</div>`;
 
   return `
 <div class="chart-card" style="margin-top:24px">
   <h2>Content Intelligence</h2>
-  <p style="color:#94a3b8;font-size:13px;margin-bottom:16px">What feeds each content prompt: accumulated reading corpus, this week's hot themes, news events Nate can honestly react to, recent notebook observations, Nate's worldview coverage.</p>
+  <p style="color:#6b7280;font-size:13px;margin-bottom:16px">What feeds each content prompt: accumulated reading corpus, this week's hot themes, news events Nate can honestly react to, recent notebook observations, Nate's worldview coverage.</p>
 
   <div style="margin-bottom:20px">
-    <h3 style="font-size:14px;color:#e2e8f0;margin-bottom:10px">Reader Corpus <span style="font-size:12px;color:#6b7280;font-weight:400">— last 7 days / total</span></h3>
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px">${readerCards || '<div style="color:#6b7280;font-size:13px">No articles read yet — --mode read-daily kicks off in next CI run.</div>'}</div>
+    <h3 style="font-size:13px;font-weight:600;color:#111827;margin-bottom:10px">Reader Corpus <span style="font-size:12px;color:#9ca3af;font-weight:400">— last 7 days / total</span></h3>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px">${readerCards || '<div style="color:#9ca3af;font-size:13px">No articles read yet — --mode read-daily kicks off in next CI run.</div>'}</div>
   </div>
 
   <div style="margin-bottom:20px">
-    <h3 style="font-size:14px;color:#e2e8f0;margin-bottom:10px">Breaking News — eligible angles <span style="font-size:12px;color:#6b7280;font-weight:400">— what Nate can honestly post about</span></h3>
+    <h3 style="font-size:13px;font-weight:600;color:#111827;margin-bottom:10px">Breaking News — eligible angles <span style="font-size:12px;color:#9ca3af;font-weight:400">— what Nate can honestly post about</span></h3>
     ${newsHtml}
   </div>
 
   <div style="margin-bottom:20px">
-    <h3 style="font-size:14px;color:#e2e8f0;margin-bottom:10px">Trend Themes</h3>
+    <h3 style="font-size:13px;font-weight:600;color:#111827;margin-bottom:10px">Trend Themes</h3>
     ${themesHtml}
   </div>
 
   <div style="margin-bottom:20px">
-    <h3 style="font-size:14px;color:#e2e8f0;margin-bottom:10px">Notebook — recent observations</h3>
+    <h3 style="font-size:13px;font-weight:600;color:#111827;margin-bottom:10px">Notebook — recent observations</h3>
     ${notebookHtml}
   </div>
 
   <div>
-    <h3 style="font-size:14px;color:#e2e8f0;margin-bottom:10px">Nate's Opinions — ${opinions.length} stances, coverage by bucket</h3>
+    <h3 style="font-size:13px;font-weight:600;color:#111827;margin-bottom:10px">Nate's Opinions — ${opinions.length} stances, coverage by bucket</h3>
     <table>
-      <tr><th>Bucket</th><th style="text-align:right">Moderate</th><th style="text-align:right;color:#fb923c">Spicy</th><th style="text-align:right">Total</th></tr>
-      ${opinionRows || '<tr><td colspan="4" style="color:#6b7280">No opinions loaded.</td></tr>'}
+      <tr><th>Bucket</th><th style="text-align:right">Moderate</th><th style="text-align:right;color:#f97316">Spicy</th><th style="text-align:right">Total</th></tr>
+      ${opinionRows || '<tr><td colspan="4" style="color:#9ca3af">No opinions loaded.</td></tr>'}
     </table>
   </div>
 </div>`;
@@ -327,8 +327,8 @@ function buildLocalEngagementSection(dataDir: string): string {
     return `
 <div class="chart-card" style="margin-top:24px">
   <h2>Cross-Platform Engagement (Medium / Substack / Twitter)</h2>
-  <p style="color:#94a3b8;font-size:13px">Not collected yet. Runs locally (needs OpenTabs + logged-in Brave) during the Monday <code>--mode weekly</code> pass, or via <code>--mode collect-engagement-local</code>.</p>
-  <p style="color:#6b7280;font-size:12px;margin-top:8px">Bluesky + Dev.to are tracked via API in CI daily — see Engagement section above. Medium/Substack/Twitter have no public metrics APIs, so they need the browser-automation pass.</p>
+  <p style="color:#6b7280;font-size:13px">Not collected yet. Runs locally (needs OpenTabs + logged-in Brave) during the Monday <code>--mode weekly</code> pass, or via <code>--mode collect-engagement-local</code>.</p>
+  <p style="color:#9ca3af;font-size:12px;margin-top:8px">Bluesky + Dev.to are tracked via API in CI daily — see Engagement section above. Medium/Substack/Twitter have no public metrics APIs, so they need the browser-automation pass.</p>
 </div>`;
   }
 
@@ -336,31 +336,31 @@ function buildLocalEngagementSection(dataDir: string): string {
   const cards: string[] = [];
 
   if (latest.medium) {
-    cards.push(`<div style="background:#0f172a;border:1px solid #334155;border-radius:10px;padding:14px">
-      <div style="font-size:12px;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Medium</div>
-      <div style="font-size:22px;font-weight:700">${latest.medium.followers !== null ? fmt(latest.medium.followers) : '?'}<span style="font-size:12px;color:#6b7280;font-weight:400;margin-left:6px">followers</span></div>
-      <div style="font-size:13px;color:#94a3b8;margin-top:4px">${latest.medium.articles.length} articles${latest.medium.totalViews !== null ? ` · ${fmt(latest.medium.totalViews)} views` : ''}${latest.medium.totalReads !== null ? ` · ${fmt(latest.medium.totalReads)} reads` : ''}</div>
+    cards.push(`<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:14px">
+      <div style="font-size:12px;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Medium</div>
+      <div style="font-size:22px;font-weight:700;color:#111827">${latest.medium.followers !== null ? fmt(latest.medium.followers) : '?'}<span style="font-size:12px;color:#9ca3af;font-weight:400;margin-left:6px">followers</span></div>
+      <div style="font-size:13px;color:#6b7280;margin-top:4px">${latest.medium.articles.length} articles${latest.medium.totalViews !== null ? ` · ${fmt(latest.medium.totalViews)} views` : ''}${latest.medium.totalReads !== null ? ` · ${fmt(latest.medium.totalReads)} reads` : ''}</div>
     </div>`);
   }
   if (latest.substack) {
-    cards.push(`<div style="background:#0f172a;border:1px solid #334155;border-radius:10px;padding:14px">
-      <div style="font-size:12px;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Substack</div>
-      <div style="font-size:22px;font-weight:700">${latest.substack.subscribers !== null ? fmt(latest.substack.subscribers) : '?'}<span style="font-size:12px;color:#6b7280;font-weight:400;margin-left:6px">subscribers</span></div>
-      <div style="font-size:13px;color:#94a3b8;margin-top:4px">${latest.substack.posts.length} posts · ${latest.substack.notes.length} notes tracked</div>
+    cards.push(`<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:14px">
+      <div style="font-size:12px;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Substack</div>
+      <div style="font-size:22px;font-weight:700;color:#111827">${latest.substack.subscribers !== null ? fmt(latest.substack.subscribers) : '?'}<span style="font-size:12px;color:#9ca3af;font-weight:400;margin-left:6px">subscribers</span></div>
+      <div style="font-size:13px;color:#6b7280;margin-top:4px">${latest.substack.posts.length} posts · ${latest.substack.notes.length} notes tracked</div>
     </div>`);
   }
   if (latest.twitter) {
-    cards.push(`<div style="background:#0f172a;border:1px solid #334155;border-radius:10px;padding:14px">
-      <div style="font-size:12px;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Twitter / X</div>
-      <div style="font-size:22px;font-weight:700">${latest.twitter.followers !== null ? fmt(latest.twitter.followers) : '?'}<span style="font-size:12px;color:#6b7280;font-weight:400;margin-left:6px">followers</span></div>
-      <div style="font-size:13px;color:#94a3b8;margin-top:4px">${latest.twitter.tweets.length} recent tweets tracked</div>
+    cards.push(`<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:14px">
+      <div style="font-size:12px;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Twitter / X</div>
+      <div style="font-size:22px;font-weight:700;color:#111827">${latest.twitter.followers !== null ? fmt(latest.twitter.followers) : '?'}<span style="font-size:12px;color:#9ca3af;font-weight:400;margin-left:6px">followers</span></div>
+      <div style="font-size:13px;color:#6b7280;margin-top:4px">${latest.twitter.tweets.length} recent tweets tracked</div>
     </div>`);
   }
 
   return `
 <div class="chart-card" style="margin-top:24px">
   <h2>Cross-Platform Engagement (Medium / Substack / Twitter)</h2>
-  <p style="color:#94a3b8;font-size:12px;margin-bottom:12px">Latest snapshot: ${latest.collectedAt}. Collected locally via OpenTabs scrapers — selectors may need periodic calibration.</p>
+  <p style="color:#6b7280;font-size:12px;margin-bottom:12px">Latest snapshot: ${latest.collectedAt}. Collected locally via OpenTabs scrapers — selectors may need periodic calibration.</p>
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px">${cards.join('')}</div>
 </div>`;
 }
@@ -393,17 +393,17 @@ function buildWeekCalendar(dataDir: string): string {
     const isSubstackDay = SUBSTACK_DAYS[stage].includes(utcDay) || !!day.devto;
     const isEngageDay = MEDIUM_ENGAGE_DAYS.includes(utcDay);
     const dayName = DAY_NAMES[utcDay];
-    const bg = isToday ? '#1e3a5f' : isPast ? '#0f172a' : '#1e293b';
-    const border = isToday ? '2px solid #3b82f6' : '1px solid #334155';
+    const bg = isToday ? '#eff6ff' : isPast ? '#f9fafb' : '#ffffff';
+    const border = isToday ? '2px solid #3b82f6' : '1px solid #e5e7eb';
 
     const items: string[] = [];
 
     // Bluesky — always, AUTO
-    items.push(`<div style="margin:3px 0"><span style="background:#0085ff;color:#fff;font-size:10px;padding:1px 5px;border-radius:3px">AUTO</span> <strong>Bluesky</strong>${p?.bluesky ? ` <span style="color:#94a3b8;font-size:11px">— ${p.bluesky.text.slice(0, 60)}…</span>` : ''}</div>`);
+    items.push(`<div style="margin:3px 0"><span style="background:#1d4ed8;color:#fff;font-size:10px;padding:1px 5px;border-radius:3px">AUTO</span> <strong>Bluesky</strong>${p?.bluesky ? ` <span style="color:#6b7280;font-size:11px">— ${p.bluesky.text.slice(0, 60)}…</span>` : ''}</div>`);
 
     // Dev.to — stage-aware, AUTO
     if (isDevtoDay) {
-      items.push(`<div style="margin:3px 0"><span style="background:#166534;color:#fff;font-size:10px;padding:1px 5px;border-radius:3px">AUTO</span> <strong>Dev.to</strong>${p?.devto ? ` <span style="color:#94a3b8;font-size:11px">— ${p.devto.title.slice(0, 60)}…</span>` : ''}</div>`);
+      items.push(`<div style="margin:3px 0"><span style="background:#15803d;color:#fff;font-size:10px;padding:1px 5px;border-radius:3px">AUTO</span> <strong>Dev.to</strong>${p?.devto ? ` <span style="color:#6b7280;font-size:11px">— ${p.devto.title.slice(0, 60)}…</span>` : ''}</div>`);
     }
 
     // Twitter + Medium — same days as Dev.to, MANUAL (same command runs both)
@@ -411,23 +411,23 @@ function buildWeekCalendar(dataDir: string): string {
     if (isDevtoDay) {
       const twitterText = p?.twitter?.text ?? p?.bluesky?.text ?? '';
       const twitterCat = p?.twitter?.category ?? '';
-      const twitterPreview = twitterText ? `<div style="color:#94a3b8;font-size:11px;margin-top:2px">🐦 <span style="color:#60a5fa;font-size:10px">[${twitterCat}]</span> ${twitterText.slice(0, 60)}…</div>` : '';
-      const mediumPreview = p?.medium ? `<div style="color:#94a3b8;font-size:11px;margin-top:2px">📝 ${p.medium.title.slice(0, 60)}…</div>` : '';
-      items.push(`<div style="margin:3px 0"><span style="background:#f59e0b;color:#fff;font-size:10px;padding:1px 5px;border-radius:3px">MANUAL</span> <strong>Twitter + Medium</strong>${twitterPreview}${mediumPreview}<code style="font-size:10px;color:#94a3b8;margin-top:3px;display:block">--mode social-post --medium</code></div>`);
+      const twitterPreview = twitterText ? `<div style="color:#6b7280;font-size:11px;margin-top:2px">🐦 <span style="color:#2563eb;font-size:10px">[${twitterCat}]</span> ${twitterText.slice(0, 60)}…</div>` : '';
+      const mediumPreview = p?.medium ? `<div style="color:#6b7280;font-size:11px;margin-top:2px">📝 ${p.medium.title.slice(0, 60)}…</div>` : '';
+      items.push(`<div style="margin:3px 0"><span style="background:#d97706;color:#fff;font-size:10px;padding:1px 5px;border-radius:3px">MANUAL</span> <strong>Twitter + Medium</strong>${twitterPreview}${mediumPreview}<code style="font-size:10px;color:#6b7280;margin-top:3px;display:block">--mode social-post --medium</code></div>`);
     }
 
     // Substack Note — same days as Dev.to, MANUAL
     if (isSubstackDay) {
-      items.push(`<div style="margin:3px 0"><span style="background:#f59e0b;color:#fff;font-size:10px;padding:1px 5px;border-radius:3px">MANUAL</span> <strong>Substack Note</strong>${p?.substack ? ` <span style="color:#94a3b8;font-size:11px">— ${p.substack.note.slice(0, 50)}…</span>` : ''}<br><code style="font-size:10px;color:#94a3b8">--mode social-test-substack --submit</code></div>`);
+      items.push(`<div style="margin:3px 0"><span style="background:#d97706;color:#fff;font-size:10px;padding:1px 5px;border-radius:3px">MANUAL</span> <strong>Substack Note</strong>${p?.substack ? ` <span style="color:#6b7280;font-size:11px">— ${p.substack.note.slice(0, 50)}…</span>` : ''}<br><code style="font-size:10px;color:#6b7280">--mode social-test-substack --submit</code></div>`);
     }
 
     // Medium Engage — Mon/Wed/Fri, MANUAL
     if (isEngageDay) {
-      items.push(`<div style="margin:3px 0"><span style="background:#7c3aed;color:#fff;font-size:10px;padding:1px 5px;border-radius:3px">MANUAL</span> <strong>Medium Engage</strong> <span style="color:#94a3b8;font-size:11px">— clap + comment</span><br><code style="font-size:10px;color:#94a3b8">--mode medium-engage --topic programming</code></div>`);
+      items.push(`<div style="margin:3px 0"><span style="background:#7c3aed;color:#fff;font-size:10px;padding:1px 5px;border-radius:3px">MANUAL</span> <strong>Medium Engage</strong> <span style="color:#6b7280;font-size:11px">— clap + comment</span><br><code style="font-size:10px;color:#6b7280">--mode medium-engage --topic programming</code></div>`);
     }
 
     return `<div style="background:${bg};border:${border};border-radius:10px;padding:14px;min-width:180px">
-      <div style="font-weight:700;font-size:13px;margin-bottom:8px;color:${isToday ? '#93c5fd' : '#e2e8f0'}">${dayName} ${day.date}${isToday ? ' <span style="font-size:10px;background:#3b82f6;color:#fff;padding:1px 6px;border-radius:3px">TODAY</span>' : isPast ? ' <span style="font-size:10px;color:#475569">past</span>' : ''}</div>
+      <div style="font-weight:700;font-size:13px;margin-bottom:8px;color:${isToday ? '#2563eb' : '#111827'}">${dayName} ${day.date}${isToday ? ' <span style="font-size:10px;background:#3b82f6;color:#fff;padding:1px 6px;border-radius:3px">TODAY</span>' : isPast ? ' <span style="font-size:10px;color:#9ca3af">past</span>' : ''}</div>
       ${items.join('')}
     </div>`;
   }).join('');
@@ -479,8 +479,8 @@ function buildTodayActionsSection(dataDir: string): string {
 
   // --- AUTO items (informational — what CI is doing) ---
   const autoLines: string[] = [];
-  autoLines.push(`<strong>Bluesky</strong> ${p?.bluesky ? `<span style="color:#94a3b8;font-size:12px">— "${p.bluesky.text.slice(0, 70)}…"</span>` : ''}`);
-  if (isDevtoDay) autoLines.push(`<strong>Dev.to</strong> ${p?.devto ? `<span style="color:#94a3b8;font-size:12px">— "${p.devto.title.slice(0, 70)}…"</span>` : ''}`);
+  autoLines.push(`<strong>Bluesky</strong> ${p?.bluesky ? `<span style="color:#6b7280;font-size:12px">— "${p.bluesky.text.slice(0, 70)}…"</span>` : ''}`);
+  if (isDevtoDay) autoLines.push(`<strong>Dev.to</strong> ${p?.devto ? `<span style="color:#6b7280;font-size:12px">— "${p.devto.title.slice(0, 70)}…"</span>` : ''}`);
 
   // --- MANUAL content items (things user runs today) ---
   const manualItems: Array<{ label: string; preview?: string; cmd: string }> = [];
@@ -537,66 +537,66 @@ function buildTodayActionsSection(dataDir: string): string {
 
   // --- Build HTML ---
   const autoHtml = autoLines.map((l) =>
-    `<li style="margin:6px 0;padding:8px 12px;background:#064e3b;border-radius:6px;border-left:3px solid #22c55e;list-style:none">
+    `<li style="margin:6px 0;padding:8px 12px;background:#f0fdf4;border-radius:6px;border-left:3px solid #22c55e;list-style:none;color:#111827">
       <span style="font-size:11px;background:#22c55e;color:#fff;padding:1px 6px;border-radius:3px;margin-right:8px">AUTO</span>${l}
     </li>`).join('');
 
   const manualHtml = manualItems.length === 0
-    ? `<li style="color:#6b7280;list-style:none;padding:8px 12px">Nothing manual scheduled for today.</li>`
+    ? `<li style="color:#9ca3af;list-style:none;padding:8px 12px">Nothing manual scheduled for today.</li>`
     : manualItems.map((item) =>
-        `<li style="margin:6px 0;padding:10px 12px;background:#451a03;border-radius:6px;border-left:3px solid #f59e0b;list-style:none">
+        `<li style="margin:6px 0;padding:10px 12px;background:#fffbeb;border-radius:6px;border-left:3px solid #f59e0b;list-style:none;color:#111827">
           <span style="font-size:11px;background:#f59e0b;color:#fff;padding:1px 6px;border-radius:3px;margin-right:8px">MANUAL</span>
-          <strong>${item.label}</strong>${item.preview ? ` — <span style="color:#94a3b8;font-size:12px">"${item.preview}"</span>` : ''}<br>
-          <code style="font-size:12px;background:#1e293b;color:#e2e8f0;padding:4px 8px;border-radius:4px;margin-top:6px;display:inline-block">${item.cmd}</code>
+          <strong>${item.label}</strong>${item.preview ? ` — <span style="color:#6b7280;font-size:12px">"${item.preview}"</span>` : ''}<br>
+          <code style="font-size:12px;background:#f3f4f6;color:#374151;padding:4px 8px;border-radius:4px;margin-top:6px;display:inline-block">${item.cmd}</code>
         </li>`).join('');
 
   const mondayHtml = mondayItems.length > 0
-    ? `<h3 style="font-size:13px;color:#c7d2fe;margin:18px 0 8px 0;text-transform:uppercase;letter-spacing:0.5px">Monday — Weekly Brain</h3>
+    ? `<h3 style="font-size:11px;color:#4338ca;margin:18px 0 8px 0;text-transform:uppercase;letter-spacing:0.6px;font-weight:600">Monday — Weekly Brain</h3>
        <ul style="margin:0;padding:0">
          ${mondayItems.map((item) =>
-           `<li style="margin:6px 0;padding:10px 12px;background:#1e1b4b;border-radius:6px;border-left:3px solid #818cf8;list-style:none">
+           `<li style="margin:6px 0;padding:10px 12px;background:#f5f3ff;border-radius:6px;border-left:3px solid #818cf8;list-style:none;color:#111827">
              <span style="font-size:11px;background:#818cf8;color:#fff;padding:1px 6px;border-radius:3px;margin-right:8px">WEEKLY</span>
              <strong>${item.label}</strong><br>
-             <code style="font-size:12px;background:#1e293b;color:#e2e8f0;padding:4px 8px;border-radius:4px;margin-top:6px;display:inline-block">${item.cmd}</code>
-             ${item.note ? `<div style="font-size:12px;color:#94a3b8;margin-top:6px">${item.note}</div>` : ''}
+             <code style="font-size:12px;background:#f3f4f6;color:#374151;padding:4px 8px;border-radius:4px;margin-top:6px;display:inline-block">${item.cmd}</code>
+             ${item.note ? `<div style="font-size:12px;color:#6b7280;margin-top:6px">${item.note}</div>` : ''}
            </li>`).join('')}
        </ul>`
     : '';
 
   const firstRunHtml = firstRunItems.length > 0
-    ? `<h3 style="font-size:13px;color:#fca5a5;margin:18px 0 8px 0;text-transform:uppercase;letter-spacing:0.5px">⚙ First-Run Setup (do once)</h3>
-       <p style="color:#94a3b8;font-size:12px;margin-bottom:8px">These scrapers need a DOM inspection pass before first live use. Run each with OpenTabs started + Brave logged in to that platform. They write HTML dumps to <code>data/dom-dumps/</code> — share them to finalize selectors.</p>
+    ? `<h3 style="font-size:11px;color:#dc2626;margin:18px 0 8px 0;text-transform:uppercase;letter-spacing:0.6px;font-weight:600">⚙ First-Run Setup (do once)</h3>
+       <p style="color:#6b7280;font-size:12px;margin-bottom:8px">These scrapers need a DOM inspection pass before first live use. Run each with OpenTabs started + Brave logged in to that platform. They write HTML dumps to <code>data/dom-dumps/</code> — share them to finalize selectors.</p>
        <ul style="margin:0;padding:0">
          ${firstRunItems.map((item) =>
-           `<li style="margin:6px 0;padding:10px 12px;background:#450a0a;border-radius:6px;border-left:3px solid #ef4444;list-style:none">
+           `<li style="margin:6px 0;padding:10px 12px;background:#fef2f2;border-radius:6px;border-left:3px solid #ef4444;list-style:none;color:#111827">
              <span style="font-size:11px;background:#ef4444;color:#fff;padding:1px 6px;border-radius:3px;margin-right:8px">SETUP</span>
              <strong>${item.label}</strong><br>
-             <code style="font-size:12px;background:#1e293b;color:#e2e8f0;padding:4px 8px;border-radius:4px;margin-top:6px;display:inline-block">${item.cmd}</code>
-             ${item.note ? `<div style="font-size:12px;color:#94a3b8;margin-top:6px">${item.note}</div>` : ''}
+             <code style="font-size:12px;background:#f3f4f6;color:#374151;padding:4px 8px;border-radius:4px;margin-top:6px;display:inline-block">${item.cmd}</code>
+             ${item.note ? `<div style="font-size:12px;color:#6b7280;margin-top:6px">${item.note}</div>` : ''}
            </li>`).join('')}
        </ul>`
     : '';
 
   // --- ON DEMAND — always visible, no dependency on state ---
   const onDemandHtml = `
-<h3 style="font-size:13px;color:#93c5fd;margin:18px 0 8px 0;text-transform:uppercase;letter-spacing:0.5px">On demand — when breaking news happens</h3>
-<p style="color:#94a3b8;font-size:12px;margin-bottom:8px">React to a specific event with a genuine take (required: --topic). Respects the honest-take rule — no quality/performance claims without firsthand testing. Outputs to stdout + <code>data/reactive-posts.json</code>; you review before publishing.</p>
-<div style="background:#172554;border-left:3px solid #60a5fa;padding:10px 12px;border-radius:6px;font-size:12px">
-  <code style="display:block;background:#1e293b;color:#e2e8f0;padding:6px 10px;border-radius:4px;margin-bottom:4px">cd packages/max &amp;&amp; node dist/index.js --mode react --topic "your topic" --angle "your genuine take" --platform twitter</code>
-  <div style="color:#94a3b8">--angle is optional but recommended. --platform: twitter (default) | bluesky | medium.</div>
+<h3 style="font-size:11px;color:#2563eb;margin:18px 0 8px 0;text-transform:uppercase;letter-spacing:0.6px;font-weight:600">On demand — when breaking news happens</h3>
+<p style="color:#6b7280;font-size:12px;margin-bottom:8px">React to a specific event with a genuine take (required: --topic). Respects the honest-take rule — no quality/performance claims without firsthand testing. Outputs to stdout + <code>data/reactive-posts.json</code>; you review before publishing.</p>
+<div style="background:#eff6ff;border-left:3px solid #3b82f6;padding:10px 12px;border-radius:6px;font-size:12px">
+  <code style="display:block;background:#f3f4f6;color:#374151;padding:6px 10px;border-radius:4px;margin-bottom:4px">cd packages/max &amp;&amp; node dist/index.js --mode react --topic "your topic" --angle "your genuine take" --platform twitter</code>
+  <div style="color:#6b7280">--angle is optional but recommended. --platform: twitter (default) | bluesky | medium.</div>
 </div>`;
 
   return `
-<div style="background:linear-gradient(135deg,#1e293b 0%,#1e1b4b 100%);border-radius:14px;padding:22px 26px;margin-bottom:24px;border:1px solid #334155">
+<div style="background:#ffffff;border-radius:14px;padding:22px 26px;margin-bottom:24px;border:1px solid #e5e7eb;box-shadow:0 1px 3px rgba(0,0,0,0.06)">
   <div style="display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;margin-bottom:14px">
-    <h2 style="font-size:20px;color:#f8fafc;margin:0">Today's Actions — ${dayName}</h2>
-    <div style="color:#94a3b8;font-size:13px">${todayStr} · stage: <strong style="color:#e2e8f0">${stage}</strong></div>
+    <h2 style="font-size:20px;font-weight:700;color:#111827;margin:0">Today's Actions — ${dayName}</h2>
+    <div style="color:#6b7280;font-size:13px">${todayStr} · stage: <strong style="color:#111827">${stage}</strong></div>
   </div>
 
-  <h3 style="font-size:13px;color:#86efac;margin:0 0 8px 0;text-transform:uppercase;letter-spacing:0.5px">CI handles these at 06:00 UTC</h3>
+  <h3 style="font-size:11px;color:#16a34a;margin:0 0 8px 0;text-transform:uppercase;letter-spacing:0.6px;font-weight:600">CI handles these at 06:00 UTC</h3>
   <ul style="margin:0 0 4px 0;padding:0">${autoHtml}</ul>
 
-  <h3 style="font-size:13px;color:#fcd34d;margin:18px 0 8px 0;text-transform:uppercase;letter-spacing:0.5px">You run these today</h3>
+  <h3 style="font-size:11px;color:#d97706;margin:18px 0 8px 0;text-transform:uppercase;letter-spacing:0.6px;font-weight:600">You run these today</h3>
   <ul style="margin:0;padding:0">${manualHtml}</ul>
 
   ${mondayHtml}
@@ -660,30 +660,30 @@ export function generateDashboard(dataDir: string): void {
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; padding: 24px; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f9fafb; color: #111827; padding: 24px; }
   h1 { font-size: 24px; margin-bottom: 4px; }
-  .subtitle { color: #94a3b8; margin-bottom: 24px; font-size: 14px; }
+  .subtitle { color: #6b7280; margin-bottom: 24px; font-size: 14px; }
   .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 24px; }
-  .card { background: #1e293b; border-radius: 12px; padding: 20px; }
-  .card h3 { font-size: 13px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
-  .card .value { font-size: 28px; font-weight: 700; }
+  .card { background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+  .card h3 { font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 8px; font-weight: 500; }
+  .card .value { font-size: 28px; font-weight: 700; color: #111827; }
   .card .delta { font-size: 14px; margin-left: 8px; }
-  .delta.up { color: #22c55e; }
-  .delta.down { color: #ef4444; }
-  .delta.flat { color: #6b7280; }
-  .chart-card { background: #1e293b; border-radius: 12px; padding: 20px; margin-bottom: 24px; }
-  .chart-card h2 { font-size: 16px; margin-bottom: 16px; }
+  .delta.up { color: #16a34a; }
+  .delta.down { color: #dc2626; }
+  .delta.flat { color: #9ca3af; }
+  .chart-card { background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+  .chart-card h2 { font-size: 15px; font-weight: 600; color: #111827; margin-bottom: 16px; }
   .chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
   canvas { max-height: 260px; }
   table { width: 100%; border-collapse: collapse; font-size: 14px; }
-  th { text-align: left; padding: 8px; color: #94a3b8; border-bottom: 2px solid #334155; }
-  td { padding: 8px; border-bottom: 1px solid #334155; }
-  .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
-  .badge-bluesky { background: #0085ff; color: #fff; }
-  .badge-devto { background: #166534; color: #fff; }
-  .badge-reddit { background: #ff4500; color: #fff; }
-  .badge-pass { background: #166534; color: #fff; }
-  .badge-fail { background: #991b1b; color: #fff; }
+  th { text-align: left; padding: 8px 10px; color: #6b7280; border-bottom: 1px solid #e5e7eb; font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+  td { padding: 10px; border-bottom: 1px solid #f3f4f6; color: #374151; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 500; }
+  .badge-bluesky { background: #dbeafe; color: #1d4ed8; }
+  .badge-devto { background: #dcfce7; color: #15803d; }
+  .badge-reddit { background: #fee2e2; color: #dc2626; }
+  .badge-pass { background: #dcfce7; color: #15803d; }
+  .badge-fail { background: #fee2e2; color: #dc2626; }
   @media (max-width: 768px) { .chart-row { grid-template-columns: 1fr; } }
 </style>
 </head>
@@ -745,7 +745,7 @@ ${weekCalendar}
       <td>${e.date}</td>
       <td><span class="badge badge-${e.platform}">${e.platform}</span></td>
       <td>${e.category}</td>
-      <td>${e.platform === 'devto' && e.postUrl ? `<a href="${e.postUrl}" style="color:#60a5fa">${e.title || e.content.slice(0, 60)}</a>` : e.content.slice(0, 80)}</td>
+      <td>${e.platform === 'devto' && e.postUrl ? `<a href="${e.postUrl}" style="color:#2563eb">${e.title || e.content.slice(0, 60)}</a>` : e.content.slice(0, 80)}</td>
     </tr>`).join('\n')}
   </table>
 </div>
@@ -790,26 +790,26 @@ const chartOpts = {
   responsive: true,
   plugins: { legend: { display: false } },
   scales: {
-    x: { ticks: { color: '#94a3b8', maxTicksLimit: 10 }, grid: { color: '#334155' } },
-    y: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } }
+    x: { ticks: { color: '#6b7280', maxTicksLimit: 10 }, grid: { color: '#f3f4f6' } },
+    y: { ticks: { color: '#6b7280' }, grid: { color: '#f3f4f6' } }
   }
 };
 
 new Chart(document.getElementById('starsChart'), {
   type: 'line',
-  data: { labels: dates, datasets: [{ data: ${JSON.stringify(stars)}, borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.1)', fill: true, tension: 0.3 }] },
+  data: { labels: dates, datasets: [{ data: ${JSON.stringify(stars)}, borderColor: '#111827', backgroundColor: 'rgba(17,24,39,0.06)', fill: true, tension: 0.3, pointRadius: 3, pointBackgroundColor: '#111827' }] },
   options: chartOpts
 });
 
 new Chart(document.getElementById('downloadsChart'), {
   type: 'bar',
-  data: { labels: dates, datasets: [{ data: ${JSON.stringify(downloads)}, backgroundColor: '#3b82f6' }] },
+  data: { labels: dates, datasets: [{ data: ${JSON.stringify(downloads)}, backgroundColor: '#374151', borderRadius: 4 }] },
   options: chartOpts
 });
 
 new Chart(document.getElementById('viewsChart'), {
   type: 'line',
-  data: { labels: dates, datasets: [{ data: ${JSON.stringify(views)}, borderColor: '#22c55e', backgroundColor: 'rgba(34,197,94,0.1)', fill: true, tension: 0.3 }] },
+  data: { labels: dates, datasets: [{ data: ${JSON.stringify(views)}, borderColor: '#6b7280', backgroundColor: 'rgba(107,114,128,0.08)', fill: true, tension: 0.3, pointRadius: 3, pointBackgroundColor: '#6b7280' }] },
   options: chartOpts
 });
 
@@ -820,15 +820,15 @@ new Chart(document.getElementById('qualityChart'), {
     labels: ${JSON.stringify(categoryAvgs.map((c) => c.category))},
     datasets: [{
       data: ${JSON.stringify(categoryAvgs.map((c) => Math.round(c.avg * 10) / 10))},
-      backgroundColor: ['#f59e0b', '#3b82f6', '#22c55e', '#ef4444', '#8b5cf6', '#ec4899']
+      backgroundColor: ['#111827', '#374151', '#6b7280', '#9ca3af', '#d1d5db', '#e5e7eb']
     }]
   },
-  options: { ...chartOpts, scales: { ...chartOpts.scales, y: { ...chartOpts.scales.y, min: 0, max: 10 } } }
+  options: { ...chartOpts, scales: { ...chartOpts.scales, y: { ...chartOpts.scales.y, min: 0, max: 10 } }, datasets: { bar: { borderRadius: 4 } } }
 });
 ` : `
 new Chart(document.getElementById('qualityChart'), {
   type: 'bar',
-  data: { labels: ['No data yet'], datasets: [{ data: [0], backgroundColor: '#334155' }] },
+  data: { labels: ['No data yet'], datasets: [{ data: [0], backgroundColor: '#e5e7eb' }] },
   options: chartOpts
 });
 `}
