@@ -12,7 +12,7 @@
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { generateContent } from './claude.js';
-import { blueskyPrompt, devtoPrompt, mediumPrompt, substackPrompt, SUBSTACK_ROTATION, tagsForCategory, twitterStandalonePrompt, TWITTER_ROTATION, type ContentCategory, type TwitterCategory, type PromptContext } from './templates.js';
+import { blueskyPrompt, devtoPrompt, mediumPrompt, substackPrompt, SUBSTACK_ROTATION, substackNotePrompt, SUBSTACK_NOTE_ROTATION, tagsForCategory, twitterStandalonePrompt, TWITTER_ROTATION, type ContentCategory, type TwitterCategory, type SubstackNoteCategory, type PromptContext } from './templates.js';
 import type { FormatInsights } from '../brain/format-research.js';
 import { reviewBlueskyPost, reviewArticle } from './quality.js';
 import { parseArticle } from '../publish/devto.js';
@@ -58,13 +58,20 @@ export interface PregeneratedPost {
   } | null;
   /**
    * Substack content.
-   * note: mirrors bluesky.text (short-form parity — same content, Notes feed)
+   * note: INDEPENDENT short-form Substack voice (ss_morning / ss_line / ss_aside /
+   *   ss_question / ss_revision), via SUBSTACK_NOTE_ROTATION. Falls back to
+   *   mirroring Bluesky text if generation fails. `mirroredFromBluesky` flag
+   *   makes the fallback visible downstream.
    * newsletter: INDEPENDENT of Medium — uses SUBSTACK_ROTATION categories with
-   * email-first intimate voice. Falls back to mirroring Medium if generation fails.
-   * `mirroredFromMedium` flag makes that fallback visible downstream (digest, dashboard).
+   *   email-first intimate voice. Falls back to mirroring Medium if generation fails.
+   *   `mirroredFromMedium` flag makes that fallback visible downstream.
    */
   substack: {
     note: string | null;
+    /** Category of the note — absent on the Bluesky-mirror fallback path. */
+    noteCategory?: SubstackNoteCategory;
+    /** True if note generation failed and we fell back to mirroring Bluesky text. */
+    mirroredFromBluesky?: boolean;
     newsletter: {
       title: string;
       body: string;
@@ -335,19 +342,43 @@ export async function pregenerateWeek(
       }
     }
 
-    // Substack:
-    //   - Notes mirror Bluesky (short-form parity — not worth a separate call).
-    //   - Newsletter is generated INDEPENDENTLY using SUBSTACK_ROTATION with
-    //     email-first intimate voice. This lets us experiment with a different
-    //     content voice vs Medium's public-article style.
-    //   - Only generate on days that also get a Medium article (same 1-3x/week cadence).
-    //   - Fall back to mirroring Medium if Substack generation fails — flagged
-    //     via mirroredFromMedium so the digest/dashboard can show the distinction.
+    // Substack has TWO content surfaces with DIFFERENT cadence + voice:
+    //   - Notes (short): INDEPENDENT voice, generated DAILY via SUBSTACK_NOTE_ROTATION
+    //     (5 short-form categories: ss_morning / ss_line / ss_aside / ss_question /
+    //     ss_revision). Falls back to mirroring Bluesky text if generation fails.
+    //   - Newsletter (long): INDEPENDENT voice, generated 1-3x/week via SUBSTACK_ROTATION
+    //     (5 long-form categories: letter / field_notes / essay_long / contrarian /
+    //     thread_story). Falls back to mirroring Medium if generation fails.
+
+    // --- Substack NOTE (short-form, daily) ---
+    let noteText: string | null = null;
+    let noteCategory: SubstackNoteCategory | undefined;
+    let mirroredFromBluesky = false;
+    try {
+      const cat = SUBSTACK_NOTE_ROTATION[dayIndex % SUBSTACK_NOTE_ROTATION.length];
+      console.log(`[Max] Pre-generating ${day.date} Substack Note (${cat})...`);
+      const prompt = substackNotePrompt(cat, ctx);
+      let text = await generateBlueskyText(claudeApiKey, prompt); // reuses short-text generator (Haiku, low tokens)
+      const polished = antiPolish(text, 'twitter');
+      if (polished.changes.length > 0) console.log(`[Max]   anti-polish (ss-note): ${polished.changes.join(', ')}`);
+      text = polished.text.trim();
+      // Soft cap — Substack Notes have no hard limit but aiming for the 280 range
+      if (text.length > 320) text = text.slice(0, 317).trimEnd() + '...';
+      noteText = text;
+      noteCategory = cat;
+      console.log(`[Max]   Substack Note ${day.date} (${cat}): ${text.length} chars — "${text.slice(0, 60)}..."`);
+    } catch (err) {
+      console.warn(`[Max]   Substack Note pre-gen failed for ${day.date}:`, (err as Error).message);
+      noteText = post.bluesky?.text ?? null;
+      mirroredFromBluesky = noteText !== null;
+    }
+
+    // --- Substack NEWSLETTER (long-form, Dev.to days only) ---
     const existingNewsletter = post.substack?.newsletter ?? null;
     if (day.devto && !existingNewsletter) {
       const substackCategory = SUBSTACK_ROTATION[dayIndex % SUBSTACK_ROTATION.length];
       try {
-        console.log(`[Max] Pre-generating ${day.date} Substack (${substackCategory})...`);
+        console.log(`[Max] Pre-generating ${day.date} Substack Newsletter (${substackCategory})...`);
         const bucket = bucketForCategory(substackCategory);
         const readingHint = readingInsightForPrompt(readingInsights ?? null, bucket);
         const opinionsHint = opinionsForPrompt(dataDir, bucket);
@@ -381,7 +412,9 @@ export async function pregenerateWeek(
         }
 
         post.substack = {
-          note: post.bluesky?.text ?? null,
+          note: noteText,
+          noteCategory,
+          mirroredFromBluesky,
           newsletter: {
             title,
             body,
@@ -390,12 +423,14 @@ export async function pregenerateWeek(
             qualityScore: quality.score.average,
           },
         };
-        console.log(`[Max]   Substack ${day.date} (${substackCategory}): ${quality.score.average}/10 (${quality.passed ? 'pass' : 'fail'})`);
+        console.log(`[Max]   Substack Newsletter ${day.date} (${substackCategory}): ${quality.score.average}/10 (${quality.passed ? 'pass' : 'fail'})`);
       } catch (err) {
-        console.warn(`[Max]   Substack pre-gen failed for ${day.date}:`, (err as Error).message);
+        console.warn(`[Max]   Substack Newsletter pre-gen failed for ${day.date}:`, (err as Error).message);
         // Fallback: mirror Medium so we still ship something, flagged for visibility
         post.substack = {
-          note: post.bluesky?.text ?? null,
+          note: noteText,
+          noteCategory,
+          mirroredFromBluesky,
           newsletter: post.medium
             ? {
                 title: post.medium.title,
@@ -407,9 +442,11 @@ export async function pregenerateWeek(
         };
       }
     } else {
-      // Not a Dev.to/Medium day — just mirror the Bluesky note. Preserve any existing newsletter from resume.
+      // Not a newsletter day — still ship the Note. Preserve any existing newsletter from resume.
       post.substack = {
-        note: post.bluesky?.text ?? null,
+        note: noteText,
+        noteCategory,
+        mirroredFromBluesky,
         newsletter: existingNewsletter,
       };
     }

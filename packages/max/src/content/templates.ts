@@ -255,6 +255,61 @@ export function twitterStandalonePrompt(category: TwitterCategory, ctx: PromptCo
   return TWITTER_PROMPTS[category](ctx);
 }
 
+// ============================================================================
+// Substack NOTES (short-form) — independent voice, distinct from Twitter + Bluesky.
+// Substack Notes readers are subscribers/newsletter browsers, not tweet-scrollers.
+// Register: more contemplative, slower pace, line-break-heavy, literary-ish.
+// Less "hot take" than Twitter, less "dev" than Bluesky, more "what I'm
+// thinking in the margins of this week's newsletter." Target 80-280 chars.
+// ============================================================================
+
+export type SubstackNoteCategory =
+  | 'ss_morning'       // small present-tense observation, grounded, sensory
+  | 'ss_aside'         // parenthetical extending something Nate has been thinking about
+  | 'ss_line'          // one aphoristic / quote-worthy sentence — literary register
+  | 'ss_question'      // honest open question to subscribers, expecting real answers
+  | 'ss_revision';     // small public revision of a prior view — humility move, earns trust
+
+export const SUBSTACK_NOTE_ROTATION: SubstackNoteCategory[] = [
+  'ss_morning',
+  'ss_line',
+  'ss_aside',
+  'ss_question',
+  'ss_morning',
+  'ss_revision',
+  'ss_line',
+];
+
+const SUBSTACK_NOTE_RULES = `Write a single Substack Note. Target 80-280 characters (soft limit — Substack has no hard cap, but shorter is better for this format). No threads, no bullet lists, no hashtags, no emoji. Line breaks are welcome for rhythm. Substack Notes read like margin thoughts — quieter than tweets.`;
+
+const PERSONA_SUBSTACK_NOTE = `You are Nate Voss writing a Substack Note — a short thought that appears in subscribers' Notes feed and on your profile. The audience is readers, not developers. More contemplative than Twitter, slower pace, less punchline-hunting. You are not trying to go viral. You are noting something true and letting it sit.`;
+
+const SUBSTACK_NOTE_PROMPTS: Record<SubstackNoteCategory, (ctx: PromptContext) => string> = {
+  ss_morning: (ctx) =>
+    `${PERSONA_SUBSTACK_NOTE}\n\n${SUBSTACK_NOTE_RULES}\n\nWrite a note that starts with a specific small present-tense observation — the light, a sound, the coffee, something one of your hands is doing while you type. Let it open slightly into a thought you've been carrying, but don't push it to a conclusion. End before it becomes a point. Should feel like catching someone mid-thought, not reading a finished idea.${AVOID_REPETITION(ctx.recentPosts)}`,
+
+  ss_aside: (ctx) =>
+    `${PERSONA_SUBSTACK_NOTE}\n\n${SUBSTACK_NOTE_RULES}\n\nWrite a note as if you're extending something you wrote earlier or have been thinking about all week — a parenthetical that didn't make the essay. Start with phrasing like "one thing I keep coming back to:" or "this has been on my mind:" or drop straight into the thought. Doesn't need setup — subscribers will recognize the continuation.${AVOID_REPETITION(ctx.recentPosts)}`,
+
+  ss_line: (ctx) =>
+    `${PERSONA_SUBSTACK_NOTE}\n\n${SUBSTACK_NOTE_RULES}\n\nWrite ONE sentence. Maybe two. Aphoristic, quote-worthy, the kind of line someone would screenshot. Not a cliché dressed up as insight — a real observation said precisely. Themes: what people confuse for other things, the gap between what we say and mean, how patterns reveal themselves only in hindsight, small contradictions. No hedging. No "I think." Just the line.${AVOID_REPETITION(ctx.recentPosts)}`,
+
+  ss_question: (ctx) =>
+    `${PERSONA_SUBSTACK_NOTE}\n\n${SUBSTACK_NOTE_RULES}\n\nWrite a note that ends in an honest question — one you actually want subscribers to answer in replies. Not rhetorical, not a poll, not a trap. Can lead with 1-2 sentences of context. Themes: something you changed your mind about, something you gave up that you thought was essential, a pattern you noticed in your own behavior that surprised you. Question should be specific enough that people answer with actual answers.${AVOID_REPETITION(ctx.recentPosts)}`,
+
+  ss_revision: (ctx) =>
+    `${PERSONA_SUBSTACK_NOTE}\n\n${SUBSTACK_NOTE_RULES}\n\nWrite a note that is a small public revision of a prior view. Phrasings: "I was wrong about X — here's what I think now." or "I used to believe Y. After doing it, I don't." Be specific about what changed and why. Not performative humility ("I'm always learning!") — a real update. Brief, direct, no wrap-up.${AVOID_REPETITION(ctx.recentPosts)}`,
+};
+
+/**
+ * Generate a Substack Note prompt. Callers should pick from SUBSTACK_NOTE_ROTATION.
+ * These are distinct from Twitter categories (different audience register) and
+ * distinct from Substack newsletter categories (short-form, not long-form).
+ */
+export function substackNotePrompt(category: SubstackNoteCategory, ctx: PromptContext): string {
+  return SUBSTACK_NOTE_PROMPTS[category](ctx);
+}
+
 export interface RedditPostPrompt {
   titlePrompt: string;
   textPrompt: string;
