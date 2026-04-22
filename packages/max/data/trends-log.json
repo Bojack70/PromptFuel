@@ -89,6 +89,87 @@
       "score": 60,
       "comments": 58,
       "itemId": 47848276
+    },
+    {
+      "date": "2026-04-22",
+      "source": "hn",
+      "title": "Making RAM at Home [video]",
+      "url": "https://www.youtube.com/watch?v=h6GWikWlAQA",
+      "score": 228,
+      "comments": 49,
+      "itemId": 47842569
+    },
+    {
+      "date": "2026-04-22",
+      "source": "hn",
+      "title": "ChatGPT Images 2.0",
+      "url": "https://openai.com/index/introducing-chatgpt-images-2-0/",
+      "score": 733,
+      "comments": 560,
+      "itemId": 47852835
+    },
+    {
+      "date": "2026-04-22",
+      "source": "hn",
+      "title": "Acetaminophen vs. ibuprofen",
+      "url": "https://asteriskmag.com/issues/14/the-mystery-in-the-medicine-cabinet",
+      "score": 290,
+      "comments": 148,
+      "itemId": 47835635
+    },
+    {
+      "date": "2026-04-22",
+      "source": "hn",
+      "title": "XOR'ing a register with itself is the idiom for zeroing it out. Why not sub?",
+      "url": "https://devblogs.microsoft.com/oldnewthing/20260421-00/?p=112247",
+      "score": 9,
+      "comments": 1,
+      "itemId": 47859861
+    },
+    {
+      "date": "2026-04-22",
+      "source": "hn",
+      "title": "Diverse organic molecules on Mars revealed by the first SAM TMAH experiment",
+      "url": "https://www.courthousenews.com/preserved-for-billions-of-years-organic-compounds-found-on-mars/",
+      "score": 59,
+      "comments": 2,
+      "itemId": 47846861
+    },
+    {
+      "date": "2026-04-22",
+      "source": "hn",
+      "title": "SpaceX says it has agreement to acquire Cursor for $60B",
+      "url": "https://twitter.com/spacex/status/2046713419978453374",
+      "score": 524,
+      "comments": 640,
+      "itemId": 47855293
+    },
+    {
+      "date": "2026-04-22",
+      "source": "hn",
+      "title": "The Vercel breach: OAuth attack exposes risk in platform environment variables",
+      "url": "https://www.trendmicro.com/en_us/research/26/d/vercel-breach-oauth-supply-chain.html",
+      "score": 304,
+      "comments": 108,
+      "itemId": 47851634
+    },
+    {
+      "date": "2026-04-22",
+      "source": "hn",
+      "title": "Garbage Collection Without Unsafe Code",
+      "url": "https://fitzgen.com/2024/02/06/safe-gc.html",
+      "score": 19,
+      "comments": 1,
+      "itemId": 47821853
+    },
+    {
+      "date": "2026-04-22",
+      "source": "hn",
+      "title": "Contact Lens Uses Microfluidics to Monitor and Treat Glaucoma",
+      "url": "https://spectrum.ieee.org/smart-contact-lens-glaucoma-microfluidics",
+      "score": 7,
+      "comments": 0,
+      "itemId": 47823654
     }
   ]
 }

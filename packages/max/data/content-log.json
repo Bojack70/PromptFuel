@@ -96,5 +96,13 @@
     "content": "If you're still picking LLM providers by gut feeling, you're leaving money on the table. I ran 5 developer use cases through Claude 3.5 Sonnet, GPT-4o, and Gemini 2.0 Flash using PromptFuel to measure",
     "postId": "3532390",
     "postUrl": "https://dev.to/natevoss/3-things-i-learned-benchmarking-claude-gpt-4o-and-gemini-on-real-dev-work-5340"
+  },
+  {
+    "date": "2026-04-22",
+    "timestamp": "2026-04-22T07:28:34.250Z",
+    "platform": "bluesky",
+    "category": "ai_general",
+    "content": "asked Claude to 'optimize my code' but didn't specify what mattered. got back something elegant that solved the wrong thing. that's the moment: AI doesn't replace thinking—it just reflects how lazy yours was.",
+    "postId": "at://did:plc:n54y6c7lx2tt42tpx2brzcdi/app.bsky.feed.post/3mk2xxfl5qk2c"
   }
 ]

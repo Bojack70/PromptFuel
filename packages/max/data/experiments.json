@@ -174,5 +174,21 @@
     },
     "passed": true,
     "retried": false
+  },
+  {
+    "date": "2026-04-22",
+    "timestamp": "2026-04-22T07:28:34.250Z",
+    "platform": "bluesky",
+    "category": "ai_general",
+    "qualityScores": {
+      "authenticity": 7,
+      "value": 7,
+      "accuracy": 7,
+      "engagement": 7,
+      "average": 8.8,
+      "feedback": "pre-generated"
+    },
+    "passed": true,
+    "retried": false
   }
 ]
