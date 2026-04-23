@@ -190,5 +190,37 @@
     },
     "passed": true,
     "retried": false
+  },
+  {
+    "date": "2026-04-23",
+    "timestamp": "2026-04-23T07:46:42.111Z",
+    "platform": "bluesky",
+    "category": "comparison",
+    "qualityScores": {
+      "authenticity": 7,
+      "value": 7,
+      "accuracy": 7,
+      "engagement": 7,
+      "average": 8,
+      "feedback": "pre-generated"
+    },
+    "passed": true,
+    "retried": false
+  },
+  {
+    "date": "2026-04-23",
+    "timestamp": "2026-04-23T07:46:42.576Z",
+    "platform": "devto",
+    "category": "tutorial",
+    "qualityScores": {
+      "authenticity": 7,
+      "value": 7,
+      "accuracy": 7,
+      "engagement": 7,
+      "average": 8.3,
+      "feedback": "pre-generated"
+    },
+    "passed": true,
+    "retried": false
   }
 ]

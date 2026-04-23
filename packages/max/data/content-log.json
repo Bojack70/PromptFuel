@@ -104,5 +104,23 @@
     "category": "ai_general",
     "content": "asked Claude to 'optimize my code' but didn't specify what mattered. got back something elegant that solved the wrong thing. that's the moment: AI doesn't replace thinking—it just reflects how lazy yours was.",
     "postId": "at://did:plc:n54y6c7lx2tt42tpx2brzcdi/app.bsky.feed.post/3mk2xxfl5qk2c"
+  },
+  {
+    "date": "2026-04-23",
+    "timestamp": "2026-04-23T07:46:42.111Z",
+    "platform": "bluesky",
+    "category": "comparison",
+    "content": "47 tokens. Same prompt, 6 models — Claude 142, GPT-4o 189, Gemini 156. That spread multiplies with every call. PromptFuel shows the cost delta. npm install -g promptfuel",
+    "postId": "at://did:plc:n54y6c7lx2tt42tpx2brzcdi/app.bsky.feed.post/3mk5jgqjqsq2u"
+  },
+  {
+    "date": "2026-04-23",
+    "timestamp": "2026-04-23T07:46:42.575Z",
+    "platform": "devto",
+    "category": "tutorial",
+    "title": "How I Accidentally Spent $800/Month on LLM Tokens I Didn't Need (And How to Fix It)",
+    "content": "I spent six weeks shipping the wrong thing.\n\nI built PromptFuel because I was hemorrhaging money on API calls. Not because I was building at scale—I wasn't. I was building *dumb*. I'd write a prompt i",
+    "postId": "3539981",
+    "postUrl": "https://dev.to/natevoss/how-i-accidentally-spent-800month-on-llm-tokens-i-didnt-need-and-how-to-fix-it-oi7"
   }
 ]
