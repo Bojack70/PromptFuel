@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
+import { Analytics } from '@vercel/analytics/react';
 import { Landing } from './Landing.js';
 import { DashboardPage } from './Dashboard.js';
 
@@ -23,4 +24,9 @@ function Router() {
   return <Landing />;
 }
 
-createRoot(document.getElementById('root')!).render(<Router />);
+createRoot(document.getElementById('root')!).render(
+  <>
+    <Router />
+    <Analytics />
+  </>
+);
